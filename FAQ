@@ -1,0 +1,43 @@
+Will this work with my radio?
+
+  I have no idea.  I have an FT-60, and FT-7800, and an FT-897, so
+  I've made it work with those.  Other people may make it work with
+  their radios, or it may just work.  If so, I will take changes
+  and reports of working/nonworking radios.
+
+
+Will you make it work with my radio?
+
+  Well, that depends.  If you follow the instructions in the man page,
+  you may be able to get it to work.  But there may be issues.
+
+  I'm not going to buy a radio or go back and forth with you forever
+  to get something working.  I'll try a few simple things, perhaps,
+  but not much.  If you are willing to give me a radio or pay me
+  enough to buy a radio, that's another story, I *might* do it
+  depending on my status.  But it's difficult to support something if
+  you don't have the hardware.
+
+  You, of course, can do the work.  Or you might ask on a list;
+  someone else with the radio and Linux may be interested in doing
+  this.  I'll gladly take patches as long as they are reasonable.  I
+  would expect you to maintain the work and test it periodically, or
+  the device will go unsupported.
+
+
+Are you adding the ability to modify the configuration?
+
+  That's my plan, but that's a bigger job than just cloning.
+  Hopefully soon.
+
+
+When that happens, will you support my radio for configuration?
+
+  See the previous response, but I will not support this without
+  hardware, and even then it's a very long process.  Yaesu will not
+  release the information, so it has to be reverse-engineered.
+  Money, of course makes things easier.  Not that I'm doing this
+  software for money, but that's really what it will take.
+
+  Of course, as before, you can do the work or you may be able to find
+  someone else.  But reverse-engineering just sucks.

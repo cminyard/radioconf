@@ -1,0 +1,38 @@
+
+Frequency is a 4-byte value that is binary coded.  There is a
+frequency setting per band.
+
+CTCSS Tones:
+      00 -  67.0  01 -  69.3  02 -  71.9  03 -  74.4
+      04 -  77.0  05 -  79.7  06 -  82.5  07 -  85.4
+      08 -  88.5  09 -  91.5  0a -  94.8  0b -  97.4
+      0c - 100.0  0d - 103.5  0e - 107.2  0f - 110.9
+      10 - 114.8  11 - 188.8  12 - 123.0  13 - 127.3
+      14 - 131.8  15 - 136.5  16 - 141.3  17 - 146.2
+      18 - 151.4  19 - 156.7  1a - 159.8  1b - 162.2
+      1c - 165.5  1d - 167.9  1e - 171.3  1f - 173.8
+      20 - 177.3  21 - 179.9  22 - 183.5  23 - 186.2
+      24 - 189.9  25 - 192.8  26 - 196.6  27 - 199.5
+      28 - 203.5  29 - 206.5  2a - 210.7  2b - 218.1
+      2c - 225.7  2d - 229.1  2e - 233.6  2f - 241.8
+      30 - 250.3  31 - 254.1
+
+A memory is a 28 byte field:
+    byte 0 bit 7 - Alphanumeric tag is enabled
+
+    byte 4 bit 4 - Split tone mode
+
+    byte 6 - Transmit CTCSS tone
+
+    byte 7 - Receive CTCSS tone
+
+    bytes 0c-0f - Frequency (Receive frequency when split)
+
+    bytes 10-13 - Transmit frequency when split
+
+    bytes 14-1b - ASCII encoded name, null terminates if <8 bytes.
+	  if all 0xff then it is not valid.
+
+01ef-01f2 - 70cm frequency
+
+0495-0498 - 40m frequency

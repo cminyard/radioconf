@@ -1,0 +1,173 @@
+.TH yaesu_rw 1 11/02/09 Yaesu "Yaesu radio clone program"
+
+.SH NAME
+yaesu_rw \- A program to read and write clone information for Yaesu radios
+
+.SH SYNOPSIS
+.B yaesu
+[\fIoptions\fR]
+\fI\-r|\-w\fR
+<filename> 
+
+.SH DESCRIPTION
+The
+.BR yaesu_rw
+program allows a user to read data from Yaesu radios, and write data
+to Yaesu radios, over the clone interface.  This allows the backup
+and restore of memories and configuration information in the radio.  If
+a program exists to modify the information, then the information can be
+extracted from the radio using yaesu_rw, modified, then written back
+using yaesu_rw.
+
+This may not support all Yaesu radios.
+
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-hash\fR
+Print out a '.' for each block of data transferred.
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+WHen given once, print out the program version.  When given twice,
+print out all data send and received.  When given three times, also
+print out data as it's written, not just as its queued.
+
+.TP
+\fB\-d\fR, \fB\-\-device\fR \fIdevice\fR
+Use the given device as the serial device for the connection, instead of
+the default /dev/ttyS0.
+
+.TP
+\fB\-i\fR, \fB\-\-ignerr\fR
+When reading, write out all read data even if an error occurs.
+
+.TP
+\fB\-n\fR, \fB\-\-notermio\fR
+Don't set up the serial port, useful if the device is actually a network
+connection or something that is not a serial port.
+
+.TP
+\fB\-e\fR, \fB\-\-rcv_echo\fR 
+Expect that all data transmitted to the radio will be echoed.  If echo
+is not specified, the program will attempt to test for echo.
+
+.TP
+\fB\-m\fR, \fB\-\-norcv_echo\fR
+Expect that all data transmitted to the radio will not be echoed.  If echo
+is not specified, the program will attempt to test for echo.
+
+.TP
+\fB\-y\fR, \fB\-\-send_echo\fR
+Echo all received data back out device.
+
+.TP
+\fB\-c\fR, \fB\-\-checksum\fR
+Expect that the radio will send a checksum at the end of the data.  This is
+generally set up in the configuration file, but this option will override
+the default.  In timer mode, checksum is off.
+
+.TP
+\fB\-g\fR, \fB\-\-nochecksum\fR
+Expect that the radio will not send a checksum at the end of the data.  This is
+generally set up in the configuration file, but this option will override
+the default.  In timer mode, checksum is off.
+
+.TP
+\fB\-f\fR, \fB\-\-configfile\fR \fIfile\fR
+Use the given file for the radio configuration instead of the default
+config file.
+
+.SH "USAGE"
+To use this program, you generally put your radio into clone mode, then do
+.IP
+yaesu_rw -h -r radio_file
+.PP
+then start your radio's clone TX function.  The method to do this varies from
+radio to radio, but it generally described in the cloning section of the
+radio.  This reads data from a radio and stores it in radio_file.
+
+To restore your data, again put the radio in clone mode, do
+.IP
+yaesu_rw -h -w radio_file
+.PP
+This will put a prompt up.  Put your radio into clone RX mode, then press
+enter on the screen to start the transmission to the radio.
+
+.SH "ADDING YOUR RADIO"
+If the program does not recognize your radio, the program will run in a
+less efficient timer mode, and you will not be able to transmit data to
+the program.  The timer mode will print out most of the information you
+need to configure the radio.  For instance, without configuration, the
+FT-857 will print out:
+.P
+ Start transmission from the radio
+ Unable to find the device, going ahead, but it probably won't work
+ Going into timer mode, dumping block information
+ Header size = 4
+ Header data is: 00 1f 06 25
+ Block sizes: 84 254 198 254 198 214 57 142 142 142 142 142 142 142
+  142 142 142 142 142 142 142 142 142 142 142 142 142 142 142 142
+  142 142 142 142 142 142 142 142 142 142 142 142 142 142 142 142
+  142 142 142 40 178 142
+ Transferred 7587 characters
+.P
+This will translate into the following configuration information:
+.P
+ radio FT-857
+    headercmp 00 1f 06 25
+    headerlen 4
+    filesize  7587
+    blocksizelist (1, 84) (1, 254) (1, 198) (1, 254) (1, 198) \
+        (1, 214) (1, 57) (42, 142) (1, 40) (1, 178) (0, 142)
+    nochecksum
+ endradio
+.P
+Note that headerlen is automatically calculated from headercmp normally,
+but may be different if the header ends with a version number or something
+else that may change without changing the other information.  headercmp
+will be enough information to uniquely identify the radio, headerlen may
+be longer.
+.P
+If all the block sizes are the say, you may use blocksize instead of
+blocksizelist.  Also, if the last block is 1 byte long, it is likely a
+checksum, so the filesize will be reduced by 1 and checksum specified
+instead of nochecksum.
+.P
+Will this work with your radio?  I don't know how.  I've made it work with
+the ones I have.  See the FAQ for more details.
+
+.SH "ECHO"
+It appears that cloning cables that come with the ADMS software do echo, and
+the cables that come from Yeasu do not.  The software attempts to detect
+this automatically, but in case it doesn't work correctly, you can override
+using the proper options.
+
+.SH "USE WITH ADMS"
+After reading the options, the reader may be wondering why the
+\fI\-\-send_echo\fR option exists.  The clone protocol is moderately
+symmetric, so it is possible to use this software with ADMS.  ADMS is
+a piece of software for using the clone mode on Yaesu (and other)
+radios; it comes from a company named RT Systems, and it seems to work
+fine, but it only works on Windows.  That is obviously not acceptable,
+a Linux version should be available.
+.P
+Why would you want to use this program with ADMS?  Well, if you are
+trying to decode the meaning of the contents of the data, changing a
+value, turning the radio off, turning it back on in clone mode,
+sending the data, turning the radio off, etc. is a very tedious
+process.  If you have ADMS, it is much easier to make the change in
+ADMS and send the data, make another change, send the data, etc.
+.P
+However, ADMS, at least on the versions I have, expects characters to
+be echoed by the interface.  Thus the \fI\-\-send_echo\fR option.
+
+.SH "SEE ALSO"
+.BR /etc/yaesu.conf
+has the description of the configuration file as comments.
+
+.SH "KNOWN PROBLEMS"
+None
+
+.SH AUTHOR
+.PP
+Corey Minyard <minyard@acm.org>, AE5KM
