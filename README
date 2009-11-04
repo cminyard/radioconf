@@ -11,7 +11,7 @@ up and restore radio configuration.
 Layout files
 ------------
 
-The "xxx-layout" files here are attempts to decode the cloned
+The "xxx.layout" files here are attempts to decode the cloned
 information into the meanings of the various data fields.
 
 The eventual goal is to have a program that allows the user to modify
