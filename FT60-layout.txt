@@ -4,9 +4,9 @@ Frequencies take up 3 bytes and are in the following format:
     byte 0 bits 4-7 - This is the last 5khz, 8 to enable the last
 		5khz, 0 to not.  Like 145.805 if set to 8
 		and 145.800 if not.
-    byte 0 bits 0-3 to byte 2 - BCD encoded frequency, with the
+    byte 0 bits 0-3 to byte 3 - BCD encoded frequency, with the
 		first nibble being 100Mhz, 2nd 10Mhz, etc.  For
-		instance, 437.795 the first 4 bytes would be:
+		instance, 437.795 the 4 bytes would be:
 		  80 84 37 79.
 
 Memories take up 16 bytes in the format:
