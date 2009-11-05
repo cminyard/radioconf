@@ -10,18 +10,18 @@ Frequencies take up 3 bytes and are in the following format:
 		  80 84 37 79.
 
 Memories take up 16 bytes in the format:
-	    byte 0 bits 0-3 - offset direction:
+	    byte 0 bits 0-2 - offset direction:
 		              0 - simplex
 			      1 - ?
 			      2 - minus
 			      3 - plus
 			      4 - split (transmit frequency valid)
-		   bit 4 - ?
+		   bits 3-4 - ?
 		   bit 5 - TX Narrow
 		   bit 6 - Pager Enable
 		   bit 7 - 1 to enable and 0 to disable a channel
 	    byte 1 - byte 3 - Receive frequency
-	    byte 4 bits 0-3 - Tone mode
+	    byte 4 bits 0-2 - Tone mode
 			0 - None
 			1 - Tone
 			2 - Tone squelch
@@ -31,13 +31,13 @@ Memories take up 16 bytes in the format:
 			6 - T DCS
 			7 - D Tone
 		   bits 4-6 - Step
-		        0 - 5kHz
+			0 - 5kHz
 			1 - 10kHz
 			2 - 12.5kHz
 			3 - 15kHz
 			4 - 20kHz
 			5 - 25kHz
-			6 - ?
+			6 - 50khz
 			7 - 100kHz
 		   bit 7 - Clock shift
 	    byte 5 - byte 7 - transmit frequency
@@ -75,7 +75,8 @@ Memories take up 16 bytes in the format:
 		      60-703 61-712 62-723 63-731 64-732 65-734 66-743 67-754
 	    byte 10 - unknown, always 0f
 	    byte 11 - unknown, always 00
-	    byte 12 - Offset frequency (only valid with minus or plus offset)
+	    byte 12 - Shift (Offset frequency) (only valid with minus or plus offset)
+		"value * 50kHz", displayed as n.nnMHz.  Values from ADMS are:
 		      02 - 100kHz
 		      0a - 500kHz
 		      0c - 600kHz
@@ -130,15 +131,34 @@ cycled on the radio, there appears to be no memory for it.
 	    This is an 8-byte record that is sent first.
 	    The rest of the records are 64-bits.
 
-001a	bits 0-4 - Selected DTMF, 0=1, 1=2, 2=3, 3=4, 4=5, 5=6, 6=7, 7=8, 8=9
+0008    bit 5 - Wide/Narrow (also see byte 12) - 0=Wide, 1=Narrow
+
+000c	bits 0-2 - Current Tone Mode (Menu 48) - See byte 4 of memory data
+	bits 4-6 - Step - see byte 4 of memory, and byte 38
+
+0010	bits 0-5 - CTCSS Tone (menu 50)
+	bits 6-7 - Transmit power
+	      0 - High
+	      1 - Med
+	      2 - Low
+
+0012    bit 7 - Wide/Narrow (also see byte 8) - 0=Wide, 1=Narrow
+
+0019	bit 1 - V/M mode (see also bit 3b) - 0=memory, 1=VFO
+
+001a	bits 0-3 - Selected DTMF, 0=1, 1=2, 2=3, 3=4, 4=5, 5=6, 6=7, 7=8, 8=9
+
+001c-001d	Current memory selected
+
+001f	Current menu item
 
 0024    bits 0-4 - Auto power off, off = v * (.5 hours) up to 12 hours.
 
-0025	Timeout Timer: 0=Off, 1=1min, 2=2min, ..., 30=30min
+0025	Timeout Timer (menu 51): 0=Off, 1=1min, 2=2min, ..., 30=30min
 
 0026	P1 key setting: 0=AutoPowerOff, 2=ARTSBeep, 3=ATSINT, 13=EdgeBeep, 24=REV/HM, 2e=Skip
 
-0027	P2 key setting: 0=AutoPowerOff, 
+0027	P2 key setting: see byte 0026 
 
 0028	bits 0-4 -   RF Squelch: 0=off, 1=S1, 2=S2, .., 6=S6, 7=S8, 8=S-Full
 	     Careful on above numbers, S7 is missing
@@ -184,12 +204,13 @@ cycled on the radio, there appears to be no memory for it.
 	     10min, 1b=15min, 1c=20min, 1d=30min, 1e=40min, 1f=50min,
 	     Value 10 appears to not be used.
 	   
-0038	bit 3 - ARTS interval 0=25sec, 1=15sec
-	bit 6 - Weather alert
+0038	bit 0 - ?
+	bit 3 - ARTS interval 0=25sec, 1=15sec
+	bit 6 - Weather alert (menu 56)
 
 0039	bit 0 - Smart Search: 0=Single, 1=Continuous
 	bits 1-2 - DCS N/R, values are: 0=T/RX N, 1=RX R, 2=TX R, 3=T/RX R
-	bit 3 - VFO band edge limit
+	bit 3 - VFO band edge limit (Menu 54)
 	bit 4 - Auto repeater shift
 	bit 5 - Memory only
 	bit 7 - ARTS CW ID enable
@@ -200,18 +221,20 @@ cycled on the radio, there appears to be no memory for it.
 	bit 4 - Band edge beep
 	bit 5 - Scan beep (note: on the radio this can only be set if key beep
 		is also set)
-	bit 6 - Split tone
+	bit 6 - Split tone (menu 47)
 	bit 7 - Priority revert
 
+003b	bit 4 - V/M (see also byte 19) - 0=VFO, 1=memory
+
 003c	bit 0 - Pager Answer Back
-	bit 1 - Tx save
+	bit 1 - Tx save (menu 53)
 	bits 2-3 - Scan resume, values are 0=time, 1=hold, 2=busy
 	bit 4 - Moni/TCall Key: 0=Moni, 1=TCall
 	bit 5 - HM/REV: 0=Reverse, 1=Home
 	bits 6-7 - Scan resume - 0=Time, 1=Busy, 2=Hold
 
 003d	bit 1 - Password Enable
-	bit 2 - Tx LED
+	bit 2 - Tx LED (menu 52)
 	bit 4 - Busy LED
 	bit 5 - Busy channel lockout
 	bit 6 - Scan lamp
@@ -257,7 +280,8 @@ cycled on the radio, there appears to be no memory for it.
 
 6ec8-6fc1 - This is 1000 2-bit values holding the Skip field, starting
 	    from low-order bits and going to high.  So 6ec8 bits 0-1 are
-	    channel 1, 6ec8 bits 2-3 are channel 2, etc.  The values are:
+	    channel 1, 6ec8 bits 2-3 are channel 2, etc.  (menu 46)
+	    The values are:
 		0 - off
 		1 - Skip
 		2 - P Scan

@@ -1,57 +1,294 @@
 
-enum CTCSS
-	00 "67.0"
-	01 "69.3"
-	02 "71.9"
-	03 "74.4"
-	04 "77.0"
-	05 "79.7"
-	06 "82.5"
-	07 "85.4"
-	08 "88.5"
-	09 "91.5"
-	0a "94.8"
-	0b "97.4"
-	0c "00.0"
-	0d "03.5"
-	0e "07.2"
-	0f "10.9"
-	10 "14.8"
-	11 "88.8"
-	12 "23.0"
-	13 "27.3"
-	14 "31.8"
-	15 "36.5"
-	16 "41.3"
-	17 "46.2"
-	18 "51.4"
-	19 "56.7"
-	1a "59.8"
-	1b "62.2"
-	1c "65.5"
-	1d "67.9"
-	1e "71.3"
-	1f "73.8"
-	20 "77.3"
-	21 "79.9"
-	22 "83.5"
-	23 "86.2"
-	24 "89.9"
-	25 "92.8"
-	26 "96.6"
-	27 "99.5"
-	28 "03.5"
-	29 "06.5"
-	2a "10.7"
-	2b "18.1"
-	2c "25.7"
-	2d "29.1"
-	2e "33.6"
-	2f "41.8"
-	30 "50.3"
-	31 "54.1"
-end enum
+enum CTCSS_e
+	0x00 "67.0"
+	0x01 "69.3"
+	0x02 "71.9"
+	0x03 "74.4"
+	0x04 "77.0"
+	0x05 "79.7"
+	0x06 "82.5"
+	0x07 "85.4"
+	0x08 "88.5"
+	0x09 "91.5"
+	0x0a "94.8"
+	0x0b "97.4"
+	0x0c "00.0"
+	0x0d "03.5"
+	0x0e "07.2"
+	0x0f "10.9"
+	0x10 "14.8"
+	0x11 "88.8"
+	0x12 "23.0"
+	0x13 "27.3"
+	0x14 "31.8"
+	0x15 "36.5"
+	0x16 "41.3"
+	0x17 "46.2"
+	0x18 "51.4"
+	0x19 "56.7"
+	0x1a "59.8"
+	0x1b "62.2"
+	0x1c "65.5"
+	0x1d "67.9"
+	0x1e "71.3"
+	0x1f "73.8"
+	0x20 "77.3"
+	0x21 "79.9"
+	0x22 "83.5"
+	0x23 "86.2"
+	0x24 "89.9"
+	0x25 "92.8"
+	0x26 "96.6"
+	0x27 "99.5"
+	0x28 "03.5"
+	0x29 "06.5"
+	0x2a "10.7"
+	0x2b "18.1"
+	0x2c "25.7"
+	0x2d "29.1"
+	0x2e "33.6"
+	0x2f "41.8"
+	0x30 "50.3"
+	0x31 "54.1"
+endenum
 
-tab VFOs
-	
+enum DCSCode_e
+	0x00 "023"
+	0x01 "025"
+	0x02 "026"
+	0x03 "031"
+	0x04 "032"
+	0x05 "036"
+	0x06 "043"
+	0x07 "047"
+	0x08 "051"
+	0x09 "053"
+	0x0a "054"
+	0x0b "065"
+	0x0c "071"
+	0x0d "072"
+	0x0e "073"
+	0x0f "074"
+	0x10 "114"
+	0x11 "115"
+	0x12 "116"
+	0x13 "122"
+	0x14 "125"
+	0x15 "131"
+	0x16 "132"
+	0x17 "134"
+	0x18 "143"
+	0x19 "145"
+	0x1a "152"
+	0x1b "155"
+	0x1c "156"
+	0x1d "162"
+	0x1e "165"
+	0x1f "172"
+	0x20 "174"
+	0x21 "205"
+	0x22 "212"
+	0x23 "223"
+	0x24 "225"
+	0x25 "226"
+	0x26 "243"
+	0x27 "244"
+	0x28 "245"
+	0x29 "246"
+	0x2a "251"
+	0x2b "252"
+	0x2c "255"
+	0x2d "261"
+	0x2e "263"
+	0x2f "265"
+	0x30 "266"
+	0x31 "271"
+	0x32 "274"
+	0x33 "306"
+	0x34 "311"
+	0x35 "315"
+	0x36 "325"
+	0x37 "331"
+	0x38 "332"
+	0x39 "343"
+	0x3a "346"
+	0x3b "351"
+	0x3c "356"
+	0x3d "364"
+	0x3e "365"
+	0x3f "371"
+	0x40 "411"
+	0x41 "412"
+	0x42 "413"
+	0x43 "423"
+	0x44 "431"
+	0x45 "432"
+	0x46 "445"
+	0x47 "446"
+	0x48 "452"
+	0x49 "454"
+	0x4a "455"
+	0x4b "462"
+	0x4c "464"
+	0x4d "465"
+	0x4e "466"
+	0x4f "503"
+	0x50 "506"
+	0x51 "516"
+	0x52 "523"
+	0x53 "526"
+	0x54 "532"
+	0x55 "546"
+	0x56 "565"
+	0x57 "606"
+	0x58 "612"
+	0x59 "624"
+	0x5a "627"
+	0x5b "631"
+	0x5c "632"
+	0x5d "654"
+	0x5e "662"
+	0x5f "664"
+	0x60 "703"
+	0x61 "712"
+	0x62 "723"
+	0x63 "731"
+	0x64 "732"
+	0x65 "734"
+	0x66 "743"
+	0x67 "754"
+endenum
+
+enum SelectedDTMFe
+	0 "1"
+	1 "2"
+	2 "3"
+	3 "4"
+	4 "5"
+	5 "6"
+	6 "7"
+	7 "8"
+	8 "9"
+endenum
+
+enum OffsetDir_e
+	0 "smplx"
+	2 "-"
+	3 "+"
+	4 "split"
+endenum
+
+enum OnOff_e
+	0 "off"
+	1 "on"
+endenum
+
+enum ToneMode_e
+	0 "None"
+	1 "Tone"
+	2 "Tone squelch"
+	3 "Rev CTCSS"
+	4 "DCS"
+	5 "D Code"
+	6 "T DCS"
+	7 "D Tone"
+endenum
+
+enum Step_e
+	0 "Auto"
+	1 "5kHz"
+	2 "10kHz"
+	3 "12.5kHz"
+	4 "15kHz"
+	5 "20kHz"
+	6 "25kHz"
+	7 "100kHz"
+endenum
+
+enum XmitPower_e
+	0 "Low"
+	1 "Med"
+	2 "High"
+endenum
+
+enum OffsetFreq_e
+	0x02 "100kHz"
+	0x0a "500kHz"
+	0x0c "600kHz"
+	0x14 "1.00MHz"
+	0x20 "1.60MHz"
+	0x3c "3.00MHz"
+	0x64 "5.00MHz"
+	0x98 "7.60MHz"
+endenum
+
+#Built in types
+# BCDFreq
+# IntFreq
+# enable - enables an entry
+# CheckBox
+
+tab Config
+#	Name			Offset   Bit	Bit	type		enable
+#                                        Offset	Size
+	"Selected DTMF"		0x001a	 0 	4	SelectedDTMFe
 end tab
+
+memories VFOs 5
+#	Name			Offset  Bit	Bit	Span	type
+#                                       Offset	Size
+	"Pager Enable"		0x48	6	1	16	OnOff_e
+	"TX Narrow"		0x48	5	1	16	OnOff_e
+	"Offset Direction"	0x48	0	3	16	OffsetDir_e
+	"Rx Frequency"		0x49	0	24	16	BCDFreq
+	"Tone Mode"		0x4c	0	3	16	ToneMode_e
+	"Step"			0x4c	4	3	16	Step_e
+	"Clock Shift"		0x4c	7	1	16	OnOff_e
+	"Tx Frequency"		0x4d	0	24	16	BCDFreq
+	"CTCSS Tone"		0x50	0	6	16	CTCSS_e
+	"Transmit Power"	0x50	6	2	16	XmitPower_e
+	"DCS Code"		0x51	0	8	16	DCSCode_e
+	"Offset Frequency"	0x54	0	8	16	OffsetFreq_e
+endmemories
+
+enum LabelOnOff_e
+	0x0000	"off"
+	0x8080	"on"
+endenum
+
+enum Skip_e
+	0x0 "off"
+	0x1 "Skip"
+	0x2 "P Scan"
+endenum
+
+memories Memories 1000
+#	Name			Offset  Bit	Bit	Span	type
+#                                       Offset	Size    Bits
+	"Enable"		0x248	7	1	128	enable
+	"Label Enable"		0x470e	0	16	64	LabelOnOff_e
+	"Label"			0x4708	0	48	64	YaesuString	
+	"Pager Enable"		0x248	6	1	128	OnOff_e
+	"TX Narrow"		0x248	5	1	128	OnOff_e
+	"Offset Direction"	0x248	0	3	128	OffsetDir_e
+	"Rx Frequency"		0x249	0	24	128	BCDFreq
+	"Tone Mode"		0x24c	0	4	128	ToneMode_e
+	"Step"			0x24c	4	4	128	Step_e
+	"Clock Shift"		0x24c	7	1	128	OnOff_e
+	"Tx Frequency"		0x24d	0	24	128	BCDFreq
+	"CTCSS Tone"		0x250	0	6	128	CTCSS_e
+	"Transmit Power"	0x250	6	2	128	XmitPower_e
+	"DCS Code"		0x251	0	8	128	DCSCode_e
+	"Offset Frequency"	0x254	0	8	128	OffsetFrequency_e
+	"Skip"			0x6ec8	0	2	2	Skip_e
+	"Bank 1"		0x69c8	0	1	1	CheckBox
+	"Bank 2"		0x6a48	0	1	1	CheckBox
+	"Bank 3"		0x6ac8	0	1	1	CheckBox
+	"Bank 4"		0x6b48	0	1	1	CheckBox
+	"Bank 5"		0x6bc8	0	1	1	CheckBox
+	"Bank 6"		0x6c48	0	1	1	CheckBox
+	"Bank 7"		0x6cc8	0	1	1	CheckBox
+	"Bank 8"		0x7d48	0	1	1	CheckBox
+	"Bank 9"		0x6dc8	0	1	1	CheckBox
+	"Bank 10		0x6e48	0	1	1	CheckBox
+endmemories
