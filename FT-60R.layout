@@ -9,6 +9,26 @@ Frequencies take up 3 bytes and are in the following format:
 		instance, 437.795 the 4 bytes would be:
 		  80 84 37 79.
 
+Tone mode
+	0 - None
+	1 - Tone
+	2 - Tone squelch
+	3 - Rev CTCSS
+	4 - DCS
+	5 - D Code
+	6 - T DCS
+	7 - D Tone
+
+Step
+	0 - 5kHz
+	1 - 10kHz
+	2 - 12.5kHz
+	3 - 15kHz
+	4 - 20kHz
+	5 - 25kHz
+	6 - 50khz
+	7 - 100kHz
+
 Memories take up 16 bytes in the format:
 	    byte 0 bits 0-2 - offset direction:
 		              0 - simplex
@@ -21,24 +41,8 @@ Memories take up 16 bytes in the format:
 		   bit 6 - Pager Enable
 		   bit 7 - 1 to enable and 0 to disable a channel
 	    byte 1 - byte 3 - Receive frequency
-	    byte 4 bits 0-2 - Tone mode
-			0 - None
-			1 - Tone
-			2 - Tone squelch
-			3 - Rev CTCSS
-			4 - DCS
-			5 - D Code
-			6 - T DCS
-			7 - D Tone
-		   bits 4-6 - Step
-			0 - 5kHz
-			1 - 10kHz
-			2 - 12.5kHz
-			3 - 15kHz
-			4 - 20kHz
-			5 - 25kHz
-			6 - 50khz
-			7 - 100kHz
+	    byte 4 bits 0-2 - Tone mode (see table)
+		   bits 4-6 - Step (see table)
 		   bit 7 - Clock shift
 	    byte 5 - byte 7 - transmit frequency
 	    byte 8 bits 0-5 - CTCSS tone
@@ -133,8 +137,8 @@ cycled on the radio, there appears to be no memory for it.
 
 0008    bit 5 - Wide/Narrow (also see byte 12) - 0=Wide, 1=Narrow
 
-000c	bits 0-2 - Current Tone Mode (Menu 48) - See byte 4 of memory data
-	bits 4-6 - Step - see byte 4 of memory, and byte 38
+000c	bits 0-2 - Current Tone Mode (Menu 48) - see table
+	bits 4-6 - Step - see table, and byte 38
 
 0010	bits 0-5 - CTCSS Tone (menu 50)
 	bits 6-7 - Transmit power
@@ -204,7 +208,8 @@ cycled on the radio, there appears to be no memory for it.
 	     10min, 1b=15min, 1c=20min, 1d=30min, 1e=40min, 1f=50min,
 	     Value 10 appears to not be used.
 	   
-0038	bit 0 - ?
+0038	bit 0 - Auto step mode - this also sets step in byte 0c
+		to zero.
 	bit 3 - ARTS interval 0=25sec, 1=15sec
 	bit 6 - Weather alert (menu 56)
 
