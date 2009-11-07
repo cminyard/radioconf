@@ -29,6 +29,54 @@ Step
 	6 - 50khz
 	7 - 100kHz
 
+Shift (Offset frequency) "value * 50kHz", displayed as n.nnMHz.  Values
+	from ADMS are as follows, but all values up to 99.9MHz are
+	supported by the radio.
+		      02 - 100kHz
+		      0a - 500kHz
+		      0c - 600kHz
+		      14 - 1.00MHz
+		      20 - 1.60MHz
+		      3c - 3.00MHz
+		      64 - 5.00MHz
+		      98 - 7.60MHz
+
+CTCSS Tone
+	00 -  67.0  01 -  69.3  02 -  71.9  03 -  74.4
+	04 -  77.0  05 -  79.7  06 -  82.5  07 -  85.4
+	08 -  88.5  09 -  91.5  0a -  94.8  0b -  97.4
+	0c - 100.0  0d - 103.5  0e - 107.2  0f - 110.9
+	10 - 114.8  11 - 188.8  12 - 123.0  13 - 127.3
+	14 - 131.8  15 - 136.5  16 - 141.3  17 - 146.2
+	18 - 151.4  19 - 156.7  1a - 159.8  1b - 162.2
+	1c - 165.5  1d - 167.9  1e - 171.3  1f - 173.8
+	20 - 177.3  21 - 179.9  22 - 183.5  23 - 186.2
+	24 - 189.9  25 - 192.8  26 - 196.6  27 - 199.5
+	28 - 203.5  29 - 206.5  2a - 210.7  2b - 218.1
+	2c - 225.7  2d - 229.1  2e - 233.6  2f - 241.8
+	30 - 250.3  31 - 254.1
+
+DCS code
+	00-023 01-025 02-026 03-031 04-032 05-036 06-043 07-047
+	08-051 09-053 0a-054 0b-065 0c-071 0d-072 0e-073 0f-074
+	10-114 11-115 12-116 13-122 14-125 15-131 16-132 17-134
+	18-143 19-145 1a-152 1b-155 1c-156 1d-162 1e-165 1f-172
+	20-174 21-205 22-212 23-223 24-225 25-226 26-243 27-244
+	28-245 29-246 2a-251 2b-252 2c-255 2d-261 2e-263 2f-265
+	30-266 31-271 32-274 33-306 34-311 35-315 36-325 37-331
+	38-332 39-343 3a-346 3b-351 3c-356 3d-364 3e-365 3f-371
+	40-411 41-412 42-413 43-423 44-431 45-432 46-445 47-446
+	48-452 49-454 4a-455 4b-462 4c-464 4d-465 4e-466 4f-503
+	50-506 51-516 52-523 53-526 54-532 55-546 56-565 57-606
+	58-612 59-624 5a-627 5b-631 5c-632 5d-654 5e-662 5f-664
+	60-703 61-712 62-723 63-731 64-732 65-734 66-743 67-754
+
+Transmit power
+	0 - High
+	1 - Med
+	2 - Low
+
+
 Memories take up 16 bytes in the format:
 	    byte 0 bits 0-2 - offset direction:
 		              0 - simplex
@@ -38,7 +86,7 @@ Memories take up 16 bytes in the format:
 			      4 - split (transmit frequency valid)
 		   bits 3-4 - ?
 		   bit 5 - TX Narrow
-		   bit 6 - Pager Enable
+		   bit 6 - Pager Enable (menu 29)
 		   bit 7 - 1 to enable and 0 to disable a channel
 	    byte 1 - byte 3 - Receive frequency
 	    byte 4 bits 0-2 - Tone mode (see table)
@@ -46,49 +94,11 @@ Memories take up 16 bytes in the format:
 		   bit 7 - Clock shift
 	    byte 5 - byte 7 - transmit frequency
 	    byte 8 bits 0-5 - CTCSS tone
-		      00 -  67.0  01 -  69.3  02 -  71.9  03 -  74.4
-		      04 -  77.0  05 -  79.7  06 -  82.5  07 -  85.4
-	    	      08 -  88.5  09 -  91.5  0a -  94.8  0b -  97.4
-		      0c - 100.0  0d - 103.5  0e - 107.2  0f - 110.9
-		      10 - 114.8  11 - 188.8  12 - 123.0  13 - 127.3
-		      14 - 131.8  15 - 136.5  16 - 141.3  17 - 146.2
-		      18 - 151.4  19 - 156.7  1a - 159.8  1b - 162.2
-		      1c - 165.5  1d - 167.9  1e - 171.3  1f - 173.8
-		      20 - 177.3  21 - 179.9  22 - 183.5  23 - 186.2
-		      24 - 189.9  25 - 192.8  26 - 196.6  27 - 199.5
-		      28 - 203.5  29 - 206.5  2a - 210.7  2b - 218.1
-		      2c - 225.7  2d - 229.1  2e - 233.6  2f - 241.8
-		      30 - 250.3  31 - 254.1
 	           bits 6-7 - Transmit power
-		      0 - High
-		      1 - Med
-		      2 - Low
 	    byte 9 - DCS code
-		      00-023 01-025 02-026 03-031 04-032 05-036 06-043 07-047
-		      08-051 09-053 0a-054 0b-065 0c-071 0d-072 0e-073 0f-074
-		      10-114 11-115 12-116 13-122 14-125 15-131 16-132 17-134
-		      18-143 19-145 1a-152 1b-155 1c-156 1d-162 1e-165 1f-172
-		      20-174 21-205 22-212 23-223 24-225 25-226 26-243 27-244
-		      28-245 29-246 2a-251 2b-252 2c-255 2d-261 2e-263 2f-265
-		      30-266 31-271 32-274 33-306 34-311 35-315 36-325 37-331
-		      38-332 39-343 3a-346 3b-351 3c-356 3d-364 3e-365 3f-371
-		      40-411 41-412 42-413 43-423 44-431 45-432 46-445 47-446
-		      48-452 49-454 4a-455 4b-462 4c-464 4d-465 4e-466 4f-503
-		      50-506 51-516 52-523 53-526 54-532 55-546 56-565 57-606
-		      58-612 59-624 5a-627 5b-631 5c-632 5d-654 5e-662 5f-664
-		      60-703 61-712 62-723 63-731 64-732 65-734 66-743 67-754
 	    byte 10 - unknown, always 0f
-	    byte 11 - unknown, always 00
-	    byte 12 - Shift (Offset frequency) (only valid with minus or plus offset)
-		"value * 50kHz", displayed as n.nnMHz.  Values from ADMS are:
-		      02 - 100kHz
-		      0a - 500kHz
-		      0c - 600kHz
-		      14 - 1.00MHz
-		      20 - 1.60MHz
-		      3c - 3.00MHz
-		      64 - 5.00MHz
-		      98 - 7.60MHz
+	    byte 11-12 - Shift (Offset frequency), only valid with minus
+		 or plus offset)
 	    byte 13-15 - unknown, always 00
 
 Display characters are in the following format:
@@ -135,71 +145,91 @@ cycled on the radio, there appears to be no memory for it.
 	    This is an 8-byte record that is sent first.
 	    The rest of the records are 64-bits.
 
-0008    bit 5 - Wide/Narrow (also see byte 12) - 0=Wide, 1=Narrow
+0008	bits 0-1 - Repeater shift direction (menu 38)
+		0=off, 1=-, 2=+
+	bit 4 - AM Receive mode (menu 40) (see also byte 38 bit 1)
+	bit 5 - Wide/Narrow (also see byte 12) (menu 55): 0=Wide, 1=Narrow
+
+0009-000b - Current frequency
 
 000c	bits 0-2 - Current Tone Mode (Menu 48) - see table
-	bits 4-6 - Step - see table, and byte 38
+	bits 4-6 - Step (menu 49) - see table, and byte 38
+	bit 7 - Clock shift (menu 9)
 
 0010	bits 0-5 - CTCSS Tone (menu 50)
-	bits 6-7 - Transmit power
-	      0 - High
-	      1 - Med
-	      2 - Low
+	bits 6-7 - Transmit power (f-3)
 
-0012    bit 7 - Wide/Narrow (also see byte 8) - 0=Wide, 1=Narrow
+0011	DCS code (menu 13)
+
+0012    bit 7 - Wide/Narrow (also see byte 8) (menu 55): 0=Wide, 1=Narrow
+
+0013-0014 - Shift (Offset Frequency) (menu 45)
 
 0019	bit 1 - V/M mode (see also bit 3b) - 0=memory, 1=VFO
 
 001a	bits 0-3 - Selected DTMF, 0=1, 1=2, 2=3, 3=4, 4=5, 5=6, 6=7, 7=8, 8=9
 
-001c-001d	Current memory selected
+001c-001d Current memory selected
+
+001e	Current band: 0=108.000-200.000 MHz, 1=200.000-300.000,
+		2=300.000-400.000 MHz, 3=400.000-520.000 MHz,
+		4=700.000-999.990 MHz
 
 001f	Current menu item
 
-0024    bits 0-4 - Auto power off, off = v * (.5 hours) up to 12 hours.
+0024    bits 0-4 - Auto power off (menu 1):
+		off = v * (.5 hours) up to 12 hours.
 
 0025	Timeout Timer (menu 51): 0=Off, 1=1min, 2=2min, ..., 30=30min
 
-0026	P1 key setting: 0=AutoPowerOff, 2=ARTSBeep, 3=ATSINT, 13=EdgeBeep, 24=REV/HM, 2e=Skip
+0026	P1 key setting: 0=AutoPowerOff, 2=ARTSBeep, 3=ATSINT,
+		13=EdgeBeep, 24=REV/HM, 2e=Skip.  Note that this is
+	set by setting the desired menu item on the display and holding
+	down the "7" or "8" key to assign.  Some menu items cannot be
+	assigned, and more than the above list can be assigned.  The
+	number corresponds directly to the menu item number.
 
 0027	P2 key setting: see byte 0026 
 
-0028	bits 0-4 -   RF Squelch: 0=off, 1=S1, 2=S2, .., 6=S6, 7=S8, 8=S-Full
+0028	bits 0-4 - RF Squelch (menu 37): 0=off, 1=S1, 2=S2, .., 6=S6,
+	     7=S8, 8=S-Full
 	     Careful on above numbers, S7 is missing
 
 0029	bits 0-3 Internet DTMF Digit: 0=Code0, 1=Code1, ..., 9=Code9
 
 002a	bits 0-3 - Internet DTMF Memory: 0=D1, 1=D2, ..., 8=D9
 
-002b	bits 0-2 - Lock type: 1=Key, 2=Dial, 3=Key+Dial, 4=PTT, 5=PTT+Key,
-	     6=PTT+Dial, 7=All
+002b	bits 0-2 - Lock type (menu 25): 1=Key, 2=Dial, 3=Key+Dial,
+		4=PTT, 5=PTT+Key, 6=PTT+Dial, 7=All
 
-002c	bits 0-2 - DTMF delay: 0=50ms, 1=100ms 2=250ms, 3=450ms, 4=750ms,
-	     5=1sec
+002c	bits 0-2 - DTMF delay (menu 15): 0=50ms, 1=100ms 2=250ms,
+		3=450ms, 4=750ms, 5=1sec
 
-002d	bit 0 - DTMF Speed - 0=50ms, 1=100ms
+002d	bit 0 - DTMF Speed (menu 16): 0=50ms, 1=100ms
 
-002e	bits 0-1 - ARTS mode 0=off, 1=inrange, 2=always
+002e	bits 0-1 - ARTS beep (menu 2): 0=off, 1=inrange, 2=always
 
-002f	bit 0-1 - Lamp Mode: 0=Key, 1=5second, 2-Toggle
+002f	bit 0-1 - Lamp Mode (menu 24): 0=Key, 1=5second, 2-Toggle
 
-0030    bits 0-2 - Bell, values are: 0=off, 1=1 time, 2=3 times, 3=5 times,
-	     4=8 times, 5=continuous
+0030    bits 0-2 - Bell (menu 7), values are: 0=off, 1=1 time, 2=3 times,
+		3=5 times, 4=8 times, 5=continuous
 
-0031	bits 0-2 - RX Save: 0=Off, 1=200ms, 2=300ms, 3=500ms, 4=1sec, 5=2sec
+0031	bits 0-2 - RX Save (menu 41): 0=Off, 1=200ms, 2=300ms, 3=500ms,
+		4=1sec, 5=2sec
 
-0032	Receive code 1: Same values as CTCSS tones
+0032	Receive pager code 1 (menu 31): Same values as CTCSS tones
 
-0033	Transmit code 1: Same values as CTCSS tones
+0033	Transmit pager code 1 (menu 32): Same values as CTCSS tones
 
-0034	Receive code 2: Same values as CTCSS tones
+0034	Receive pager code 2 (menu 31): Same values as CTCSS tones
 
-0035	Transmit code 2: Same values as CTCSS tones
+0035	Transmit pager code 2 (menu 32): Same values as CTCSS tones
 
-0036	bits 0-2 - Emergency Signal.  Values are: 0=off, 1=beep, 2=lamp,
-	     3=beep+lamp, 4=CWT, 5=CWT+beep, 6=CWT+lamp, 7=all
+0036	bits 0-2 - Emergency Signal (menu 20).  Values are:
+		0=off, 1=beep, 2=lamp, 3=beep+lamp, 4=CWT, 5=CWT+beep,
+		6=CWT+lamp, 7=all
 
-0037    bits 0-4 - Emergeny Automatic ID, values are:
+0037    bits 0-4 - Emergeny Automatic ID (menu 18), values are:
 	     Values 00-0f are for interval mode
 	     00=off, 01=1min, 2min, 3min, 4min, 5min, 6min, 7min, 8min, 9min,
 	     10min, 0b=15min, 0c=20min, 0d=30min, 0e=40min, 0f=50min,
@@ -208,41 +238,46 @@ cycled on the radio, there appears to be no memory for it.
 	     10min, 1b=15min, 1c=20min, 1d=30min, 1e=40min, 1f=50min,
 	     Value 10 appears to not be used.
 	   
-0038	bit 0 - Auto step mode - this also sets step in byte 0c
+0038	bit 0 - Auto step mode (menu 49) - this also sets step in byte 0c
 		to zero.
-	bit 3 - ARTS interval 0=25sec, 1=15sec
+	bit 1 - Auto receive mode (menu 40) (see also byte 8 bit 4)  Note that
+		if both byte 8 bit 4 and this bit are zero, then the
+		receiver is in FM mode, so the two bits are really
+		hooked together for menu item 40.
+	bit 3 - ARTS polling interval (menu 3): 0=25sec, 1=15sec
 	bit 6 - Weather alert (menu 56)
 
-0039	bit 0 - Smart Search: 0=Single, 1=Continuous
-	bits 1-2 - DCS N/R, values are: 0=T/RX N, 1=RX R, 2=TX R, 3=T/RX R
+0039	bit 0 - Smart Search (menu 42): 0=Single, 1=Continuous
+	bits 1-2 - DCS N/R, values are (menu 14): 0=T/RX N, 1=RX R,
+		2=TX R, 3=T/RX R
 	bit 3 - VFO band edge limit (Menu 54)
-	bit 4 - Auto repeater shift
+	bit 4 - Auto repeater shift (menu 4)
 	bit 5 - Memory only
-	bit 7 - ARTS CW ID enable
+	bit 7 - ARTS CW ID enable (menu 10)
 
 003a	bit 0 - Lock
-	bits 1-2  - Internet mode: 0=Off, 2=Code, 3=Memory
-	bit 3 - Key beep
-	bit 4 - Band edge beep
-	bit 5 - Scan beep (note: on the radio this can only be set if key beep
-		is also set)
+	bits 1-2  - Internet mode: (menu 21) 0=Off, 2=Code, 3=Memory
+	bit 3 - Key beep (menu 6) - See also bit 5
+	bit 4 - Band edge beep (menu 19)
+	bit 5 - Scan beep (menu 6) (note: on the radio this can only be set
+		if key beep is also set)
 	bit 6 - Split tone (menu 47)
-	bit 7 - Priority revert
+	bit 7 - Priority revert (menu 39)
 
-003b	bit 4 - V/M (see also byte 19) - 0=VFO, 1=memory
+003b	bit 3 - Scan Mode (menu 43) - 0=Mem, 1=Only
+	bit 4 - V/M (see also byte 19) - 0=VFO, 1=memory
 
-003c	bit 0 - Pager Answer Back
+003c	bit 0 - Pager Answer Back (menu 30)
 	bit 1 - Tx save (menu 53)
 	bits 2-3 - Scan resume, values are 0=time, 1=hold, 2=busy
-	bit 4 - Moni/TCall Key: 0=Moni, 1=TCall
-	bit 5 - HM/REV: 0=Reverse, 1=Home
-	bits 6-7 - Scan resume - 0=Time, 1=Busy, 2=Hold
+	bit 4 - Moni/TCall Key (menu 26): 0=Moni, 1=TCall
+	bit 5 - HM/REV (menu 36): 0=Reverse, 1=Home
 
-003d	bit 1 - Password Enable
+003d	bit 1 - Password Enable (menu 33)
 	bit 2 - Tx LED (menu 52)
-	bit 4 - Busy LED
-	bit 5 - Busy channel lockout
-	bit 6 - Scan lamp
+	bit 4 - Busy LED (menu 8)
+	bit 5 - Busy channel lockout (menu 5)
+	bit 6 - Scan lamp (menu 44)
 
 003e	bits 6-7 - Frequencies, values are: 0=All, 01=VHFOnly, 2=UHFOnly
 
@@ -250,16 +285,16 @@ cycled on the radio, there appears to be no memory for it.
 	    don't make sense.  The occur in the order: VHF, 250, 350, UHF
 	    800.
 
-00c8-0157 - 9 sets of DTMF tones, 16 values in each set. where the value is
-	  the DTMF digit (0=0, 1=1, etc).  First set is set 1, 2nd set is set
-	  2, etc.  Selected by byte 001a.
+00c8-0157 - 9 sets of DTMF tones (menu 17), 16 values in each set,
+	  where the value is the DTMF digit (0=0, 1=1, etc).  First set is
+	  set 1, 2nd set is set 2, etc.  Selected by byte 001a.
 
 01c0-0217 - Home frequencies for the various bands, same as VFO frequencies,
 	    in memory format.
 
-0218-021d - ARTS CW ID (alpha format)
+0218-021d - ARTS CW ID (menu 11) (alpha format)
 
-021e-0221  Password: 4 digits, 0-9A-F
+021e-0221  Password (menu 34): 4 digits, 0-9A-F
 
 
 0248-40c7 - Memory data, stored in 16-byte chunks.  First is memory 1, second
@@ -271,10 +306,10 @@ cycled on the radio, there appears to be no memory for it.
 4708-663f - Character strings for the 1000 memories, each 8 bytes.
 	    The first 6 bytes is the characters, the last 2 bytes
 	    has an unknown format, but appears to be 00 00 if the
-	    data is not valid and 00 80 if the data is valid but not.
-	    enabled and 80 80 if the data is valid and enabled.  I'd guess
-	    that byte 6 bit 7 is the enable bit and byte 7 bit 7 is the
-	    "data valid" bit.
+	    data is not valid and 00 80 if the data is valid but the.
+	    frequency is displayed and 80 80 if the data is valid and 
+	    the name is displayed.  So byte 6 bit 7 is the alpha/freq bit
+	    and byte 7 bit 7 is the "data valid" bit.
 	    Memory 000 is at 6638.
 
 69c8-6ec8 - Bank settings.  Each of these is 128 bytes holding 1000 bit
