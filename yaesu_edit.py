@@ -51,7 +51,7 @@ def find_radio(data):
                     n = int(ns, 16)
                     if (n > 255):
                         raise TypeError("Number too large")
-                    if (ord(data[i]) != n):
+                    if (data[i] != n):
                         found = False
                         break
                     i += 1
@@ -130,10 +130,30 @@ class RadioFileData:
     # Throws IOError
     def __init__(self, filename):
         self.filename = filename
-        f = open(filename, "rb");
-        self.data = f.read();
+        f = open(filename, "rb")
+        strdata = f.read();
         f.close()
+        self.data = []
+        for c in strdata:
+            self.data.append(ord(c))
         self.changed = False
+        pass
+
+    def write(self, filename=None):
+        if (filename == None):
+            filename = self.filename
+            pass
+        f = open(filename, "wb")
+        try:
+            outs = []
+            for c in self.data:
+                outs.append(chr(c))
+                pass
+            s = "".join(outs)
+            f.write(s)
+        finally:
+            f.close()
+            pass
         pass
 
     # The get and set routine throw IndexError if out of range.
@@ -148,12 +168,12 @@ class RadioFileData:
             numbits = a[2]
             v <<= numbits
             
-            x = ord(self.data[byte_off]) >> bit_off
+            x = self.data[byte_off] >> bit_off
             bits = 8 - bit_off
             shift = bit_off
             while (bits < numbits):
                 byte_off += 1
-                x |= ord(self.data[byte_off]) << shift
+                x |= self.data[byte_off] << shift
                 shift += 8
                 bits += 8
                 pass
@@ -175,15 +195,15 @@ class RadioFileData:
         v = 0
         if (numbytes == 0):
             return 0
-        add5 = ord(self.data[byte_off]) >> 4
-        v = ord(self.data[byte_off]) & 0xf
+        add5 = self.data[byte_off] >> 4
+        v = self.data[byte_off] & 0xf
         byte_off += 1
         numbytes -= 1
         while (numbytes > 0):
             v *= 10
-            v += ord(self.data[byte_off]) >> 4
+            v += self.data[byte_off] >> 4
             v *= 10
-            v += ord(self.data[byte_off]) & 0xf
+            v += self.data[byte_off] & 0xf
             numbytes -= 0
             byte_off += 0
             pass
@@ -206,7 +226,10 @@ class RadioFileData:
         byte_off = addr[0][0] + (offset / 8)
         numbytes = addr[0][2]
 
-        s = self.data[byte_off:byte_off + numbytes]
+        s = []
+        for i in (0, numbyte):
+            s.append(chr(self.data[byte_off+i]))
+            pass
         for i in range(0, len(s)):
             if (s[i] not in ys_chars):
                 if (s[i].islower()):
@@ -215,6 +238,7 @@ class RadioFileData:
                 s[i] = ' '
                 pass
             pass
+        s = "".join(s)
         return s
     
     def get_yaesu_string(self, addr, offset):
@@ -232,15 +256,16 @@ class RadioFileData:
 
         s = self.data[byte_off:byte_off + numbytes]
         for i in range(0, len(s)):
-            if (ord(s[i]) > 0x3f):
+            if (s[i] > 0x3f):
                 s[i] = ' '
             else:
-                s[i] = ys_chars[ord(s[i])]
+                s[i] = ys_chars[s[i]]
                 pass
             pass
+        s = "".join(s)
         return s
     
-    def set_int(self, vt, addr, offset):
+    def set_bits(self, vt, addr, offset):
         self.changed = True
         for a in addr.entries:
             byte_off = a[0]
@@ -252,7 +277,7 @@ class RadioFileData:
             v = vt & ~(0xffffffff << numbits)
             vt >>= numbits
         
-            x = ord(self.data[byte_off])
+            x = self.data[byte_off]
             if ((bit_off + numbits) <= 8):
                 # Special case, all in one byte
                 mask = (0xff >> (8 - numbits)) << bit_off
@@ -262,21 +287,21 @@ class RadioFileData:
                 return
             mask = 0xff << bit_off
             x &= ~mask
-            self.data[byte_off] = chr((v << byte_off) & mask)
+            self.data[byte_off] = (v << byte_off) & mask
             byte_off += 1
             v >>= bit_off
             numbits -= 8 - bit_off
             while (numbits >= 8):
-                self.data[byte_off] = chr(v & 0xff)
+                self.data[byte_off] = v & 0xff
                 byte_off += 1
                 v >>= 8
                 numbits -= 8
                 pass
             mask = 0xff << numbits
-            x = ord(self.data[byte_off])
+            x = self.data[byte_off]
             x &= mask
             x |= v & ~mask;
-            self.data[byte_off] = chr(x)
+            self.data[byte_off] = x
             pass
         pass
 
@@ -298,15 +323,15 @@ class RadioFileData:
         v /= 10
         byte_off += numbytes - 1
         while (numbytes > 0):
-            self.data[byte_off] = chr((v % 10) + (((v / 10) % 10) * 10))
+            self.data[byte_off] = (v % 10) + (((v / 10) % 10) * 10)
             v /= 100
             numbytes -= 1
             byte_off -= 1
             pass
         if (add5):
-            x = ord(self.data[byte_off + 1])
+            x = self.data[byte_off + 1]
             x |= 0x80
-            self.data[byte_off + 1] = chr(x)
+            self.data[byte_off + 1] = x
             pass
         pass
 
@@ -333,7 +358,8 @@ class RadioFileData:
             if c not in ys_chars:
                 c = " "
                 pass
-            self.data[byte_off] = c
+            self.data[byte_off] = ord(c)
+            byte_off += 1
             pass
         pass
     
@@ -354,17 +380,18 @@ class RadioFileData:
         inlen = len(v)
         for i in range(0, numbytes):
             if (i >= inlen):
-                c = " "
+                p = 24
             else:
                 c = v[i]
+                p = ys_chars.index(c)
+                if (p < 0):
+                    p = 24
+                else:
+                    p = ys_chars[p]
+                    pass
                 pass
-            p = ys_chars.index(c)
-            if (p < 0):
-                p = chr(24)
-            else:
-                p = ys_chars[p]
-                pass
-            self.data[byte_off] = c
+            self.data[byte_off] = p
+            byte_off += 1
             pass
         pass
     
@@ -374,6 +401,40 @@ class RadioFileData:
 class BuiltIn:
     def __init__(self, name):
         self.name = name;
+        pass
+
+    def getWidget(self, parent):
+        w = Tix.Label(parent, text="value")
+        return w
+
+    pass
+
+class MenuAndButton(Tix.Menubutton):
+    def __init__(self, parent, address, data, offset):
+        Tix.Menubutton.__init__(self, parent)
+        self.address = address
+        self.data = data
+        self.offset = offset
+        self.menu = Tix.Menu(self)
+        self['menu'] = self.menu
+        pass
+
+    def add_command(self, name, handler):
+        self.menu.add_command(label=name, command=handler)
+        pass
+
+    def set_label(self, label):
+        self["text"] = label
+    pass
+
+class Handler:
+    def __init__(self, handler, data):
+        self.handler = handler
+        self.data = data
+        pass
+
+    def set(self):
+        self.handler(self.data)
         pass
     pass
 
@@ -393,6 +454,22 @@ class Enum:
         self.entries.append((c.toNum(v[0]), v[1]))
         pass
 
+    def getWidget(self, parent, address, data, offset):
+        self.button = MenuAndButton(parent, address, data, offset)
+        v = data.get_bits(address, offset)
+        for e in self.entries:
+            h = Handler(self.set, e)
+            self.button.add_command(e[1], h.set)
+            if (v == e[0]):
+                self.button.set_label(e[1])
+                pass
+            pass
+        return self.button
+
+    def set(self, e):
+        self.button.set_label(e[1])
+        self.button.data.set_bits(e[0], self.button.address,
+                                  self.button.offset)
     pass
 
 
@@ -414,8 +491,34 @@ class List:
                              c.findType(v[3])))
         pass
 
+    def setup(self, top):
+        self.list = Tix.ScrolledHList(top, scrollbar="auto",
+                                      options="hlist.header 1"
+                                      + " hlist.columns 2"
+                                      + " hlist.itemtype text"
+                                      + " hlist.selectForeground black"
+                                      + " hlist.selectBackground beige")
+        self.list.hlist.header_create(0, text="X1")
+        self.list.hlist.header_create(1, text="X2")
+        self.list.hlist.column_width(0, 100)
+        self.list.hlist.column_width(1, "")
+
+        self.list.pack(side=Tix.LEFT, fill=Tix.BOTH, expand=1)
+        pass
     pass
 
+class TabEntry:
+    def __init__(self, name, address, type, data):
+        self.name = name
+        self.address = address
+        self.type = type
+        self.data = data
+        pass
+
+    def getWidget(self, parent):
+        return self.type.getWidget(parent, self.address, self.data, 0)
+    
+    pass
 
 class Tab:
     def __init__(self, name):
@@ -430,22 +533,45 @@ class Tab:
         if (len(v) != 3):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for tab entry");
-        self.entries.append((v[0], Address(c, v[1]), c.findType(v[2])))
+        self.entries.append(TabEntry(v[0], Address(c, v[1]), c.findType(v[2]),
+                                     c.filedata))
         pass
 
+    def setup(self, top):
+        self.list = Tix.ScrolledHList(top, scrollbar="auto",
+                                      options="hlist.header 1"
+                                      + " hlist.columns 2"
+                                      + " hlist.itemtype text"
+                                      + " hlist.selectForeground black"
+                                      + " hlist.selectBackground beige")
+        self.list.hlist.header_create(0, text="Name")
+        self.list.hlist.header_create(1, text="Value")
+        self.list.hlist.column_width(0, "")
+        self.list.hlist.column_width(1, "")
+
+        i = 0
+        for e in self.entries:
+            e.key = i
+            self.list.hlist.add(i, text=e.name)
+            w = e.getWidget(self.list.hlist)
+            self.list.hlist.item_create(i, 1, itemtype=Tix.WINDOW, window=w)
+            pass
+
+        self.list.pack(side=Tix.LEFT, fill=Tix.BOTH, expand=1)
+
+        pass
     pass
 
 
 class RadioConfig:
-    def __init__(self, filename):
+    def __init__(self, filename, filedata):
         self.filename = filename
+        self.filedata = filedata
         self.curr = None
-        self.enums = []
-        self.lists = []
-        self.tabs = []
-        self.builtins = [ BuiltIn("BCDFreq"), BuiltIn("IntFreq"),
-                          BuiltIn("CheckBox"), BuiltIn("YaesuString"),
-                          BuiltIn("String") ]
+        self.toplevel = []
+        self.types = [ BuiltIn("BCDFreq"), BuiltIn("IntFreq"),
+                       BuiltIn("CheckBox"), BuiltIn("YaesuString"),
+                       BuiltIn("String") ]
         f = open(filename, "r")
         try:
             self.lineno = 0
@@ -528,7 +654,6 @@ class RadioConfig:
             i += 1
             pass
 
-        print str(v)
         if (instr):
             raise ParseException(self.filename, self.lineno,
                                  "End of line in string");
@@ -550,7 +675,6 @@ class RadioConfig:
                 if (len(s) < 2):
                     raise ParseException(self.filename, self.lineno,
                                          "List has no length")
-
                 length = self.toNum(s[2])
                 self.curr = List(s[1], length)
             elif (s[0] == "tab"):
@@ -567,28 +691,29 @@ class RadioConfig:
         pass
 
     def addEnum(self, e):
-        self.enums.append(e)
+        for i in self.types:
+            if (i.name == e.name):
+                raise ParseException(self.filename, self.lineno,
+                                     "Duplicate type: " + e.name)
+            pass
+        self.types.append(e)
         self.curr = None
         pass
 
     def findType(self, s):
-        for i in self.enums:
-            if (i.name == s):
-                return i
-            pass
-        for i in self.builtins:
+        for i in self.types:
             if (i.name == s):
                 return i
             pass
         raise ParseException(self.filename, self.lineno, "Unknown type: " + s)
     
     def addList(self, e):
-        self.lists.append(e)
+        self.toplevel.append(e)
         self.curr = None
         pass
 
     def addTab(self, e):
-        self.tabs.append(e)
+        self.toplevel.append(e)
         self.curr = None
         pass
 
@@ -608,15 +733,20 @@ class GUI(Tix.Frame):
 
     def openfile(self, filename):
         try:
-            fd = RadioFileData(filename)
-            radioname = find_radio(fd.data)
-            radio = RadioConfig(radiodir + "/" + radioname + ".rad")
+            self.fd = RadioFileData(filename)
+            self.radioname = find_radio(self.fd.data)
+            self.radio = RadioConfig(radiodir + "/" + self.radioname + ".rad",
+                                     self.fd)
         except Exception, e:
             exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
             traceback.print_exception(exceptionType, exceptionValue,
                                       exceptionTraceback,
                                       file=sys.stdout)
             print str(e)
+            return
+        for t in self.radio.toplevel:
+            t.tab = self.tabs.add(t.name.lower(), label=t.name)
+            t.setup(t.tab)
             pass
         pass
     
@@ -626,6 +756,10 @@ class GUI(Tix.Frame):
 
     def opencmd(self, event=None):
         print "Open!\n"
+        pass
+
+    def savecmd(self, event=None):
+        self.fd.write()
         pass
 
     def createWidgets(self):
@@ -639,11 +773,16 @@ class GUI(Tix.Frame):
         self.filemenu.add_command(label="Open", underline=1,
                                   accelerator="Ctrl+O",
                                   command = lambda self=self: self.opencmd() )
+        self.filemenu.add_command(label="Save", underline=1,
+                                  accelerator="Ctrl+S",
+                                  command = lambda self=self: self.savecmd() )
         self.filemenu.add_command(label="Exit", underline=1,
                                   accelerator="Ctrl+Q",
                                   command = lambda self=self: self.quitcmd() )
         self.top.bind_all("<Control-Q>", self.quitcmd)
         self.top.bind_all("<Control-q>", self.quitcmd)
+        self.top.bind_all("<Control-S>", self.savecmd)
+        self.top.bind_all("<Control-s>", self.savecmd)
         self.filebutton.pack(side=Tix.LEFT)
 
         self.editbutton = Tix.Menubutton(self.buttons, text="Edit",
@@ -656,22 +795,6 @@ class GUI(Tix.Frame):
 
         self.tabs = Tix.NoteBook(self);
         self.tabs.pack(side=Tix.TOP, fill=Tix.BOTH, expand=1)
-
-        self.page1 = self.tabs.add("page1", label="p1");
-        
-        self.QUIT = Tix.Button(self.page1)
-        self.QUIT["text"] = "QUIT"
-        self.QUIT["fg"]   = "red"
-        self.QUIT["command"] = lambda self=self: self.quitcmd()
-
-        self.QUIT.pack(side=Tix.LEFT)
-
-        self.page2 = self.tabs.add("page2", label="p2");
-        self.hi_there = Tix.Button(self.page2)
-        self.hi_there["text"] = "Hello",
-        self.hi_there["command"] = self.opencmd
-
-        self.hi_there.pack(side=Tix.LEFT)
 
         pass
 
