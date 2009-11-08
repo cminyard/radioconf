@@ -235,6 +235,7 @@ endenum
 tab Config
 #	Name			Location	type
 	"Selected DTMF"		(0x001a,0,4)	SelectedDTMFe
+	"Bank 1"		(0x69c8,0,1)	CheckBox
 endtab
 
 list VFOs 5

@@ -403,11 +403,48 @@ class BuiltIn:
         self.name = name;
         pass
 
-    def getWidget(self, parent):
+    def getWidget(self, parent, data, address, offset):
         w = Tix.Label(parent, text="value")
         return w
 
     pass
+
+class Handler:
+    def __init__(self, handler, data):
+        self.handler = handler
+        self.data = data
+        pass
+
+    def set(self):
+        self.handler(self.data)
+        pass
+    pass
+
+class BICheckBox(BuiltIn):
+    def __init__(self):
+        BuiltIn.__init__(self, "CheckBox")
+        pass
+
+    def getWidget(self, parent, data, address, offset):
+        v = data.get_bits(address, offset)
+        d = [data, address, offset, v]
+        h = Handler(self.set, d)
+        w = Tix.Checkbutton(parent, command=h.set)
+        if (v):
+            w.select()
+        else:
+            w.deselect()
+            pass
+        return w
+
+    def set(self, d):
+        if (d[3]):
+            d[3] = 0
+        else:
+            d[3] = 1
+            pass
+        d[0].set_bits(d[3], d[1], d[2])
+        pass
 
 class MenuAndButton(Tix.Menubutton):
     def __init__(self, parent, address, data, offset):
@@ -427,17 +464,6 @@ class MenuAndButton(Tix.Menubutton):
         self["text"] = label
     pass
 
-class Handler:
-    def __init__(self, handler, data):
-        self.handler = handler
-        self.data = data
-        pass
-
-    def set(self):
-        self.handler(self.data)
-        pass
-    pass
-
 class Enum:
     def __init__(self, name):
         self.name = name
@@ -454,7 +480,7 @@ class Enum:
         self.entries.append((c.toNum(v[0]), v[1]))
         pass
 
-    def getWidget(self, parent, address, data, offset):
+    def getWidget(self, parent, data, address, offset):
         self.button = MenuAndButton(parent, address, data, offset)
         v = data.get_bits(address, offset)
         for e in self.entries:
@@ -470,6 +496,8 @@ class Enum:
         self.button.set_label(e[1])
         self.button.data.set_bits(e[0], self.button.address,
                                   self.button.offset)
+        pass
+
     pass
 
 
@@ -516,7 +544,7 @@ class TabEntry:
         pass
 
     def getWidget(self, parent):
-        return self.type.getWidget(parent, self.address, self.data, 0)
+        return self.type.getWidget(parent, self.data, self.address, 0)
     
     pass
 
@@ -555,6 +583,7 @@ class Tab:
             self.list.hlist.add(i, text=e.name)
             w = e.getWidget(self.list.hlist)
             self.list.hlist.item_create(i, 1, itemtype=Tix.WINDOW, window=w)
+            i += 1
             pass
 
         self.list.pack(side=Tix.LEFT, fill=Tix.BOTH, expand=1)
@@ -570,7 +599,7 @@ class RadioConfig:
         self.curr = None
         self.toplevel = []
         self.types = [ BuiltIn("BCDFreq"), BuiltIn("IntFreq"),
-                       BuiltIn("CheckBox"), BuiltIn("YaesuString"),
+                       BICheckBox(), BuiltIn("YaesuString"),
                        BuiltIn("String") ]
         f = open(filename, "r")
         try:
