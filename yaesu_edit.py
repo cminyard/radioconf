@@ -92,30 +92,32 @@ class Address:
         l -= 1
         pos = 0
         start = 1
-        v = [0, 0, 0]
+        v = [0, 0, 0, 0]
         self.entries.append(v)
         while (i < l):
             if (s[i] == ','):
                 v[pos] = c.toNum(s[start:i])
                 start = i + 1
                 pos += 1
-                if (pos > 2):
+                if (pos > 3):
                     raise ParseException(c.filename, c.lineno,
                                          "Address has too many values"
                                          + " in a field");
                 pass
             elif (s[i] == ':'):
-                if (pos != 2):
+                if (pos < 2 or pos > 3):
                     raise ParseException(c.filename, c.lineno,
                                          "Address has too few values"
                                          + " in a field");
                 v[pos] = c.toNum(s[start:i])
                 start = i + 1
                 pos = 0
+                v = [0, 0, 0, 0]
+                self.entries.append(v)
                 pass
             i += 1
             pass
-        if (pos != 2):
+        if (pos < 2 or pos > 3):
             raise ParseException(c.filename, c.lineno,
                                  "Address has too few values"
                                  + " in a field");
@@ -140,13 +142,13 @@ class RadioFileData:
         if (filename == None):
             filename = self.filename
             pass
-        f = open(filename, "wb")
+        outs = []
+        for c in self.data:
+            outs.append(chr(c))
+            pass
+        s = "".join(outs)
         try:
-            outs = []
-            for c in self.data:
-                outs.append(chr(c))
-                pass
-            s = "".join(outs)
+            f = open(filename, "wb")
             f.write(s)
         finally:
             f.close()
@@ -155,11 +157,11 @@ class RadioFileData:
 
     # The get and set routine throw IndexError if out of range.
     
-    def get_bits(self, addr, offset):
+    def get_bits(self, addr, num):
         v = 0
         for a in addr.entries:
             byte_off = a[0]
-            bit_off = a[1] + offset
+            bit_off = a[1] + a[3] * num
             byte_off += bit_off / 8
             bit_off %= 8
             numbits = a[2]
@@ -178,17 +180,22 @@ class RadioFileData:
             pass
         return v
 
-    def set_bits(self, vt, addr, offset):
+    def set_bits(self, vt, addr, num):
         self.changed = True
+        bitsleft = 0
+        for a in addr.entries:
+            bitsleft += a[2]
+            pass
         for a in addr.entries:
             byte_off = a[0]
-            bit_off = a[1] + offset
+            bit_off = a[1] + a[3] * num
             byte_off += bit_off / 8
             bit_off %= 8
             numbits = a[2]
-            
-            v = vt & ~(0xffffffff << numbits)
-            vt >>= numbits
+            bitsleft -= numbits
+
+            v = vt >> bitsleft
+            v = v & ~(0xffffffff << numbits)
         
             x = self.data[byte_off]
             if ((bit_off + numbits) <= 8):
@@ -197,7 +204,7 @@ class RadioFileData:
                 x &= ~ mask
                 x |= (v << bit_off) & mask
                 self.data[byte_off] = x
-                return
+                continue
             mask = 0xff << bit_off
             x &= ~mask
             self.data[byte_off] = (v << byte_off) & mask
@@ -231,16 +238,16 @@ class RadioFileData:
         self.data[addr] = v
         pass
 
-    def get_string(self, addr, offset):
+    def get_string(self, addr, num):
         if (len(addr) != 1):
             raise DataException("String formats only support one"
                                 + " location field")
         if (addr[0][2] != 0):
             raise DataException("String formats must of a zero bit offset")
-        if ((offset % 8) != 0):
+        if ((addr[0][3] % 8) != 0):
             raise DataException("String formats must have a byte-multiple"
                                 + " offset")
-        byte_off = addr[0][0] + (offset / 8)
+        byte_off = addr[0][0] + (addr[0][3] * num / 8)
         numbytes = addr[0][2]
 
         s = []
@@ -258,7 +265,7 @@ class RadioFileData:
         s = "".join(s)
         return s
     
-    def set_string(self, v, addr, offset):
+    def set_string(self, v, addr, num):
         if (len(addr) != 1):
             raise DataException("String formats only support one"
                                 + " location field")
@@ -267,7 +274,7 @@ class RadioFileData:
         if ((offset % 8) != 0):
             raise DataException("String formats must have a byte-multiple"
                                 + " offset")
-        byte_off = addr[0][0] + (offset / 8)
+        byte_off = addr[0][0] + (addr[0][3] * num / 8)
         numbytes = addr[0][2]
 
         self.changed = True
@@ -302,11 +309,11 @@ class Handler:
         pass
 
     def set(self):
-        self.handler(self.data)
+        self.handler(self)
         pass
 
     def set_event(self, event):
-        return self.handler(self.data, event)
+        return self.handler(self, event)
 
     pass
 
@@ -315,11 +322,11 @@ class BuiltIn:
         self.name = name;
         pass
 
-    def getWidget(self, parent, data, addr, offset):
-        w = Tix.Label(parent, text="value")
+    def getWidget(self, parent, t, num):
+        w = Tix.Label(parent)
         return w
 
-    def checkAddrOk(self, c, addr, offset):
+    def checkAddrOk(self, c, addr):
         return True
 
     pass
@@ -329,11 +336,13 @@ class BICheckBox(BuiltIn):
         BuiltIn.__init__(self, "CheckBox")
         pass
 
-    def getWidget(self, parent, data, addr, offset):
-        v = data.get_bits(addr, offset)
-        d = [data, addr, offset, v]
-        h = Handler(self.set, d)
+    def getWidget(self, parent, t, num):
+        v = t.data.get_bits(t.addr, num)
+        h = Handler(self.set, t)
         w = Tix.Checkbutton(parent, command=h.set)
+        h.BIrownum = num
+        h.widget = w
+        h.v = v
         if (v):
             w.select()
         else:
@@ -341,13 +350,15 @@ class BICheckBox(BuiltIn):
             pass
         return w
 
-    def set(self, d):
-        if (d[3]):
-            d[3] = 0
+    def set(self, h):
+        w = h.widget
+        t = h.data
+        if (h.v):
+            h.v = 0
         else:
-            d[3] = 1
+            h.v = 1
             pass
-        d[0].set_bits(d[3], d[1], d[2])
+        t.data.set_bits(h.v, t.addr, h.BIrownum)
         pass
 
 # These are internal Yaesu string values for some radios.
@@ -358,7 +369,7 @@ class BIYaesuString(BuiltIn):
         BuiltIn.__init__(self, "YaesuString")
         pass
 
-    def checkAddrOk(self, c, addr, offset):
+    def checkAddrOk(self, c, addr):
         if (len(addr.entries) != 1):
             raise ParseException(c.filename, c.lineno,
                                  "Yaesu string formats only support one"
@@ -371,14 +382,14 @@ class BIYaesuString(BuiltIn):
             raise ParseException(c.filename, c.lineno,
                                  "Yaesu string formats must be a"
                                  + " byte-multiple size")
-        if ((offset % 8) != 0):
+        if ((addr.entries[0][3] % 8) != 0):
             raise ParseException(c.filename, c.lineno,
                                  "Yaesu string formats must have a"
                                  + " byte-multiple offset")
         return True
 
-    def get_yaesu_string(self, data, addr, offset):
-        byte_off = addr.entries[0][0] + (offset / 8)
+    def get_yaesu_string(self, data, addr, num):
+        byte_off = addr.entries[0][0] + (addr.entries[0][3] * num / 8)
         numbytes = addr.entries[0][2] / 8
 
         s = data.get_bytes(byte_off, numbytes)
@@ -392,8 +403,8 @@ class BIYaesuString(BuiltIn):
         s = "".join(s)
         return s
 
-    def set_yaesu_string(self, v, data, addr, offset):
-        byte_off = addr.entries[0][0] + (offset / 8)
+    def set_yaesu_string(self, v, data, addr, num):
+        byte_off = addr.entries[0][0] + (addr.entries[0][3] * num / 8)
         numbytes = addr.entries[0][2] / 8
 
         inlen = len(v)
@@ -411,29 +422,31 @@ class BIYaesuString(BuiltIn):
             pass
         pass
 
-    def getWidget(self, parent, data, addr, offset):
-        v = self.get_yaesu_string(data, addr, offset)
-        d = [data, addr, offset, v]
-        h = Handler(self.set, d)
+    def getWidget(self, parent, t, num):
+        v = self.get_yaesu_string(t.data, t.addr, num)
+        h = Handler(self.set, t)
+        h.v = v
+        h.BIrownum = num
         w = Tix.Entry(parent)
+        h.widget = w
         w.bind("<KeyRelease>", h.set_event)
         w.delete(0, 'end')
         w.insert(0, v)
-        d.append(w)
         return w
 
-    def set(self, d, event):
-        w = d[4]
+    def set(self, h, event):
+        w = h.widget
+        t = h.data
         v = w.get()
-        if (v == d[3]):
+        if (v == h.v):
             return
         cursor = w.index("insert")
-        self.set_yaesu_string(v, d[0], d[1], d[2])
-        v = self.get_yaesu_string(d[0], d[1], d[2])
+        self.set_yaesu_string(v, t.data, t.addr, h.BIrownum)
+        v = self.get_yaesu_string(t.data, t.addr, h.BIrownum)
         w.delete(0, 'end')
         w.insert(0, v)
         w.icursor(cursor)
-        d[3] = v
+        h.v = v
         pass
     pass
 
@@ -449,7 +462,7 @@ class BIBCDFreq(BuiltIn):
         BuiltIn.__init__(self, "BCDFreq")
         pass
 
-    def checkAddrOk(self, c, addr, offset):
+    def checkAddrOk(self, c, addr):
         if (len(addr.entries) != 1):
             raise ParseException(c.filename, c.lineno,
                                  "BCDFreq formats only support one"
@@ -461,14 +474,14 @@ class BIBCDFreq(BuiltIn):
         if (addr.entries[0][2] != 24):
             raise ParseException(c.filename, c.lineno,
                                  "BCDFreq formats must be 24 bits long")
-        if ((offset % 8) != 0):
+        if ((addr.entries[0][3] % 8) != 0):
             raise ParseException(c.filename, c.lineno,
                                  "BCDFreq formats must have a"
                                  + " byte-multiple offset")
         return True
 
-    def get_bcd(self, data, addr, offset):
-        byte_off = addr.entries[0][0] + (offset / 8)
+    def get_bcd(self, data, addr, num):
+        byte_off = addr.entries[0][0] + (addr.entries[0][3] * num / 8)
         numbytes = addr.entries[0][2] / 8
 
         s = data.get_bytes(byte_off, numbytes)
@@ -492,8 +505,8 @@ class BIBCDFreq(BuiltIn):
         pass
 
     # Yaesu BCD format for frequency, see FT60-layout.txt
-    def set_bcd(self, v, data, addr, offset):
-        byte_off = addr.entries[0][0] + (offset / 8)
+    def set_bcd(self, v, data, addr, num):
+        byte_off = addr.entries[0][0] + (addr[0][3] * num / 8)
         numbytes = addr.entries[0][2] / 8
 
         vlen = len(v)
@@ -521,18 +534,18 @@ class BIBCDFreq(BuiltIn):
             pass
         pass
 
-    def getWidget(self, parent, data, addr, offset):
-        v = self.get_bcd(data, addr, offset)
-        d = [data, addr, offset]
-        h = Handler(self.set, d)
+    def getWidget(self, parent, t, num):
+        v = self.get_bcd(t.data, t.addr, num)
+        h = Handler(self.set, t)
         w = Tix.Entry(parent)
+        h.widget = w
+        h.BIrownum = num
         w.bind("<Key>", h.set_event)
         w.delete(0, 'end')
         w.insert(0, v)
-        d.append(w)
         return w
 
-    def set(self, d, event):
+    def set(self, h, event):
         # FIXME - handling pasting
         if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
             or (event.keysym == "Insert")):
@@ -543,7 +556,7 @@ class BIBCDFreq(BuiltIn):
         # Now we have normal character keys.  Ignore everything but
         # digits, don't go past the end or change the "."
 
-        w = d[3]
+        w = h.widget
         cursor = w.index("insert")
         if (cursor >= 7):
             return "break" # Past the end of the entry
@@ -568,7 +581,7 @@ class BIBCDFreq(BuiltIn):
         if (s[cursor] != c):
             w.delete(cursor)
             w.insert(cursor, c)
-            self.set_bcd(w.get(), d[0], d[1], d[2])
+            self.set_bcd(w.get(), t.data, t.addr, h.BIrownum)
             pass
         if (cursor == 2):
             w.icursor(cursor + 2) # Skip over the '.'
@@ -579,11 +592,11 @@ class BIBCDFreq(BuiltIn):
     pass
 
 class MenuAndButton(Tix.Menubutton):
-    def __init__(self, parent, addr, data, offset):
+    def __init__(self, parent, data, addr, num):
         Tix.Menubutton.__init__(self, parent)
-        self.addr = addr
         self.data = data
-        self.offset = offset
+        self.addr = addr
+        self.num = num
         self.menu = Tix.Menu(self)
         self['menu'] = self.menu
         pass
@@ -612,11 +625,12 @@ class Enum(BuiltIn):
         self.entries.append((c.toNum(v[0]), v[1]))
         pass
 
-    def getWidget(self, parent, data, addr, offset):
-        self.button = MenuAndButton(parent, addr, data, offset)
-        v = data.get_bits(addr, offset)
+    def getWidget(self, parent, t, num):
+        self.button = MenuAndButton(parent, t.data, t.addr, num)
+        v = t.data.get_bits(t.addr, num)
         for e in self.entries:
             h = Handler(self.set, e)
+            h.BIrownum = num
             self.button.add_command(e[1], h.set)
             if (v == e[0]):
                 self.button.set_label(e[1])
@@ -624,25 +638,25 @@ class Enum(BuiltIn):
             pass
         return self.button
 
-    def set(self, e):
+    def set(self, h):
+        e = h.data
         self.button.set_label(e[1])
-        self.button.data.set_bits(e[0], self.button.addr,
-                                  self.button.offset)
+        self.button.data.set_bits(e[0], self.button.addr, self.button.num)
         pass
 
     pass
 
 
 class TabEntry:
-    def __init__(self, name, addr, type, offset, data):
+    def __init__(self, name, addr, type, data):
         self.name = name
         self.addr = addr
         self.type = type
         self.data = data
         pass
 
-    def getWidget(self, parent):
-        return self.type.getWidget(parent, self.data, self.addr, 0)
+    def getWidget(self, parent, num):
+        return self.type.getWidget(parent, self, num)
     
     pass
 
@@ -652,9 +666,9 @@ class TabBase:
         self.entries = []
         pass
 
-    def addItem(self, c, name, addr, type, offset):
-        type.checkAddrOk(c, addr, offset)
-        self.entries.append(TabEntry(name, addr, type, offset, c.filedata))
+    def addItem(self, c, name, addr, type):
+        type.checkAddrOk(c, addr)
+        self.entries.append(TabEntry(name, addr, type, c.filedata))
         pass
 
 class List(TabBase):
@@ -667,24 +681,38 @@ class List(TabBase):
         if (v[0] == "endlist"):
             c.addList(self)
             return
-        if (len(v) != 4):
+        if (len(v) != 3):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for list entry");
-        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[3]), c.toNum(v[2]))
+        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]))
         pass
 
     def setup(self, top):
         self.list = Tix.ScrolledHList(top, scrollbar="auto",
                                       options="hlist.header 1"
-                                      + " hlist.columns 2"
+                                      + " hlist.columns "
+                                      + str(len(self.entries) + 1)
                                       + " hlist.itemtype text"
                                       + " hlist.selectForeground black"
                                       + " hlist.selectBackground beige")
-        self.list.hlist.header_create(0, text="X1")
-        self.list.hlist.header_create(1, text="X2")
-        self.list.hlist.column_width(0, 100)
-        self.list.hlist.column_width(1, "")
+        i = 1
+        for e in self.entries:
+            e.column = i
+            self.list.hlist.header_create(i, text=e.name)
+            self.list.hlist.column_width(i, "")
+            i += 1
+            pass
 
+        for i in range(0, self.length):
+            print ("Adding line " + str(i))
+            self.list.hlist.add(i, text=str(i+1))
+            for e in self.entries:
+                w = e.getWidget(self.list.hlist, i)
+                self.list.hlist.item_create(i, e.column,
+                                            itemtype=Tix.WINDOW, window=w)
+                pass
+            pass
+        
         self.list.pack(side=Tix.LEFT, fill=Tix.BOTH, expand=1)
         pass
     pass
@@ -702,7 +730,7 @@ class Tab(TabBase):
         if (len(v) != 3):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for tab entry");
-        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), 0)
+        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]))
         pass
 
     def setup(self, top):
@@ -721,7 +749,7 @@ class Tab(TabBase):
         for e in self.entries:
             e.key = i
             self.list.hlist.add(i, text=e.name)
-            w = e.getWidget(self.list.hlist)
+            w = e.getWidget(self.list.hlist, 0)
             self.list.hlist.item_create(i, 1, itemtype=Tix.WINDOW, window=w)
             i += 1
             pass
@@ -731,6 +759,30 @@ class Tab(TabBase):
         pass
     pass
 
+quote_hash = {"n" : "\n",
+              "t" : "\t",
+              "r" : "\r" }
+
+def unquote(s):
+    inquote = False
+    v = []
+    for c in s:
+        if (inquote):
+            if (c in quote_hash):
+                v.append(quote_hash[c])
+            else:
+                v.append(c);
+                pass
+            inquote = False
+            pass
+        elif (c == '\\'):
+            inquote = True
+            pass
+        else:
+            v.append(c)
+            pass
+        pass
+    return "".join(v)
 
 class RadioConfig:
     def __init__(self, filename, filedata):
@@ -740,7 +792,7 @@ class RadioConfig:
         self.toplevel = []
         self.types = [ BIBCDFreq(), BuiltIn("IntFreq"),
                        BICheckBox(), BIYaesuString(),
-                       BuiltIn("String") ]
+                       BuiltIn("String"), BuiltIn("Empty") ]
         f = open(filename, "r")
         try:
             self.lineno = 0
@@ -793,36 +845,39 @@ class RadioConfig:
         v = []
         instr = False
         inname = False
+        inquote = False
         i = 0
         last = len(l)
         start = 0
         while (i < last):
             c = l[i]
-            if (c == '\\'):
-                # Remove the '\', will automatically skip the char
-                l = "".join([l[0:i], l[i+1:]])
-                last -= 1
-                if (i >= last):
-                    raise ParseException(self.filename, self.lineno,
-                                         "End of line after '\\'");
-                i += 1
-                continue
-            if (instr and (c == '"')):
-                v.append(l[start:i])
+            if (inquote):
+                inquote = False
+                pass
+            elif (instr and (c == '"')):
+                v.append(unquote(l[start:i]))
                 instr = False
             elif (inname and c.isspace()):
-                v.append(l[start:i])
+                v.append(unquote(l[start:i]))
                 inname = False
             elif (c == '"'):
                 start = i + 1
                 instr = True
             elif (not (inname or instr) and not c.isspace()):
+                if (c == '\\'):
+                    inquote = True
+                    pass
                 start = i
                 inname = True
+            elif (c == '\\'):
+                inquote = True
                 pass
             i += 1
             pass
 
+        if (inquote):
+            raise ParseException(self.filename, self.lineno,
+                                 "End of line after '\\'");
         if (instr):
             raise ParseException(self.filename, self.lineno,
                                  "End of line in string");
