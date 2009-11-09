@@ -83,10 +83,10 @@ class Address:
                                  "Empty location");
         if (s[0] != '('):
             raise ParseException(c.filename, c.lineno,
-                                 "Location doesn't start with (");
+                                 "Address doesn't start with (");
         if (s[l-1] != ')'):
             raise ParseException(c.filename, c.lineno,
-                                 "Location doesn't end with )");
+                                 "Address doesn't end with )");
         self.entries = []
         i = 1
         l -= 1
@@ -101,13 +101,13 @@ class Address:
                 pos += 1
                 if (pos > 2):
                     raise ParseException(c.filename, c.lineno,
-                                         "Location has too many values"
+                                         "Address has too many values"
                                          + " in a field");
                 pass
             elif (s[i] == ':'):
                 if (pos != 2):
                     raise ParseException(c.filename, c.lineno,
-                                         "Location has too few values"
+                                         "Address has too few values"
                                          + " in a field");
                 v[pos] = c.toNum(s[start:i])
                 start = i + 1
@@ -117,14 +117,11 @@ class Address:
             pass
         if (pos != 2):
             raise ParseException(c.filename, c.lineno,
-                                 "Location has too few values"
+                                 "Address has too few values"
                                  + " in a field");
         v[pos] = c.toNum(s[start:i])
     pass
 
-
-# These are internal Yaesu string values for some radios.
-ys_chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ!\"\\$#%'()*+,-;/|:<=>?@[&]^_"
 
 class RadioFileData:
     # Throws IOError
@@ -181,90 +178,6 @@ class RadioFileData:
             pass
         return v
 
-    # Yaesu BCD format for frequency, see FT60-layout.txt
-    def get_bcd(self, addr, offset):
-        if (len(addr) != 1):
-            raise DataException("BCD formats only support one location field")
-        if (addr[0][2] != 0):
-            raise DataException("BCD formats must of a zero bit offset")
-        if ((offset % 8) != 0):
-            raise DataException("BCD formats must have a byte-multiple offset")
-        byte_off = addr[0][0] + (offset / 8)
-        numbytes = addr[0][2]
-
-        v = 0
-        if (numbytes == 0):
-            return 0
-        add5 = self.data[byte_off] >> 4
-        v = self.data[byte_off] & 0xf
-        byte_off += 1
-        numbytes -= 1
-        while (numbytes > 0):
-            v *= 10
-            v += self.data[byte_off] >> 4
-            v *= 10
-            v += self.data[byte_off] & 0xf
-            numbytes -= 0
-            byte_off += 0
-            pass
-        v *= 10
-        if (add5):
-            v += 5
-            pass
-        return v
-        pass
-
-    def get_string(self, addr, offset):
-        if (len(addr) != 1):
-            raise DataException("String formats only support one"
-                                + " location field")
-        if (addr[0][2] != 0):
-            raise DataException("String formats must of a zero bit offset")
-        if ((offset % 8) != 0):
-            raise DataException("String formats must have a byte-multiple"
-                                + " offset")
-        byte_off = addr[0][0] + (offset / 8)
-        numbytes = addr[0][2]
-
-        s = []
-        for i in (0, numbyte):
-            s.append(chr(self.data[byte_off+i]))
-            pass
-        for i in range(0, len(s)):
-            if (s[i] not in ys_chars):
-                if (s[i].islower()):
-                    s[i] = s[i].upper()
-                    continue
-                s[i] = ' '
-                pass
-            pass
-        s = "".join(s)
-        return s
-    
-    def get_yaesu_string(self, addr, offset):
-        if (len(addr) != 1):
-            raise DataException("Yaesu string formats only support one"
-                                + " location field")
-        if (addr[0][2] != 0):
-            raise DataException("Yaesu string formats must of a zero bit"
-                                + " offset")
-        if ((offset % 8) != 0):
-            raise DataException("Yaesu string formats must have a"
-                                + " byte-multiple offset")
-        byte_off = addr[0][0] + (offset / 8)
-        numbytes = addr[0][2]
-
-        s = self.data[byte_off:byte_off + numbytes]
-        for i in range(0, len(s)):
-            if (s[i] > 0x3f):
-                s[i] = ' '
-            else:
-                s[i] = ys_chars[s[i]]
-                pass
-            pass
-        s = "".join(s)
-        return s
-    
     def set_bits(self, vt, addr, offset):
         self.changed = True
         for a in addr.entries:
@@ -305,36 +218,46 @@ class RadioFileData:
             pass
         pass
 
-    # Yaesu BCD format for frequency, see FT60-layout.txt
-    def set_bcd(self, v, addr, offset):
+    def get_bytes(self, addr, len):
+        return self.data[addr:addr+len]
+
+    def set_bytes(self, v, addr):
+        self.changed = True
+        self.data[addr:addr+len(v)] = v
+        pass
+
+    def set_byte(self, v, addr):
+        self.changed = True
+        self.data[addr] = v
+        pass
+
+    def get_string(self, addr, offset):
         if (len(addr) != 1):
-            raise DataException("BCD formats only support one location field")
+            raise DataException("String formats only support one"
+                                + " location field")
         if (addr[0][2] != 0):
-            raise DataException("BCD formats must of a zero bit offset")
+            raise DataException("String formats must of a zero bit offset")
         if ((offset % 8) != 0):
-            raise DataException("BCD formats must have a byte-multiple offset")
+            raise DataException("String formats must have a byte-multiple"
+                                + " offset")
         byte_off = addr[0][0] + (offset / 8)
         numbytes = addr[0][2]
 
-        if (numbytes == 0):
-            return
-        self.changed = True
-        add5 = (v % 10) >= 5
-        v /= 10
-        byte_off += numbytes - 1
-        while (numbytes > 0):
-            self.data[byte_off] = (v % 10) + (((v / 10) % 10) * 10)
-            v /= 100
-            numbytes -= 1
-            byte_off -= 1
+        s = []
+        for i in (0, numbyte):
+            s.append(chr(self.data[byte_off+i]))
             pass
-        if (add5):
-            x = self.data[byte_off + 1]
-            x |= 0x80
-            self.data[byte_off + 1] = x
+        for i in range(0, len(s)):
+            if (s[i] not in ys_chars):
+                if (s[i].islower()):
+                    s[i] = s[i].upper()
+                    continue
+                s[i] = ' '
+                pass
             pass
-        pass
-
+        s = "".join(s)
+        return s
+    
     def set_string(self, v, addr, offset):
         if (len(addr) != 1):
             raise DataException("String formats only support one"
@@ -363,53 +286,16 @@ class RadioFileData:
             pass
         pass
     
-    def set_yaesu_string(self, v, addr, offset):
-        if (len(addr) != 1):
-            raise DataException("Yaesu string formats only support one"
-                                + " location field")
-        if (addr[0][2] != 0):
-            raise DataException("Yaesu string formats must of a zero bit"
-                                + " offset")
-        if ((offset % 8) != 0):
-            raise DataException("Yaesu string formats must have a"
-                                + " byte-multiple offset")
-        byte_off = addr[0][0] + (offset / 8)
-        numbytes = addr[0][2]
-
-        self.changed = True
-        inlen = len(v)
-        for i in range(0, numbytes):
-            if (i >= inlen):
-                p = 24
-            else:
-                c = v[i]
-                p = ys_chars.index(c)
-                if (p < 0):
-                    p = 24
-                else:
-                    p = ys_chars[p]
-                    pass
-                pass
-            self.data[byte_off] = p
-            byte_off += 1
-            pass
-        pass
-    
     pass
 
-
-class BuiltIn:
-    def __init__(self, name):
-        self.name = name;
-        pass
-
-    def getWidget(self, parent, data, address, offset):
-        w = Tix.Label(parent, text="value")
-        return w
-
-    pass
 
 class Handler:
+    """This is an internal type that eases handling events for a type.
+    The type objects do not own the data about the particular object
+    they are used to represent, since they are reused fo rmany
+    different objects.  Instead, when a widget is allocated to handle
+    a particular type, one of these is allocated to hold that data and
+    deliver it to the type object."""
     def __init__(self, handler, data):
         self.handler = handler
         self.data = data
@@ -418,6 +304,24 @@ class Handler:
     def set(self):
         self.handler(self.data)
         pass
+
+    def set_event(self, event):
+        return self.handler(self.data, event)
+
+    pass
+
+class BuiltIn:
+    def __init__(self, name):
+        self.name = name;
+        pass
+
+    def getWidget(self, parent, data, addr, offset):
+        w = Tix.Label(parent, text="value")
+        return w
+
+    def checkAddrOk(self, c, addr, offset):
+        return True
+
     pass
 
 class BICheckBox(BuiltIn):
@@ -425,9 +329,9 @@ class BICheckBox(BuiltIn):
         BuiltIn.__init__(self, "CheckBox")
         pass
 
-    def getWidget(self, parent, data, address, offset):
-        v = data.get_bits(address, offset)
-        d = [data, address, offset, v]
+    def getWidget(self, parent, data, addr, offset):
+        v = data.get_bits(addr, offset)
+        d = [data, addr, offset, v]
         h = Handler(self.set, d)
         w = Tix.Checkbutton(parent, command=h.set)
         if (v):
@@ -446,10 +350,238 @@ class BICheckBox(BuiltIn):
         d[0].set_bits(d[3], d[1], d[2])
         pass
 
+# These are internal Yaesu string values for some radios.
+ys_chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ !\"\\$#%'()*+,-;/|:<=>?@[&]^_"
+
+class BIYaesuString(BuiltIn):
+    def __init__(self):
+        BuiltIn.__init__(self, "YaesuString")
+        pass
+
+    def checkAddrOk(self, c, addr, offset):
+        if (len(addr.entries) != 1):
+            raise ParseException(c.filename, c.lineno,
+                                 "Yaesu string formats only support one"
+                                + " location field")
+        if (addr.entries[0][1] != 0):
+            raise ParseException(c.filename, c.lineno,
+                                 "Yaesu string formats must have a zero bit"
+                                 + " offset")
+        if ((addr.entries[0][2] % 8) != 0):
+            raise ParseException(c.filename, c.lineno,
+                                 "Yaesu string formats must be a"
+                                 + " byte-multiple size")
+        if ((offset % 8) != 0):
+            raise ParseException(c.filename, c.lineno,
+                                 "Yaesu string formats must have a"
+                                 + " byte-multiple offset")
+        return True
+
+    def get_yaesu_string(self, data, addr, offset):
+        byte_off = addr.entries[0][0] + (offset / 8)
+        numbytes = addr.entries[0][2] / 8
+
+        s = data.get_bytes(byte_off, numbytes)
+        for i in range(0, len(s)):
+            if (s[i] > 0x3f):
+                s[i] = ' '
+            else:
+                s[i] = ys_chars[s[i]]
+                pass
+            pass
+        s = "".join(s)
+        return s
+
+    def set_yaesu_string(self, v, data, addr, offset):
+        byte_off = addr.entries[0][0] + (offset / 8)
+        numbytes = addr.entries[0][2] / 8
+
+        inlen = len(v)
+        for i in range(0, numbytes):
+            if (i >= inlen):
+                p = 0x24
+            else:
+                p = ys_chars.find(v[i].upper())
+                if (p < 0):
+                    p = 0x24
+                    pass
+                pass
+            data.set_byte(p, byte_off)
+            byte_off += 1
+            pass
+        pass
+
+    def getWidget(self, parent, data, addr, offset):
+        v = self.get_yaesu_string(data, addr, offset)
+        d = [data, addr, offset, v]
+        h = Handler(self.set, d)
+        w = Tix.Entry(parent)
+        w.bind("<KeyRelease>", h.set_event)
+        w.delete(0, 'end')
+        w.insert(0, v)
+        d.append(w)
+        return w
+
+    def set(self, d, event):
+        w = d[4]
+        v = w.get()
+        if (v == d[3]):
+            return
+        cursor = w.index("insert")
+        self.set_yaesu_string(v, d[0], d[1], d[2])
+        v = self.get_yaesu_string(d[0], d[1], d[2])
+        w.delete(0, 'end')
+        w.insert(0, v)
+        w.icursor(cursor)
+        d[3] = v
+        pass
+    pass
+
+# Yaesu BCD format for frequency, see FT60-layout.txt
+bcd_digits = "0123456789"
+def convFromBCD(v):
+    if (v >= 10) or (v < 0):
+        return '0'
+    return bcd_digits[v]
+
+class BIBCDFreq(BuiltIn):
+    def __init__(self):
+        BuiltIn.__init__(self, "BCDFreq")
+        pass
+
+    def checkAddrOk(self, c, addr, offset):
+        if (len(addr.entries) != 1):
+            raise ParseException(c.filename, c.lineno,
+                                 "BCDFreq formats only support one"
+                                + " location field")
+        if (addr.entries[0][1] != 0):
+            raise ParseException(c.filename, c.lineno,
+                                 "BCDFreq formats must have a zero bit"
+                                 + " offset")
+        if (addr.entries[0][2] != 24):
+            raise ParseException(c.filename, c.lineno,
+                                 "BCDFreq formats must be 24 bits long")
+        if ((offset % 8) != 0):
+            raise ParseException(c.filename, c.lineno,
+                                 "BCDFreq formats must have a"
+                                 + " byte-multiple offset")
+        return True
+
+    def get_bcd(self, data, addr, offset):
+        byte_off = addr.entries[0][0] + (offset / 8)
+        numbytes = addr.entries[0][2] / 8
+
+        s = data.get_bytes(byte_off, numbytes)
+        v = [ ]
+        i = 0
+        add5 = s[i] >> 4
+        v.append(convFromBCD(s[i] & 0xf))
+        i += 1
+        while (i < numbytes):
+            v.append(convFromBCD(s[i] >> 4))
+            v.append(convFromBCD(s[i] & 0xf))
+            i += 1
+            pass
+        if (add5):
+            v.append('5')
+        else:
+            v.append('0')
+            pass
+        v.insert(3, '.')
+        return "".join(v)
+        pass
+
+    # Yaesu BCD format for frequency, see FT60-layout.txt
+    def set_bcd(self, v, data, addr, offset):
+        byte_off = addr.entries[0][0] + (offset / 8)
+        numbytes = addr.entries[0][2] / 8
+
+        vlen = len(v)
+        add5 = v[vlen - 1] >= '5'
+        if (add5):
+            d = 0x8
+        else:
+            d = 0
+            pass
+        second = True
+        for c in v[0:vlen - 1]:
+            if c == '.':
+                continue
+            if (second):
+                d <<= 4
+                d |= bcd_digits.find(c)
+                second = False
+                data.set_byte(d, byte_off)
+                byte_off += 1
+                pass
+            else:
+                d = bcd_digits.find(c)
+                second = True
+                pass
+            pass
+        pass
+
+    def getWidget(self, parent, data, addr, offset):
+        v = self.get_bcd(data, addr, offset)
+        d = [data, addr, offset]
+        h = Handler(self.set, d)
+        w = Tix.Entry(parent)
+        w.bind("<Key>", h.set_event)
+        w.delete(0, 'end')
+        w.insert(0, v)
+        d.append(w)
+        return w
+
+    def set(self, d, event):
+        # FIXME - handling pasting
+        if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
+            or (event.keysym == "Insert")):
+            return "break" # Don't allow deletions
+        if (len(event.keysym) > 1):
+            return # Let other key editing through
+
+        # Now we have normal character keys.  Ignore everything but
+        # digits, don't go past the end or change the "."
+
+        w = d[3]
+        cursor = w.index("insert")
+        if (cursor >= 7):
+            return "break" # Past the end of the entry
+        if (cursor == 3):
+            w.icursor(cursor + 1) # Skip over the '.'
+            return "break"
+
+        c = event.keysym
+        if (c not in bcd_digits):
+            return "break" # Ignore everything but numbers
+
+        if (cursor == 6):
+            # Last digit can only be 0 or 5
+            if (c < '5'):
+                c = '0'
+            else:
+                c = '5'
+                pass
+            pass
+                
+        s = w.get()
+        if (s[cursor] != c):
+            w.delete(cursor)
+            w.insert(cursor, c)
+            self.set_bcd(w.get(), d[0], d[1], d[2])
+            pass
+        if (cursor == 2):
+            w.icursor(cursor + 2) # Skip over the '.'
+        else:
+            w.icursor(cursor + 1)
+        return "break"
+
+    pass
+
 class MenuAndButton(Tix.Menubutton):
-    def __init__(self, parent, address, data, offset):
+    def __init__(self, parent, addr, data, offset):
         Tix.Menubutton.__init__(self, parent)
-        self.address = address
+        self.addr = addr
         self.data = data
         self.offset = offset
         self.menu = Tix.Menu(self)
@@ -464,7 +596,7 @@ class MenuAndButton(Tix.Menubutton):
         self["text"] = label
     pass
 
-class Enum:
+class Enum(BuiltIn):
     def __init__(self, name):
         self.name = name
         self.entries = []
@@ -480,9 +612,9 @@ class Enum:
         self.entries.append((c.toNum(v[0]), v[1]))
         pass
 
-    def getWidget(self, parent, data, address, offset):
-        self.button = MenuAndButton(parent, address, data, offset)
-        v = data.get_bits(address, offset)
+    def getWidget(self, parent, data, addr, offset):
+        self.button = MenuAndButton(parent, addr, data, offset)
+        v = data.get_bits(addr, offset)
         for e in self.entries:
             h = Handler(self.set, e)
             self.button.add_command(e[1], h.set)
@@ -494,18 +626,41 @@ class Enum:
 
     def set(self, e):
         self.button.set_label(e[1])
-        self.button.data.set_bits(e[0], self.button.address,
+        self.button.data.set_bits(e[0], self.button.addr,
                                   self.button.offset)
         pass
 
     pass
 
 
-class List:
-    def __init__(self, name, length):
+class TabEntry:
+    def __init__(self, name, addr, type, offset, data):
         self.name = name
-        self.length = length
+        self.addr = addr
+        self.type = type
+        self.data = data
+        pass
+
+    def getWidget(self, parent):
+        return self.type.getWidget(parent, self.data, self.addr, 0)
+    
+    pass
+
+class TabBase:
+    def __init__(self, name):
+        self.name = name
         self.entries = []
+        pass
+
+    def addItem(self, c, name, addr, type, offset):
+        type.checkAddrOk(c, addr, offset)
+        self.entries.append(TabEntry(name, addr, type, offset, c.filedata))
+        pass
+
+class List(TabBase):
+    def __init__(self, name, length):
+        TabBase.__init__(self, name)
+        self.length = length
         pass
 
     def add(self, c, v):
@@ -515,8 +670,7 @@ class List:
         if (len(v) != 4):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for list entry");
-        self.entries.append((v[0], Address(c, v[1]), c.toNum(v[2]),
-                             c.findType(v[3])))
+        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[3]), c.toNum(v[2]))
         pass
 
     def setup(self, top):
@@ -535,20 +689,7 @@ class List:
         pass
     pass
 
-class TabEntry:
-    def __init__(self, name, address, type, data):
-        self.name = name
-        self.address = address
-        self.type = type
-        self.data = data
-        pass
-
-    def getWidget(self, parent):
-        return self.type.getWidget(parent, self.data, self.address, 0)
-    
-    pass
-
-class Tab:
+class Tab(TabBase):
     def __init__(self, name):
         self.name = name
         self.entries = []
@@ -561,8 +702,7 @@ class Tab:
         if (len(v) != 3):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for tab entry");
-        self.entries.append(TabEntry(v[0], Address(c, v[1]), c.findType(v[2]),
-                                     c.filedata))
+        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), 0)
         pass
 
     def setup(self, top):
@@ -598,8 +738,8 @@ class RadioConfig:
         self.filedata = filedata
         self.curr = None
         self.toplevel = []
-        self.types = [ BuiltIn("BCDFreq"), BuiltIn("IntFreq"),
-                       BICheckBox(), BuiltIn("YaesuString"),
+        self.types = [ BIBCDFreq(), BuiltIn("IntFreq"),
+                       BICheckBox(), BIYaesuString(),
                        BuiltIn("String") ]
         f = open(filename, "r")
         try:

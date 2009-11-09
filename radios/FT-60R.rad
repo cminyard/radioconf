@@ -227,19 +227,21 @@ endenum
 # IntFreq
 # CheckBox
 #
-# Location is in the form:
+# Address is in the form:
 #  (<byte address>,<bit offset>,<bit size>[:<byte address>,<bit offset>,<bit size>[:...]]
 #
 
 
 tab Config
-#	Name			Location	type
+#	Name			Address		type
 	"Selected DTMF"		(0x001a,0,4)	SelectedDTMFe
 	"Bank 1"		(0x69c8,0,1)	CheckBox
+	"Label"			(0x4708,0,48)	YaesuString	
+	"Rx Frequency"		(0x249,0,24)	BCDFreq
 endtab
 
 list VFOs 5
-#	Name			Location	Span	type
+#	Name			Address		Span	type
 	"Pager Enable"		(0x48,6,1)	16	OnOff_e
 	"TX Narrow"		(0x48,5,1)	16	OnOff_e
 	"Offset Direction"	(0x48,0,3)	16	OffsetDir_e
@@ -261,7 +263,7 @@ enum Skip_e
 endenum
 
 list Memories 1000
-#	Name			Location	Span	type
+#	Name			Address		Span	type
 	"Enable"		(0x248,7,1)	128	OnOff_e
 	"Label Enable"		(0x470e,7,1)	64	OnOff_e
 	"Label Valid"		(0x470f,7,1)	64	OnOff_e
