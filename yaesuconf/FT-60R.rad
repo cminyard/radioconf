@@ -171,6 +171,174 @@ enum SelectedDTMFe
 	8 "9"
 endenum
 
+enum DTMFDigit_e
+	0 "Code0"
+	1 "Code1"
+	2 "Code2"
+	3 "Code3"
+	4 "Code4"
+	5 "Code5"
+	6 "Code6"
+	7 "Code7"
+	8 "Code8"
+	9 "Code9"
+endenum
+
+enum DTMFDelay_e
+	0 "50ms"
+	1 "100ms"
+	2 "250ms"
+	3 "450ms"
+	4 "750ms"
+	5 "1sec"
+endenum
+
+enum DTMFSpeed_e
+	0 "50ms"
+	1 "100ms"
+endenum
+
+enum ARTSBeep_e
+	0 "Off"
+	1 "InRange"
+	2 "Always"
+endenum
+
+enum LampMode_e
+	0 "Key"
+	1 "5Sec"
+	2 "Toggle"
+endenum
+
+enum Bell_e
+	0 "Off"
+	1 "1 time"
+	2 "3 times"
+	3 "5 times"
+	4 "8 times"
+	5 "Continuous"
+endenum
+
+enum RXSave_e
+	0 "Off"
+	1 "200ms"
+	2 "300ms"
+	3 "500ms"
+	4 "1sec"
+	5 "2sec"
+endenum
+
+enum LockType_e
+	1 "Key"
+	2 "Dial"
+	3 "Key+Dial"
+	4 "PTT"
+	5 "PTT+Key"
+	6 "PTT+Dial"
+	7 "All"
+endenum
+
+enum EmergSig_e
+	0 "Off"
+	1 "Beep"
+	2 "Lamp"
+	3 "Beep+Lamp"
+	4 "CWT"
+	5 "CWT+Beep"
+	6 "CWT+Lamp"
+	7 "All"
+endenum
+
+enum EAI_e
+	0x00 "off"
+	0x01 "1min interval"
+	0x02 "2min interval"
+	0x03 "3min interval"
+	0x04 "4min interval"
+	0x05 "5min interval"
+	0x06 "6min interval"
+	0x06 "7min interval"
+	0x08 "8min interval"
+	0x09 "9min interval"
+	0x0a "10min interval"
+	0x0b "15min interval"
+	0x0c "20min interval"
+	0x0d "30min interval"
+	0x0e "40min interval"
+	0x0f "50min interval"
+	0x11 "1min continuous"
+	0x12 "2min continuous"
+	0x13 "3min continuous"
+	0x14 "4min continuous"
+	0x15 "5min continuous"
+	0x16 "6min continuous"
+	0x17 "7min continuous"
+	0x18 "8min continuous"
+	0x19 "9min continuous"
+	0x0a "10min continuous"
+	0x1b "15min continuous"
+	0x1c "20min continuous"
+	0x1d "30min continuous"
+	0x1e "40min continuous"
+	0x1f "50min continuous"
+endenum
+
+enum ARTSPoll_e
+	0 "25sec"
+	1 "15sec"
+endenum
+
+enum SmartSearch_e
+	0 "Single"
+	1 "Continuous"
+endenum
+
+enum DCSNR_e
+	0 "T/RX N"
+	1 "RX R"
+	2 "TX R"
+	3 "T/RX R"
+endenum
+
+enum InternetMode_e
+	0 "Off"
+	1 "Code"
+	3 "Memory"
+endenum
+
+enum ScanBeep_e
+	0 "Off"
+	1 "Key"
+	3 "Key+Scan"
+endenum
+
+enum ScanMode_e
+	0 "Mem"
+	1 "Only"
+endenum
+
+enum ScanResume_e
+	0 "Time"
+	1 "Hold"
+	2 "Busy"
+endenum
+
+enum MoniTCall_e
+	0 "Moni"
+	1 "TCall"
+endenum
+
+enum HMREV_e
+	0 "Reverse"
+	1 "Home"
+endenum
+
+enum Frequencies_e
+	0 "All"
+	1 "VHF Only"
+	2 "UHF Only"
+endenum
+
 enum OffsetDir_e
 	0 "smplx"
 	2 "-"
@@ -178,9 +346,15 @@ enum OffsetDir_e
 	4 "split"
 endenum
 
-enum OnOff_e
-	0 "off"
-	1 "on"
+enum ReceiveMode_e
+	0 "FM"
+	1 "AM"
+	2 "Auto"
+endenum
+
+enum WideNarrow_e
+	0 "wide"
+	3 "Narrow"
 endenum
 
 enum ToneMode_e
@@ -223,6 +397,139 @@ enum XmitPower_e
 	2 "High"
 endenum
 
+enum AutoPowerOff_e
+	 0 "Off"
+	 1 ".5 Hour"
+	 2 "1 Hour"
+	 3 "1.5 Hours"
+	 4 "2 Hours"
+	 5 "2.5 Hours"
+	 6 "3 Hours"
+	 7 "3.5 Hours"
+	 8 "4 Hours"
+	 9 "4.5 Hours"
+	10 "5 Hours"
+	11 "5.5 Hours"
+	12 "6 Hours"
+	13 "6.5 Hours"
+	14 "7 Hours"
+	15 "7.5 Hours"
+	16 "8 Hours"
+	17 "8.5 Hours"
+	18 "9 Hours"
+	19 "9.5 Hours"
+	20 "10 Hours"
+	21 "10.5 Hours"
+	22 "11 Hours"
+	23 "11.5 Hours"
+	24 "12 Hours"
+endenum
+
+enum TimeoutTimer_e
+	 0 "Off"
+	 1 "1 Min"
+	 2 "2 Min"
+	 3 "3 Min"
+	 4 "4 Min"
+	 5 "5 Min"
+	 6 "6 Min"
+	 7 "7 Min"
+	 8 "8 Min"
+	 9 "9 Min"
+	10 "10 Min"
+	11 "11 Min"
+	12 "12 Min"
+	13 "13 Min"
+	14 "14 Min"
+	15 "15 Min"
+	16 "16 Min"
+	17 "17 Min"
+	18 "18 Min"
+	19 "19 Min"
+	20 "20 Min"
+	21 "21 Min"
+	22 "22 Min"
+	23 "23 Min"
+	24 "24 Min"
+	25 "25 Min"
+	26 "26 Min"
+	27 "27 Min"
+	28 "28 Min"
+	29 "29 Min"
+	30 "30 Min"
+endenum
+
+enum MenuItem_e
+	 1 "APO - Auto Power Off"
+	 2 "AR Bep - Beep during ARTS"
+	 3 "AR Int - ARTS Polling Interval"
+	 4 "ARS - Automatic Repeater Shift"
+	 5 "BCLO - Busy CHannel Lock-Out"
+	 6 "BEEP - Beep setting"
+	 7 "BELL - CTCSS/DCS Bell repetitions"
+	 8 "BSY.LED - Busy LED setting when squelch open"
+	 9 "CLK.SFT - Shift the CPU clock frequency"
+	10 "CWID - ARTS CW id setting"
+	11 "CW WRT - Program the CW ID"
+	12 "DC VL - Display the DC voltage"
+	13 "DT DLY - DTMF Autodialer setting"
+	14 "DCS N/R - Inverted DCS code decoding"
+	15 "DT DLY - DTMF autodialer delay"
+	16 "DT SPD - DTMF autodialer speed"
+	17 "DT WRT - Program the DTMF autodialer"
+	18 "EAI - Emergency AutoID"
+	19 "EDG.BEP - Band-edge beeper"
+	20 "EMG S - Select alarm for emergency function"
+	21 "I Net - Internet Link Connection mode"
+	22 "Int CD - Access number for WIRES"
+	23 "INT MR - Memory register for WIRES"
+	24 "LAMP - LCD/Keypad Lamp mode"
+	25 "LOCK - Locking lockout combination"
+	26 "M/T-CL - MONI switch function"
+	27 "NAME - Toggle frequency/name memory display"
+	28 "NM WRT - Store a name for a memory"
+	29 "PAGER - Enahanced CTCSS paging/squelch"
+	30 "PAG.ABK - Answer back for CTCSS paging/squelch"
+	31 "PAG.CDR - Receiver pager code for CTCSS paging/squelch"
+	32 "PAG.CDT - Transmit pager code for CTCSS paging/squelch"
+	33 "PSWD - Enable/disable password"
+	34 "PSWD W - Store the password"
+	35 "RESUME - Scan/Resume mode"
+	36 "REV/HM - Function of the HM/RV key"
+	37 "RF SQL - Adjust the RF quelch threshold"
+	38 "RPT.MOD - Set the repeater shift direction"
+	39 "PRI.RVT - Priority revert"
+	40 "RX MOD - Receiving mode"
+	41 "RXSAVE - Receive mode battery saver ratio"
+	42 "S SRCH - Smart search sweep mode"
+	43 "SCN MD - Memory scan channel selection mode"
+	44 "SCN.LMP - Scan lamp while paused"
+	45 "SHIFT - Repeater shift size"
+	46 "SKIP - Memory scan skip channel selection mode"
+	47 "SPLIT - Split CTCSS/DCS coding"
+	48 "SQL.TYP - Tone squelch mode"
+	49 "STEP - Frequency steps"
+	50 "TN FRQ - CTCSS tone frequency"
+	51 "TOT - Setting of the TOT time"
+	52 "TX.LED - TX led while transmitting"
+	53 "TXSAV - Transmitter battery saver"
+	54 "VFO.BND - VFO band edge limiting"
+	55 "WID.NAR - Wide or narrow TX deviation"
+	56 "WX ALT - Weather alert scan"
+endenum
+
+enum RFSquelch_e
+	0 "Off"
+	1 "S1"
+	2 "S2"
+	3 "S3"
+	4 "S4"
+	5 "S5"
+	6 "S6"
+	7 "S8"
+	8 "S-Full"
+endenum
+
 # FIXME - this needs to be set as a BCD value.
 enum OffsetFreq_e
 	0x02 "100kHz"
@@ -245,31 +552,6 @@ endenum
 #  (<byte address>,<bit offset>,<bit size>[,<offset>][:<byte address>,<bit offset>,<bit size>[,<offset>][:...]]
 #
 
-
-tab Config
-#	Name			Address		type
-	"Selected DTMF"		(0x001a,0,4)	SelectedDTMFe
-	"Step"			(0x0038,0,1:0x000c,4,3)	StepAuto_e
-	"Bank 1"		(0x69c8,0,1)	CheckBox
-	"Label"			(0x4708,0,48)	YaesuString	
-	"Rx Frequency"		(0x249,0,24)	BCDFreq
-endtab
-
-list VFOs 5
-#	Name			Address			type
-	"Pager\nEnable"		(0x48,6,1,128)		CheckBox
-	"Tx\nNarrow"		(0x48,5,1,128)		CheckBox
-	"Offset\nDirect"	(0x48,0,3,128)		OffsetDir_e
-	"Rx\nFreq"		(0x49,0,24,128)		BCDFreq
-	"Tone\nMode"		(0x4c,0,3,128)		ToneMode_e
-	"Step"			(0x4c,4,3,128)		Step_e
-	"Clock\nShift"		(0x4c,7,1,128)		CheckBox
-	"Tx\nFreq"		(0x4d,0,24,128)		BCDFreq
-	"CTCSS\nTone"		(0x50,0,6,128)		CTCSS_e
-	"Xmit\nPower"		(0x50,6,2,128)		XmitPower_e
-	"DCS\nCode"		(0x51,0,8,128)		DCSCode_e
-	"Offset\nFreq"		(0x54,0,8,128)		OffsetFreq_e
-endlist
 
 enum Skip_e
 	0x0 "off"
@@ -294,7 +576,7 @@ list Memories 1000
 	"CTCSS\nTone"		(0x250,0,6,128)		CTCSS_e
 	"Xmit\nPower"		(0x250,6,2,128)		XmitPower_e
 	"DCS\nCode"		(0x251,0,8,128)		DCSCode_e
-	"Offset\nFreq"		(0x254,0,8,128)		OffsetFreq_e
+	"Offset\nFreq"		(0x253,0,16,128)	OffsetFreq_e
 	"Skip"			(0x6ec8,0,2,2)		Skip_e
 	"Bank"			(0x69c8,0,1,1)		Empty
 	"1"			(0x69c8,0,1,1)		CheckBox
@@ -307,4 +589,86 @@ list Memories 1000
 	"8"			(0x6d48,0,1,1)		CheckBox
 	"9"			(0x6dc8,0,1,1)		CheckBox
 	"10"			(0x6e48,0,1,1)		CheckBox
+endlist
+
+list VFOs 5
+#	Name			Address			type
+	"Pager\nEnable"		(0x48,6,1,128)		CheckBox
+	"Tx\nNarrow"		(0x48,5,1,128)		CheckBox
+	"Offset\nDirect"	(0x48,0,3,128)		OffsetDir_e
+	"Rx\nFreq"		(0x49,0,24,128)		BCDFreq
+	"Tone\nMode"		(0x4c,0,3,128)		ToneMode_e
+	"Step"			(0x4c,4,3,128)		Step_e
+	"Clock\nShift"		(0x4c,7,1,128)		CheckBox
+	"Tx\nFreq"		(0x4d,0,24,128)		BCDFreq
+	"CTCSS\nTone"		(0x50,0,6,128)		CTCSS_e
+	"Xmit\nPower"		(0x50,6,2,128)		XmitPower_e
+	"DCS\nCode"		(0x51,0,8,128)		DCSCode_e
+	"Offset\nFreq"		(0x53,0,16,128)		OffsetFreq_e
+endlist
+
+tab Config
+#	Name			Address			type
+	"Step"			(0x0038,0,1:0x000c,4,3)	StepAuto_e
+	"Offset Direction"	(0x0008,0,2)		OffsetDir_e
+	"AM Receive Mode"	(0x0038,1,1:0x0008,4,1)	ReceiveMode_e
+	"Wide/Narrow"		(0x0012,7,1:0x0008,5,1)	WideNarrow_e
+	"Tone Mode"		(0x000c,0,3)		ToneMode_e
+	"Clock Shift"		(0x000c,7,1)		CheckBox
+	"CTCSS Tone"		(0x0010,0,6)		CTCSS_e
+	"DCS Code"		(0x0011,0,8)		DCSCode_e
+	"Xmit Power"		(0x0010,6,2)		XmitPower_e
+	"Offset Frequency"	(0x0013,0,16)		OffsetFreq_e
+	"Selected DTMF"		(0x001a,0,4)		SelectedDTMFe
+	"Auto Power Off"	(0x0024,0,5)		AutoPowerOff_e
+	"Timeout Timer"		(0x0025,0,8)		TimeoutTimer_e
+	"P1 key setting"	(0x0026,0,8)		MenuItem_e
+	"P2 key setting"	(0x0027,0,8)		MenuItem_e
+	"RF Squelch"		(0x0028,0,5)		RFSquelch_e
+	"Internet DTMF"		(0x0029,0,4)		DTMFDigit_e
+	"Internet DTMF Memory"	(0x002a,0,4)		SelectedDTMFe
+	"Lock type"		(0x002b,0,3)		LockType_e
+	"DTMF Delay"		(0x002c,0,3)		DTMFDelay_e
+	"DTMF Speed"		(0x002d,0,1)		DTMFSpeed_e
+	"ARTS Beep"		(0x002e,0,2)		ARTSBeep_e
+	"Lamp Mode"		(0x002f,0,2)		LampMode_e
+	"Bell"			(0x0030,0,3)		Bell_e
+	"RX Save"		(0x0031,0,3)		RXSave_e
+	"Rcv Pager Code 1"	(0x0032,0,8)		CTCSS_e
+	"Xmit Pager Code 1"	(0x0033,0,8)		CTCSS_e
+	"Rcv Pager Code 2"	(0x0034,0,8)		CTCSS_e
+	"Xmit Pager Code 2"	(0x0035,0,8)		CTCSS_e
+	"Emergency Signal"	(0x0036,0,3)		EmergSig_e
+	"Emergency Auto ID"	(0x0037,0,5)		EAI_e
+	"ARTS Polling Interval"	(0x0038,3,1)		ARTSPoll_e
+	"Weather Alert"		(0x0038,6,1)		CheckBox
+	"Smart Search"		(0x0039,0,1)		SmartSearch_e
+	"DCS N/R"		(0x0039,1,2)		DCSNR_e
+	"VFO Band Edge Limit"	(0x0039,3,1)		CheckBox
+	"Auto Repeater Shift"	(0x0039,4,1)		CheckBox
+	"ARTS CWID Enable"	(0x0039,7,1)		CheckBox
+	"Lock"			(0x003a,0,1)		CheckBox
+	"Internet Mode"		(0x003a,1,2)		InternetMode_e
+	"Scan Beep"		(0x003a,5,1:0x003a,3,1)	ScanBeep_e
+	"Band Edge Beep"	(0x003a,4,1)		CheckBox
+	"Split Tone"		(0x003a,6,1)		CheckBox
+	"Priority Revert"	(0x003a,7,1)		CheckBox
+	"Scan Mode"		(0x003b,3,1)		ScanMode_e
+	"Pager Anwwer Back"	(0x003c,0,1)		CheckBox
+	"TX Save"		(0x003c,1,1)		CheckBox
+	"Scan Resume"		(0x003c,2,2)		ScanResume_e
+	"Moni/TCall Key"	(0x003c,4,1)		MoniTCall_e
+	"HM/REV Key"		(0x003c,5,1)		HMREV_e
+	"Password Enable"	(0x003d,1,1)		CheckBox
+	"TX LED Enable"		(0x003d,2,1)		CheckBox
+	"Busy LED Enable"	(0x003d,4,1)		CheckBox
+	"Busy Channel Lockout"	(0x003d,5,1)		CheckBox
+	"Scan Lamp"		(0x003d,6,1)		CheckBox
+	"Frequencies"		(0x003e,6,2)		Frequencies_e
+	"Password"		(0x021e,0,32)		HexDigits
+endtab
+
+list "DTMF_Tone" 9
+#	Name			Address			type
+	"Digits"		(0x00c8,0,128,128)	HexDigits
 endlist

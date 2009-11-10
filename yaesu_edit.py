@@ -660,7 +660,7 @@ class BIBCDFreq(BuiltIn):
 
     def set(self, h, event):
         if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
-            or (event.keysym == "Insert")):
+            or (event.keysym == "Insert") or (event.keysym == "space")):
             return "break" # Don't allow deletions
         if (len(event.keysym) > 1):
             return # Let other key editing through
@@ -708,6 +708,131 @@ class BIBCDFreq(BuiltIn):
             pass
 
         self.set_bcd(v, data, addr, num)
+        pass
+    pass
+
+hex_digits = "0123456789ABCDEF "
+def convFromHex(v):
+    if (v == 0xff):
+        return ' '
+    if (v >= 16) or (v < 0):
+        return '0'
+    return hex_digits[v]
+
+class BIHex(BuiltIn):
+    def __init__(self):
+        BuiltIn.__init__(self, "HexDigits")
+        pass
+
+    def checkAddrOk(self, c, addr):
+        if (len(addr.entries) != 1):
+            raise ParseException(c.filename, c.lineno,
+                                 "HexDigit formats only support one"
+                                + " location field")
+        if (addr.entries[0][1] != 0):
+            raise ParseException(c.filename, c.lineno,
+                                 "HexDigits formats must have a zero bit"
+                                 + " offset")
+        if ((addr.entries[0][2] % 8) != 0):
+            raise ParseException(c.filename, c.lineno,
+                                 "HexDigits formats must have a"
+                                 + " byte-multiple size")
+        if ((addr.entries[0][3] % 8) != 0):
+            raise ParseException(c.filename, c.lineno,
+                                 "HexDigits formats must have a"
+                                 + " byte-multiple offset")
+        return True
+
+    def get_hex(self, data, addr, num):
+        s = data.get_bytes(addr, num)
+        v = [ ]
+        i = 0
+        numbytes = addr.entries[0][2] / 8
+        while (i < numbytes):
+            v.append(convFromHex(s[i]))
+            i += 1
+            pass
+        return "".join(v)
+        pass
+
+    def set_hex(self, v, data, addr, num):
+        numbytes = addr.entries[0][2] / 8
+
+        vlen = len(v)
+        second = False
+        i = 0
+        for c in v:
+            if (c == ' '):
+                d = 0xff
+            else:
+                d = hex_digits.find(c)
+            data.set_byte(d, addr, num, i)
+            i += 1
+            pass
+        pass
+
+    def getWidget(self, parent, t, num):
+        v = self.get_hex(t.data, t.addr, num)
+        h = Handler(self.set, t)
+        h.numbytes = t.addr.entries[0][2] / 8
+        w = Tix.Entry(parent)
+        h.widget = w
+        h.num = num
+        w.bind("<Key>", h.set_event)
+        w.delete(0, 'end')
+        w.insert(0, v)
+        return h
+
+    def renumWidget(self, h, num):
+        h.num = num
+        t = h.data
+        v = self.get_hex(t.data, t.addr, num)
+        h.widget.delete(0, 'end')
+        h.widget.insert(0, v)
+        pass
+        
+    def getSelect(self, data, addr, num):
+        return self.get_hex(data, addr, num)
+
+    def set(self, h, event):
+        print event.keysym
+        if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
+            or (event.keysym == "Insert")):
+            return "break" # Don't allow deletions
+        if (event.keysym == "space"):
+            event.keysym = ' '
+        elif (len(event.keysym) > 1):
+            return # Let other key editing through
+
+        # Now we have normal character keys.  Ignore everything but
+        # digits, don't go past the end or change the "."
+
+        w = h.widget
+        cursor = w.index("insert")
+        if (cursor >= h.numbytes):
+            return "break" # Past the end of the entry
+
+        c = event.keysym.upper()
+        if (c != ' ' and c not in hex_digits):
+            return "break" # Ignore everything but numbers and space
+
+        t = h.data
+        s = w.get()
+        if (s[cursor] != c):
+            w.delete(cursor)
+            w.insert(cursor, c)
+            self.set_hex(w.get(), t.data, t.addr, h.num)
+            pass
+        w.icursor(cursor + 1)
+        return "break"
+
+    def setValue(self, v, data, addr, num):
+        for c in v:
+            if (c not in bcd_digits):
+                return
+            pass
+
+        self.set_hex(v, data, addr, num)
         pass
     pass
 
@@ -1189,7 +1314,37 @@ class Tab(TabBase):
         self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]))
         pass
 
+    def bindWidget(self, widget):
+        widget.bind("<MouseWheel>", self.Wheel)
+        if (self.winsys == "x11"):
+            widget.bind("<Button-4>", self.ButtonUpWheel)
+            widget.bind("<Button-5>", self.ButtonDownWheel)
+            pass
+        pass
+        
+    def Wheel(self, event):
+        self.list.hlist.yview("scroll", -(event.delta / 20), "units")
+        return
+    
+    def ButtonUpWheel(self, event):
+        event.delta = 120
+        self.Wheel(event);
+        return
+    
+    def ButtonDownWheel(self, event):
+        event.delta = -120
+        self.Wheel(event);
+        return
+    
     def setup(self, top):
+        try:
+            self.winsys = top.tk.eval("return [ tk windowingsystem ]")
+            pass
+        except:
+            # Assume x11
+            self.winsys = "x11"
+            pass
+
         self.list = Tix.ScrolledHList(top, scrollbar="auto",
                                       options="hlist.header 1"
                                       + " hlist.columns 2"
@@ -1200,6 +1355,10 @@ class Tab(TabBase):
         self.list.hlist.header_create(1, text="Value")
         self.list.hlist.column_width(0, "")
         self.list.hlist.column_width(1, "")
+        self.bindWidget(self.list)
+        self.bindWidget(self.list.hlist)
+        self.bindWidget(self.list.hsb)
+        self.bindWidget(self.list.vsb)
 
         i = 0
         for e in self.entries:
@@ -1208,6 +1367,7 @@ class Tab(TabBase):
             h = e.getWidget(self.list.hlist, 0)
             self.list.hlist.item_create(i, 1, itemtype=Tix.WINDOW,
                                         window=h.widget)
+            self.bindWidget(h.widget)
             i += 1
             pass
 
@@ -1250,7 +1410,8 @@ class RadioConfig:
         self.toplevel = []
         self.types = [ BIBCDFreq(), BuiltIn("IntFreq"),
                        BICheckBox(), BIYaesuString(),
-                       BuiltIn("String"), BuiltIn("Empty") ]
+                       BuiltIn("String"), BuiltIn("Empty"),
+                       BIHex() ]
         f = open(filename, "r")
         try:
             self.lineno = 0
@@ -1587,7 +1748,6 @@ while len(sys.argv) > 1:
         del sys.argv[1]
         radiodir = sys.argv[1]
         del sys.argv[1]
-        pass
     else:
         print "Unknown option: " + sys.argv[1]
         sys.exit(1)

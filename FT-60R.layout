@@ -209,7 +209,7 @@ cycled on the radio, there appears to be no memory for it.
 
 002e	bits 0-1 - ARTS beep (menu 2): 0=off, 1=inrange, 2=always
 
-002f	bit 0-1 - Lamp Mode (menu 24): 0=Key, 1=5second, 2-Toggle
+002f	bit 0-1 - Lamp Mode (menu 24): 0=Key, 1=5second, 2=Toggle
 
 0030    bits 0-2 - Bell (menu 7), values are: 0=off, 1=1 time, 2=3 times,
 		3=5 times, 4=8 times, 5=continuous
@@ -252,7 +252,7 @@ cycled on the radio, there appears to be no memory for it.
 		2=TX R, 3=T/RX R
 	bit 3 - VFO band edge limit (Menu 54)
 	bit 4 - Auto repeater shift (menu 4)
-	bit 5 - Memory only
+	bit 5 - Memory only (FIXME - what is this?)
 	bit 7 - ARTS CW ID enable (menu 10)
 
 003a	bit 0 - Lock
@@ -279,14 +279,15 @@ cycled on the radio, there appears to be no memory for it.
 	bit 5 - Busy channel lockout (menu 5)
 	bit 6 - Scan lamp (menu 44)
 
-003e	bits 6-7 - Frequencies, values are: 0=All, 01=VHFOnly, 2=UHFOnly
+003e	bits 6-7 - Frequencies, values are: 0=All, 1=VHFOnly, 2=UHFOnly
 
 0048-00a7 - VFO (current) frequencies, in the memory format, though some fields
 	    don't make sense.  The occur in the order: VHF, 250, 350, UHF
 	    800.
 
 00c8-0157 - 9 sets of DTMF tones (menu 17), 16 values in each set,
-	  where the value is the DTMF digit (0=0, 1=1, etc).  First set is
+	  where the value is the DTMF digit (0=0, 1=1, etc), taking the
+	  whole byte.  0xff marks the end of the string.  First set is
 	  set 1, 2nd set is set 2, etc.  Selected by byte 001a.
 
 01c0-0217 - Home frequencies for the various bands, same as VFO frequencies,
@@ -294,7 +295,8 @@ cycled on the radio, there appears to be no memory for it.
 
 0218-021d - ARTS CW ID (menu 11) (alpha format)
 
-021e-0221  Password (menu 34): 4 digits, 0-9A-F
+021e-0221  Password (menu 34): 4 digits, 0-9A-F, each stored in a byte
+	0xff disables the digit.
 
 
 0248-40c7 - Memory data, stored in 16-byte chunks.  First is memory 1, second
