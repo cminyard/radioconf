@@ -4,7 +4,7 @@ import sys
 import traceback
 import Tix
 
-radiodir = "radios"
+radiodir = "/etc/yaesuconf"
 
 class ParseException(Exception):
     def __init__(self, filename, lineno, err):
@@ -28,52 +28,104 @@ class DataException(Exception):
     
     pass
 
-# Throws IOError and ParseException
+class RadioInfo:
+    def __init__(self, name):
+        self.name = name;
+        self.headercmp = []
+        return
+
+    pass
+
+radios = []
+
 def find_radio(data):
+    for r in radios:
+        if (len(data) < len(r.headercmp)):
+            continue
+        found = True
+        i = 0
+        for b in r.headercmp:
+            if (b != data[i]):
+                found = False
+                break
+            i += 1
+            pass
+        if (found):
+            return r.name
+        pass
+    return None
+
+# Throws IOError and ParseException
+def read_radios():
     filename = radiodir + "/radios"
     f = open(filename, "r");
     try:
         lineno = 0
+        in_radio = False
+        l = ""
         while True:
-            l = f.readline()
+            l += f.readline()
             if (not l):
                 break;
             lineno += 1
+            if l[len(l) - 1] == '\\':
+               continue 
             if l[0] == '#':
+                l = ""
                 continue
             v = l.split();
+            l = ""
             if (not v):
                 continue
-            try:
-                i = 0
-                found = True
-                for ns in v[1:]:
-                    n = int(ns, 16)
-                    if (n > 255):
-                        raise TypeError("Number too large")
-                    if (data[i] != n):
-                        found = False
-                        break
-                    i += 1
+            if (v[0] == "radio"):
+                if (in_radio):
+                    raise ParseException(filename, lineno,
+                                         "Got radio start inside a radio")
+                if (len(v) < 2):
+                    raise ParseException(filename, lineno,
+                                         "No radio specified")
+                curr_radio = RadioInfo(v[1])
+                in_radio = True
+                continue
+            if (v[0] == "endradio"):
+                if (not in_radio):
+                    raise ParseException(filename, lineno,
+                                         "Got radio end outside a radio")
+                if (len(curr_radio.headercmp) == 0):
+                    raise ParseException(filename, lineno,
+                                         "No headercmp for radio")
+                radios.append(curr_radio)
+                in_radio = False
+                continue
+            if (v[0] == "headercmp"):
+                if (not in_radio):
+                    raise ParseException(filename, lineno,
+                                         "Got headercmp outside a radio")
+                try:
+                    i = 0
+                    found = True
+                    for ns in v[1:]:
+                        n = int(ns, 16)
+                        if (n > 255):
+                            raise TypeError("Number too large")
+                        curr_radio.headercmp.append(n)
+                        i += 1
+                        pass
                     pass
+                except TypeError, e:
+                    raise ParseException(filename, lineno,
+                                         "invalid hexadecimal 8-bit number")
+                except ValueError, e:
+                    raise ParseException(filename, lineno,
+                                         "invalid hexadecimal 8-bit number")
                 pass
-            except TypeError, e:
-                raise ParseException(filename, lineno,
-                                     "invalid hexadecimal 8-bit number")
-            except ValueError, e:
-                raise ParseException(filename, lineno,
-                                     "invalid hexadecimal 8-bit number")
-
-            if (found):
-                f.close()
-                return v[0]
             pass
         pass
     except:
         exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
         f.close()
         raise exceptionType, exceptionValue, exceptionTraceback
-    raise DataException("Radio type not found from file contents");
+    return
 
 class Address:
     def __init__(self, c, s):
@@ -141,6 +193,8 @@ class RadioFileData:
     def write(self, filename=None):
         if (filename == None):
             filename = self.filename
+        else:
+            self.filename = filename
             pass
         outs = []
         for c in self.data:
@@ -153,6 +207,7 @@ class RadioFileData:
         finally:
             f.close()
             pass
+        self.changed = False
         pass
 
     # The get and set routine throw IndexError if out of range.
@@ -317,7 +372,11 @@ class Handler:
 
 class BuiltIn:
     def __init__(self, name):
-        self.name = name;
+        self.name = name
+
+        # A set of alternate names for this type, where selection might
+        # occur from
+        self.altnames = []
         pass
 
     def getWidget(self, parent, t, num):
@@ -331,6 +390,12 @@ class BuiltIn:
     def checkAddrOk(self, c, addr):
         return True
 
+    def getSelect(self, data, addr, num):
+        return ""
+    
+    def setValue(self, v, data, addr, num):
+        pass
+    
     pass
 
 class BICheckBox(BuiltIn):
@@ -373,6 +438,23 @@ class BICheckBox(BuiltIn):
             pass
         t.data.set_bits(h.v, t.addr, h.num)
         pass
+
+    def getSelect(self, data, addr, num):
+        v = data.get_bits(addr, num)
+        if (v):
+            return '1'
+        else:
+            return '0'
+    
+    def setValue(self, v, data, addr, num):
+        if (v == "0"):
+            data.set_bits(0, addr, num)
+        elif (v == "1"):
+            data.set_bits(1, addr, num)
+            pass
+        pass
+    
+    pass
 
 # These are internal Yaesu string values for some radios.
 ys_chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ !\"\\$#%'()*+,-;/|:<=>?@[&]^_"
@@ -449,6 +531,13 @@ class BIYaesuString(BuiltIn):
         h.widget.insert(0, v)
         pass
         
+    def getSelect(self, data, addr, num):
+        return self.get_yaesu_string(data, addr, num)
+
+    def setValue(self, v, data, addr, num):
+        self.set_yaesu_string(v, data, addr, num)
+        pass
+
     def set(self, h, event):
         w = h.widget
         t = h.data
@@ -566,8 +655,10 @@ class BIBCDFreq(BuiltIn):
         h.widget.insert(0, v)
         pass
         
+    def getSelect(self, data, addr, num):
+        return self.get_bcd(data, addr, num)
+
     def set(self, h, event):
-        # FIXME - handling pasting
         if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
             or (event.keysym == "Insert")):
             return "break" # Don't allow deletions
@@ -610,6 +701,14 @@ class BIBCDFreq(BuiltIn):
             w.icursor(cursor + 1)
         return "break"
 
+    def setValue(self, v, data, addr, num):
+        for c in v:
+            if ((c != '.') and (c not in bcd_digits)):
+                return
+            pass
+
+        self.set_bcd(v, data, addr, num)
+        pass
     pass
 
 class MenuAndButton(Tix.Menubutton):
@@ -627,6 +726,13 @@ class MenuAndButton(Tix.Menubutton):
         self["text"] = label
     pass
 
+class EnumEntry:
+    def __init__(self, value, str):
+        self.value = value
+        self.str = str
+        return
+    pass
+
 class Enum(BuiltIn):
     def __init__(self, name):
         self.name = name
@@ -637,10 +743,17 @@ class Enum(BuiltIn):
         if (v[0] == "endenum"):
             c.addEnum(self)
             return
+        elif (v[0] == "altname"):
+            if (len(v) < 2):
+                raise ParseException(c.filename, c.lineno,
+                                     "No alternate name given");
+            self.altnames.append(v[1])
+            return
+        
         if (len(v) != 2):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for enum");
-        self.entries.append((c.toNum(v[0]), v[1]))
+        self.entries.append(EnumEntry(c.toNum(v[0]), v[1]))
         pass
 
     def getWidget(self, parent, t, num):
@@ -653,34 +766,55 @@ class Enum(BuiltIn):
         for e in self.entries:
             h = Handler(self.set, e)
             h.toph = toph
-            toph.widget.add_command(e[1], h.set)
-            if (v == e[0]):
-                toph.widget.set_label(e[1])
+            toph.widget.add_command(e.str, h.set)
+            if (v == e.value):
+                toph.widget.set_label(e.str)
                 pass
             pass
         return toph
 
     def set(self, h):
         e = h.data
-        h.toph.widget.set_label(e[1])
-        h.toph.widget.data.set_bits(e[0], h.toph.addr, h.toph.num)
+        h.toph.widget.set_label(e.str)
+        h.toph.data.set_bits(e.value, h.toph.addr, h.toph.num)
         pass
 
     def renumWidget(self, toph, num):
         toph.num = num
         v = toph.data.get_bits(toph.addr, num)
         for e in self.entries:
-            if (v == e[0]):
-                toph.widget.set_label(e[1])
+            if (v == e.value):
+                toph.widget.set_label(e.str)
                 break
             pass
         pass
+
+    def getSelect(self, data, addr, num):
+        v = data.get_bits(addr, num)
+        for e in self.entries:
+            if (v == e.value):
+                return e.str.replace(" ", "")
+            pass
+        pass
+
+    def setValue(self, v, data, addr, num):
+        for e in self.entries:
+            if (v == e.value.replace(" ", "")):
+                data.set_bits(e.str, addr, num)
+                return
+            pass
+        pass
+    
     pass
 
 
 class TabEntry:
     def __init__(self, name, addr, type, data):
         self.name = name
+        nn = self.name.replace("\n", "")
+        nn = nn.replace(" ", "")
+        nn = nn.replace("\t", "")
+        self.nsname = nn
         self.addr = addr
         self.type = type
         self.data = data
@@ -691,6 +825,30 @@ class TabEntry:
 
     def renumWidget(self, h, num):
         self.type.renumWidget(h, num)
+        pass
+
+    def getSelect(self, num):
+        v = self.type.getSelect(self.data, self.addr, num)
+        if (v is None):
+            v = ""
+        return (self.nsname + "=" + v)
+
+    def setSelect(self, num, vhash):
+        if (self.nsname in vhash):
+            v = vhash[self.nsname]
+            del vhash[self.nsname]
+            self.type.setValue(v, self.data, self.addr, num)
+            pass
+        else:
+            for n in self.type.altnames:
+                if (n in vhash):
+                    v = vhash[n]
+                    del vhash[n]
+                    self.type.setValue(v, self.data, self.addr, num)
+                    return
+                pass
+            pass
+        pass
     
     pass
 
@@ -731,8 +889,8 @@ class List(TabBase):
         widget.bind("<Next>", self.pageDown)
         widget.bind("<Prior>", self.pageUp)
         if (self.winsys == "x11"):
-            widget.bind("<Button-4>", self.ButtonUp)
-            widget.bind("<Button-5>", self.ButtonDown)
+            widget.bind("<Button-4>", self.ButtonUpWheel)
+            widget.bind("<Button-5>", self.ButtonDownWheel)
             pass
         pass
         
@@ -753,9 +911,21 @@ class List(TabBase):
                               yscrollcommand=self.y_scrolled,
                               xscrollcommand=self.xscroll.set)
         self.xscroll['command'] = self.list.xview
-        self.yscroll['command'] = self.y_scrollbar_change
+        self.yscroll['command'] = self.y_move
         self.xscroll.pack(side=Tix.BOTTOM, fill=Tix.X)
         self.yscroll.pack(side=Tix.RIGHT, fill=Tix.Y)
+
+        self.list.selection_handle(self.selection_request)
+
+        self.first_select = -1
+        self.last_select = -1
+        self.list.bind("<Button-1>", self.Button1)
+        self.list.bind("<Shift-Button-1>", self.SButton1)
+        self.list.bind("<Control-Button-1>", self.CButton1)
+        self.list.bind("<Button-2>", self.Button2)
+        self.list.bind("<Button-3>", self.Button3)
+
+        self.list.bind("<Map>", self.map)
 
         self.bindWidget(self.list)
         self.bindWidget(self.xscroll)
@@ -772,16 +942,117 @@ class List(TabBase):
         self.list.pack(side=Tix.LEFT, fill=Tix.BOTH, expand=1)
         pass
 
+    def map(self, event=None):
+        self.list.focus_set()
+        return
+        
+    def selection_request(self, a, b):
+        if (self.first_select < 0):
+            return ""
+        s = ""
+        for i in range(self.first_select, self.last_select + 1):
+            if (s):
+                s += "\n"
+                pass
+            first = True
+            for e in self.entries:
+                if (not first):
+                    s += " "
+                else:
+                    first = False
+                    pass
+                s += e.getSelect(i)
+                pass
+            pass
+        return s
+
+    def redoSelection(self):
+        if ((self.last_select < self.firstline)
+            or (self.first_select >= self.firstline + self.numlines)):
+            # Nothing to see
+            self.list.selection_clear()
+            return
+        
+        if (self.first_select <= self.firstline):
+            pos1 = 0
+        else:
+            pos1 = self.first_select - self.firstline
+            pass
+        
+        end = self.firstline + self.numlines - 1
+        if (self.last_select >= end):
+            pos2 = self.numlines - 1
+        else:
+            pos2 = self.last_select - self.firstline
+            pass
+
+        self.list.selection_clear()
+        self.list.selection_set(pos1, pos2)
+        self.list.selection_own()
+        pass
+    
+    def Button1(self, event):
+        self.list.focus_set()
+        line = int(self.list.nearest(event.y))
+        self.first_select = self.firstline + line
+        self.last_select = self.firstline + line
+        self.redoSelection()
+        return "break"
+    
+    def SButton1(self, event):
+        if (self.first_select < 0):
+            return self.Button1(event)
+        line = int(self.list.nearest(event.y))
+        pos = line + self.firstline
+        if (pos < self.first_select):
+            self.first_select = pos
+        else:
+            self.last_select = pos
+            pass
+        self.redoSelection()
+        return "break"
+    
+    def CButton1(self, event):
+        return "break"
+    
+    def Button2(self, event):
+        linenum = int(self.list.nearest(event.y)) + self.firstline
+        s = self.list.selection_get()
+        lines = s.split("\n")
+        for l in lines:
+            if (linenum >= self.length):
+                return
+            vhash = {}
+            for vp in l.split():
+                v = vp.split("=")
+                if (len(v) != 2):
+                    continue
+                vhash[v[0]] = v[1]
+                pass
+            for e in self.entries:
+                e.setSelect(linenum, vhash)
+                pass
+            linenum += 1
+            pass
+        self.redisplay()
+        return "break"
+    
+    def Button3(self, event):
+        self.first_select = -1
+        self.last_select = -1
+        self.redoSelection()
+        return "break"
+    
     def Wheel(self, event):
-        self.list.yview("scroll", -(event.delta / 20), "units")
+        self.y_move("scroll", -(event.delta / 20), "units")
         return
     
-    def ButtonUp(self, event):
+    def ButtonUpWheel(self, event):
         event.delta = 120
         self.Wheel(event);
         return
     
-    def ButtonDown(self, event):
+    def ButtonDownWheel(self, event):
         event.delta = -120
         self.Wheel(event);
         return
@@ -797,38 +1068,26 @@ class List(TabBase):
             first = float(self.firstline) / float(self.length)
             self.yscroll.set(first, first + pct)
             pass
+        self.redoSelection()
         pass
 
     def pageDown(self, event=None):
-        self.y_scrollbar_change("scroll", 1, "pages")
+        self.y_move("scroll", 1, "pages")
         return "break"
     
     def pageUp(self, event=None):
-        self.y_scrollbar_change("scroll", -1, "pages")
+        self.y_move("scroll", -1, "pages")
         return "break"
     
     def lineDown(self, event=None):
-        l = self.list.info_selection()
-        l = int(l[len(l)-1])
-        if (l + 1 < self.numlines):
-            self.list.selection_clear()
-            self.list.selection_set(l + 1)
-        else:
-            self.y_scrollbar_change("scroll", 1, "units")
+        self.y_move("scroll", 1, "units")
         return "break"
     
     def lineUp(self, event=None):
-        l = self.list.info_selection()
-        l = int(l[len(l)-1])
-        if (l > 0):
-            self.list.selection_clear()
-            self.list.selection_set(l - 1)
-        else:
-            self.y_scrollbar_change("scroll", -1, "units")
-            pass
+        self.y_move("scroll", -1, "units")
         return "break"
     
-    def y_scrollbar_change(self, a, b=None, c=None):
+    def y_move(self, a, b=None, c=None):
         if (a == "scroll"):
             if (c == "units"):
                 if (int(b) < 0):
@@ -1142,16 +1401,59 @@ class RadioConfig:
 
     pass
 
+class RadioSel:
+    def __init__(self, parent, radio):
+        self.parent = parent
+        self.radio = radio
+        return
+
+    def selected(self):
+        self.parent.newradio(self.radio)
+        return
+    pass
+
+class IsOk(Tix.DialogShell):
+    def __init__(self, text, command):
+        Tix.DialogShell.__init__(self, name="quit OK?")
+        w = Tix.Label(self, text=text)
+        w.pack(side=Tix.TOP, fill=Tix.BOTH, expand=1, )
+        self.ok = Tix.Button(self, text='Ok', command=self.ok);
+        self.ok.pack(side=Tix.LEFT, expand=1, padx=10, pady=8)
+        self.cancel = Tix.Button(self, text='Cancel', command=self.cancel);
+        self.cancel.pack(side=Tix.LEFT, expand=1, padx=10, pady=8)
+        self.popup()
+        self.command = command
+        return
+
+    def ok(self):
+        self.popdown()
+        self.command(True)
+        return
+
+    def cancel(self):
+        self.destroy()
+        self.command(False)
+        return
+
+    pass
 
 class GUI(Tix.Frame):
     def __init__(self, filename=None, master=None):
         Tix.Frame.__init__(self, master)
         self.top = master
         self.pack(fill=Tix.BOTH, expand=1);
+        master.geometry('800x400')
         self.createWidgets();
+        self.filedialog = Tix.FileSelectDialog(master,
+                                               command=self.open_select)
+        self.saveasdialog = Tix.FileSelectDialog(master,
+                                                 command=self.saveas_select)
         if (filename):
             self.openfile(filename)
             pass
+        else:
+            master.wm_title("yaesu edit")
+            self.fd = None
         pass
 
     def openfile(self, filename):
@@ -1167,6 +1469,7 @@ class GUI(Tix.Frame):
                                       file=sys.stdout)
             print str(e)
             return
+        self.master.wm_title(filename + " (" + self.radioname + ")")
         for t in self.radio.toplevel:
             t.tab = self.tabs.add(t.name.lower(), label=t.name)
             t.setup(t.tab)
@@ -1174,15 +1477,53 @@ class GUI(Tix.Frame):
         pass
     
     def quitcmd(self, event=None):
-        self.quit();
+        if (not self.fd or not self.fd.changed):
+            self.quit()
+            return
+        IsOk("Unchanged data has not been written, do you"
+             + " really want to quit?", self.quitok)
         pass
+
+    def quitok(self, val):
+        if (val):
+            self.quit();
+            pass
+        return
 
     def opencmd(self, event=None):
-        print "Open!\n"
+        self.filedialog.popup()
         pass
 
+    def open_select(self, filename):
+        if (not filename):
+            return
+        if (not self.fd):
+            self.openfile(filename)
+        else:
+            root = Tix.Tk()
+            GUI(filename, root)
+            pass
+        return
+    
+    def saveascmd(self, event=None):
+        if (not self.fd):
+            return
+        self.saveasdialog.popup()
+        pass
+
+    def saveas_select(self, filename):
+        if (not filename):
+            return
+        self.fd.write(filename)
+        return
+    
     def savecmd(self, event=None):
         self.fd.write()
+        pass
+
+    def newradio(self, r):
+        filename = radiodir + "/" + r.name + ".empty"
+        self.open_select(filename)
         pass
 
     def createWidgets(self):
@@ -1193,12 +1534,21 @@ class GUI(Tix.Frame):
                                          underline=0, takefocus=0)
         self.filemenu = Tix.Menu(self.filebutton, tearoff=0)
         self.filebutton["menu"] = self.filemenu
+        m = Tix.Menu(self.filemenu)
+        for r in radios:
+            ns = RadioSel(self, r)
+            m.add_command(label=r.name,
+                          command = lambda ns=ns: ns.selected())
+            pass
+        self.filemenu.add_cascade(label="New", underline=1, menu=m)
         self.filemenu.add_command(label="Open", underline=1,
                                   accelerator="Ctrl+O",
                                   command = lambda self=self: self.opencmd() )
         self.filemenu.add_command(label="Save", underline=1,
                                   accelerator="Ctrl+S",
                                   command = lambda self=self: self.savecmd() )
+        self.filemenu.add_command(label="Save As", underline=1,
+                                  command = lambda self=self: self.saveascmd())
         self.filemenu.add_command(label="Exit", underline=1,
                                   accelerator="Ctrl+Q",
                                   command = lambda self=self: self.quitcmd() )
@@ -1208,18 +1558,41 @@ class GUI(Tix.Frame):
         self.top.bind_all("<Control-s>", self.savecmd)
         self.filebutton.pack(side=Tix.LEFT)
 
-        self.editbutton = Tix.Menubutton(self.buttons, text="Edit",
-                                         underline=0, takefocus=0)
-        self.editmenu = Tix.Menu(self.editbutton, tearoff=0)
-        self.editbutton["menu"] = self.editmenu
-        self.editmenu.add_command(label="Preferences", underline=1,
-                                  command = lambda self=self: self.opencmd() )
-        self.editbutton.pack(side=Tix.LEFT)
+#         self.editbutton = Tix.Menubutton(self.buttons, text="Edit",
+#                                          underline=0, takefocus=0)
+#         self.editmenu = Tix.Menu(self.editbutton, tearoff=0)
+#         self.editbutton["menu"] = self.editmenu
+#         self.editmenu.add_command(label="Preferences", underline=1,
+#                                   command = lambda self=self: self.opencmd() )
+#         self.editbutton.pack(side=Tix.LEFT)
 
         self.tabs = Tix.NoteBook(self);
         self.tabs.pack(side=Tix.TOP, fill=Tix.BOTH, expand=1)
 
         pass
+
+progname = sys.argv[0]
+
+while len(sys.argv) > 1:
+    if (sys.argv[1][0] != '-'):
+        break
+    if (sys.argv[1] == '--'):
+        del sys.argv[0]
+        break
+    if (sys.argv[1] == '--configdir' or sys.argv[1] == '-f'):
+        if (len(sys.argv[1]) < 2):
+            print "No configuration directory given with " + sys.argv[1]
+            sys.exit(1)
+            pass
+        del sys.argv[1]
+        radiodir = sys.argv[1]
+        del sys.argv[1]
+        pass
+    else:
+        print "Unknown option: " + sys.argv[1]
+        sys.exit(1)
+        pass
+    pass
 
 if (len(sys.argv) > 1):
     filename = sys.argv[1]
@@ -1227,6 +1600,9 @@ else:
     filename = None
     pass
 
+read_radios()
+
 root = Tix.Tk();
 gui = GUI(filename, root);
 gui.mainloop();
+sys.exit(0)

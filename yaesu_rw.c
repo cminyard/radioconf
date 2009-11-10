@@ -14,8 +14,8 @@
 #include <stdarg.h>
 #include <ctype.h>
 
-#ifndef YAESU_RW_CONFIGFILE
-#define YAESU_RW_CONFIGFILE "/etc/yaesu_rw.conf"
+#ifndef YAESU_RW_CONFIGDIR
+#define YAESU_RW_CONFIGDIR "/etc/yaesuconf"
 #endif
 
 char *version = PACKAGE_VERSION;
@@ -34,6 +34,7 @@ static struct option long_options[] = {
     {"send_echo",0, NULL, 'y'},
     {"checksum", 0, NULL, 'c'},
     {"nochecksum",0, NULL, 'g'},
+    {"configdir",0, NULL, 'f'},
     {NULL,	 0, NULL, 0}
 };
 char *progname = NULL;
@@ -984,13 +985,22 @@ strtoul_nooctal(char *str, char **ep)
 }
 
 int
-read_yaesu_config(char *configfile)
+read_yaesu_config(char *configdir)
 {
     FILE *f;
     int in_radio = 0;
     unsigned int linenum = 0;;
     struct yaesu_conf *r = NULL;
     char *ep;
+    static const char *fname = "radios";
+    char *configfile = malloc(strlen(configdir) + strlen(fname) + 2);
+
+    if (!configfile)
+      return ENOMEM;
+
+    strcpy(configfile, configdir);
+    strcat(configfile, "/");
+    strcat(configfile, fname);
 
     f = fopen(configfile, "r");
     if (!f) {
@@ -1292,8 +1302,8 @@ usage(void)
     printf("  -y, --send_echo - Echo all received characters.\n");
     printf("  -c, --checksum - Send/expect a checksum at the end\n");
     printf("  -g, --nochecksum - Do not send/expect a checksum at the end\n");
-    printf("  -f, --configfile <file> - Use the given file for the radio"
-	   " configuration instead\nof the default %s\n", YAESU_RW_CONFIGFILE);
+    printf("  -f, --configdir <file> - Use the given directory for the radio"
+	   " configuration instead\nof the default %s\n", YAESU_RW_CONFIGDIR);
 }
 
 int
@@ -1308,7 +1318,7 @@ main(int argc, char *argv[])
     char dummy;
 
     char *devicename = "/dev/ttyS0";
-    char *configfile = YAESU_RW_CONFIGFILE;
+    char *configdir = YAESU_RW_CONFIGDIR;
     char *filename = NULL;
     int ignerr = 0;
     int dotermios = 1;
@@ -1339,7 +1349,7 @@ main(int argc, char *argv[])
 		break;
 
 	    case 'f':
-		configfile = optarg;
+		configdir = optarg;
 		break;
 
 	    case 'i':
@@ -1403,7 +1413,7 @@ main(int argc, char *argv[])
     }
     filename = argv[optind];
 
-    read_yaesu_config(configfile);
+    read_yaesu_config(configdir);
  
     if ((do_read + do_write) > 1) {
 	fprintf(stderr, "Can only specify one of -r and -w.\n");
