@@ -225,17 +225,15 @@ class RadioFileData:
             pass
         pass
 
-    def get_bytes(self, addr, len):
-        return self.data[addr:addr+len]
+    def get_bytes(self, addr, num):
+        byte_pos = addr.entries[0][0] + (addr.entries[0][3] * num / 8)
+        numbytes = addr.entries[0][2] / 8
+        return self.data[byte_pos:byte_pos+numbytes]
 
-    def set_bytes(self, v, addr):
+    def set_byte(self, v, addr, num, offset):
+        byte_pos = addr.entries[0][0] + (addr.entries[0][3] * num / 8)
         self.changed = True
-        self.data[addr:addr+len(v)] = v
-        pass
-
-    def set_byte(self, v, addr):
-        self.changed = True
-        self.data[addr] = v
+        self.data[byte_pos + offset] = v
         pass
 
     def get_string(self, addr, num):
@@ -323,8 +321,12 @@ class BuiltIn:
         pass
 
     def getWidget(self, parent, t, num):
-        w = Tix.Label(parent)
-        return w
+        h = Handler(None, None)
+        h.widget = Tix.Label(parent)
+        return h
+
+    def renumWidget(self, h, num):
+        pass
 
     def checkAddrOk(self, c, addr):
         return True
@@ -340,7 +342,7 @@ class BICheckBox(BuiltIn):
         v = t.data.get_bits(t.addr, num)
         h = Handler(self.set, t)
         w = Tix.Checkbutton(parent, command=h.set)
-        h.BIrownum = num
+        h.num = num
         h.widget = w
         h.v = v
         if (v):
@@ -348,8 +350,19 @@ class BICheckBox(BuiltIn):
         else:
             w.deselect()
             pass
-        return w
+        return h
 
+    def renumWidget(self, h, num):
+        h.num = num
+        t = h.data
+        v = t.data.get_bits(t.addr, num)
+        if (v):
+            h.widget.select()
+        else:
+            h.widget.deselect()
+            pass
+        pass
+        
     def set(self, h):
         w = h.widget
         t = h.data
@@ -358,7 +371,7 @@ class BICheckBox(BuiltIn):
         else:
             h.v = 1
             pass
-        t.data.set_bits(h.v, t.addr, h.BIrownum)
+        t.data.set_bits(h.v, t.addr, h.num)
         pass
 
 # These are internal Yaesu string values for some radios.
@@ -389,10 +402,7 @@ class BIYaesuString(BuiltIn):
         return True
 
     def get_yaesu_string(self, data, addr, num):
-        byte_off = addr.entries[0][0] + (addr.entries[0][3] * num / 8)
-        numbytes = addr.entries[0][2] / 8
-
-        s = data.get_bytes(byte_off, numbytes)
+        s = data.get_bytes(addr, num)
         for i in range(0, len(s)):
             if (s[i] > 0x3f):
                 s[i] = ' '
@@ -404,9 +414,7 @@ class BIYaesuString(BuiltIn):
         return s
 
     def set_yaesu_string(self, v, data, addr, num):
-        byte_off = addr.entries[0][0] + (addr.entries[0][3] * num / 8)
         numbytes = addr.entries[0][2] / 8
-
         inlen = len(v)
         for i in range(0, numbytes):
             if (i >= inlen):
@@ -417,8 +425,7 @@ class BIYaesuString(BuiltIn):
                     p = 0x24
                     pass
                 pass
-            data.set_byte(p, byte_off)
-            byte_off += 1
+            data.set_byte(p, addr, num, i)
             pass
         pass
 
@@ -426,14 +433,22 @@ class BIYaesuString(BuiltIn):
         v = self.get_yaesu_string(t.data, t.addr, num)
         h = Handler(self.set, t)
         h.v = v
-        h.BIrownum = num
+        h.num = num
         w = Tix.Entry(parent)
         h.widget = w
         w.bind("<KeyRelease>", h.set_event)
         w.delete(0, 'end')
         w.insert(0, v)
-        return w
+        return h
 
+    def renumWidget(self, h, num):
+        h.num = num
+        t = h.data
+        v = self.get_yaesu_string(t.data, t.addr, num)
+        h.widget.delete(0, 'end')
+        h.widget.insert(0, v)
+        pass
+        
     def set(self, h, event):
         w = h.widget
         t = h.data
@@ -441,8 +456,8 @@ class BIYaesuString(BuiltIn):
         if (v == h.v):
             return
         cursor = w.index("insert")
-        self.set_yaesu_string(v, t.data, t.addr, h.BIrownum)
-        v = self.get_yaesu_string(t.data, t.addr, h.BIrownum)
+        self.set_yaesu_string(v, t.data, t.addr, h.num)
+        v = self.get_yaesu_string(t.data, t.addr, h.num)
         w.delete(0, 'end')
         w.insert(0, v)
         w.icursor(cursor)
@@ -450,13 +465,13 @@ class BIYaesuString(BuiltIn):
         pass
     pass
 
-# Yaesu BCD format for frequency, see FT60-layout.txt
 bcd_digits = "0123456789"
 def convFromBCD(v):
     if (v >= 10) or (v < 0):
         return '0'
     return bcd_digits[v]
 
+# Yaesu BCD format for frequency, see FT60-layout.txt
 class BIBCDFreq(BuiltIn):
     def __init__(self):
         BuiltIn.__init__(self, "BCDFreq")
@@ -481,15 +496,13 @@ class BIBCDFreq(BuiltIn):
         return True
 
     def get_bcd(self, data, addr, num):
-        byte_off = addr.entries[0][0] + (addr.entries[0][3] * num / 8)
-        numbytes = addr.entries[0][2] / 8
-
-        s = data.get_bytes(byte_off, numbytes)
+        s = data.get_bytes(addr, num)
         v = [ ]
         i = 0
         add5 = s[i] >> 4
         v.append(convFromBCD(s[i] & 0xf))
         i += 1
+        numbytes = 3
         while (i < numbytes):
             v.append(convFromBCD(s[i] >> 4))
             v.append(convFromBCD(s[i] & 0xf))
@@ -506,7 +519,6 @@ class BIBCDFreq(BuiltIn):
 
     # Yaesu BCD format for frequency, see FT60-layout.txt
     def set_bcd(self, v, data, addr, num):
-        byte_off = addr.entries[0][0] + (addr[0][3] * num / 8)
         numbytes = addr.entries[0][2] / 8
 
         vlen = len(v)
@@ -517,6 +529,7 @@ class BIBCDFreq(BuiltIn):
             d = 0
             pass
         second = True
+        i = 0
         for c in v[0:vlen - 1]:
             if c == '.':
                 continue
@@ -524,8 +537,8 @@ class BIBCDFreq(BuiltIn):
                 d <<= 4
                 d |= bcd_digits.find(c)
                 second = False
-                data.set_byte(d, byte_off)
-                byte_off += 1
+                data.set_byte(d, addr, num, i)
+                i += 1
                 pass
             else:
                 d = bcd_digits.find(c)
@@ -539,12 +552,20 @@ class BIBCDFreq(BuiltIn):
         h = Handler(self.set, t)
         w = Tix.Entry(parent)
         h.widget = w
-        h.BIrownum = num
+        h.num = num
         w.bind("<Key>", h.set_event)
         w.delete(0, 'end')
         w.insert(0, v)
-        return w
+        return h
 
+    def renumWidget(self, h, num):
+        h.num = num
+        t = h.data
+        v = self.get_bcd(t.data, t.addr, num)
+        h.widget.delete(0, 'end')
+        h.widget.insert(0, v)
+        pass
+        
     def set(self, h, event):
         # FIXME - handling pasting
         if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
@@ -581,7 +602,7 @@ class BIBCDFreq(BuiltIn):
         if (s[cursor] != c):
             w.delete(cursor)
             w.insert(cursor, c)
-            self.set_bcd(w.get(), t.data, t.addr, h.BIrownum)
+            self.set_bcd(w.get(), t.data, t.addr, h.num)
             pass
         if (cursor == 2):
             w.icursor(cursor + 2) # Skip over the '.'
@@ -592,11 +613,8 @@ class BIBCDFreq(BuiltIn):
     pass
 
 class MenuAndButton(Tix.Menubutton):
-    def __init__(self, parent, data, addr, num):
+    def __init__(self, parent):
         Tix.Menubutton.__init__(self, parent)
-        self.data = data
-        self.addr = addr
-        self.num = num
         self.menu = Tix.Menu(self)
         self['menu'] = self.menu
         pass
@@ -626,24 +644,37 @@ class Enum(BuiltIn):
         pass
 
     def getWidget(self, parent, t, num):
-        self.button = MenuAndButton(parent, t.data, t.addr, num)
+        toph = Handler(None, None)
+        toph.widget = MenuAndButton(parent)
+        toph.data = t.data
+        toph.addr = t.addr
+        toph.num = num
         v = t.data.get_bits(t.addr, num)
         for e in self.entries:
             h = Handler(self.set, e)
-            h.BIrownum = num
-            self.button.add_command(e[1], h.set)
+            h.toph = toph
+            toph.widget.add_command(e[1], h.set)
             if (v == e[0]):
-                self.button.set_label(e[1])
+                toph.widget.set_label(e[1])
                 pass
             pass
-        return self.button
+        return toph
 
     def set(self, h):
         e = h.data
-        self.button.set_label(e[1])
-        self.button.data.set_bits(e[0], self.button.addr, self.button.num)
+        h.toph.widget.set_label(e[1])
+        h.toph.widget.data.set_bits(e[0], h.toph.addr, h.toph.num)
         pass
 
+    def renumWidget(self, toph, num):
+        toph.num = num
+        v = toph.data.get_bits(toph.addr, num)
+        for e in self.entries:
+            if (v == e[0]):
+                toph.widget.set_label(e[1])
+                break
+            pass
+        pass
     pass
 
 
@@ -657,6 +688,9 @@ class TabEntry:
 
     def getWidget(self, parent, num):
         return self.type.getWidget(parent, self, num)
+
+    def renumWidget(self, h, num):
+        self.type.renumWidget(h, num)
     
     pass
 
@@ -675,6 +709,9 @@ class List(TabBase):
     def __init__(self, name, length):
         TabBase.__init__(self, name)
         self.length = length
+        self.numlines = 0
+        self.firstline = 0
+        self.widgetlists = []
         pass
 
     def add(self, c, v):
@@ -687,34 +724,194 @@ class List(TabBase):
         self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]))
         pass
 
+    def bindWidget(self, widget):
+        widget.bind("<MouseWheel>", self.Wheel)
+        widget.bind("<Down>", self.lineDown)
+        widget.bind("<Up>", self.lineUp)
+        widget.bind("<Next>", self.pageDown)
+        widget.bind("<Prior>", self.pageUp)
+        if (self.winsys == "x11"):
+            widget.bind("<Button-4>", self.ButtonUp)
+            widget.bind("<Button-5>", self.ButtonDown)
+            pass
+        pass
+        
     def setup(self, top):
-        self.list = Tix.ScrolledHList(top, scrollbar="auto",
-                                      options="hlist.header 1"
-                                      + " hlist.columns "
-                                      + str(len(self.entries) + 1)
-                                      + " hlist.itemtype text"
-                                      + " hlist.selectForeground black"
-                                      + " hlist.selectBackground beige")
+        try:
+            self.winsys = top.tk.eval("return [ tk windowingsystem ]")
+            pass
+        except:
+            # Assume x11
+            self.winsys = "x11"
+            pass
+
+        self.xscroll = Tix.Scrollbar(top, orient=Tix.HORIZONTAL)
+        self.yscroll = Tix.Scrollbar(top, orient=Tix.VERTICAL)
+        self.list = Tix.HList(top, header=1, columns=len(self.entries) + 1,
+                              itemtype="text", selectforeground="black",
+                              selectbackground="beige",
+                              yscrollcommand=self.y_scrolled,
+                              xscrollcommand=self.xscroll.set)
+        self.xscroll['command'] = self.list.xview
+        self.yscroll['command'] = self.y_scrollbar_change
+        self.xscroll.pack(side=Tix.BOTTOM, fill=Tix.X)
+        self.yscroll.pack(side=Tix.RIGHT, fill=Tix.Y)
+
+        self.bindWidget(self.list)
+        self.bindWidget(self.xscroll)
+        self.bindWidget(self.yscroll)
+        
         i = 1
         for e in self.entries:
             e.column = i
-            self.list.hlist.header_create(i, text=e.name)
-            self.list.hlist.column_width(i, "")
+            self.list.header_create(i, text=e.name)
+            self.list.column_width(i, "")
             i += 1
             pass
 
-        for i in range(0, self.length):
-            print ("Adding line " + str(i))
-            self.list.hlist.add(i, text=str(i+1))
-            for e in self.entries:
-                w = e.getWidget(self.list.hlist, i)
-                self.list.hlist.item_create(i, e.column,
-                                            itemtype=Tix.WINDOW, window=w)
-                pass
-            pass
-        
         self.list.pack(side=Tix.LEFT, fill=Tix.BOTH, expand=1)
         pass
+
+    def Wheel(self, event):
+        self.list.yview("scroll", -(event.delta / 20), "units")
+        return
+    
+    def ButtonUp(self, event):
+        event.delta = 120
+        self.Wheel(event);
+        return
+    
+    def ButtonDown(self, event):
+        event.delta = -120
+        self.Wheel(event);
+        return
+    
+    def y_scrolled(self, a, b):
+        b = float(b)
+        if (self.numlines < self.length) and (b >= 1.0):
+            self.add_one_line()
+        elif (self.numlines > 0) and (b < (1.0 - (1.0 / float(self.numlines)))):
+            self.del_one_line()
+        else:
+            pct = float(self.numlines) / float(self.length)
+            first = float(self.firstline) / float(self.length)
+            self.yscroll.set(first, first + pct)
+            pass
+        pass
+
+    def pageDown(self, event=None):
+        self.y_scrollbar_change("scroll", 1, "pages")
+        return "break"
+    
+    def pageUp(self, event=None):
+        self.y_scrollbar_change("scroll", -1, "pages")
+        return "break"
+    
+    def lineDown(self, event=None):
+        l = self.list.info_selection()
+        l = int(l[len(l)-1])
+        if (l + 1 < self.numlines):
+            self.list.selection_clear()
+            self.list.selection_set(l + 1)
+        else:
+            self.y_scrollbar_change("scroll", 1, "units")
+        return "break"
+    
+    def lineUp(self, event=None):
+        l = self.list.info_selection()
+        l = int(l[len(l)-1])
+        if (l > 0):
+            self.list.selection_clear()
+            self.list.selection_set(l - 1)
+        else:
+            self.y_scrollbar_change("scroll", -1, "units")
+            pass
+        return "break"
+    
+    def y_scrollbar_change(self, a, b=None, c=None):
+        if (a == "scroll"):
+            if (c == "units"):
+                if (int(b) < 0):
+                    if (self.firstline > 0):
+                        self.firstline -= 1
+                        self.redisplay()
+                        pass
+                    pass
+                else:
+                    if ((self.firstline + self.numlines) < self.length):
+                        self.firstline += 1
+                        self.redisplay()
+                        pass
+                    pass
+                pass
+            elif (c == "pages"):
+                if (int(b) < 0):
+                    if (self.firstline > (self.numlines - 1)):
+                        self.firstline -= self.numlines - 1
+                        self.redisplay()
+                    elif (self.firstline > 0):
+                        self.firstline = 0
+                        self.redisplay()
+                        pass
+                    pass
+                else:
+                    if (self.firstline + (2 * self.numlines) - 1 <= self.length):
+                        self.firstline += self.numlines - 1
+                        self.redisplay()
+                    elif (self.firstline + self.numlines <= self.length):
+                        self.firstline = self.length - self.numlines
+                        self.redisplay()
+                        pass
+                    pass
+                pass
+        elif (a == "moveto"):
+            pct = float(b)
+            fl = int(pct * float(self.length))
+            if ((fl != self.firstline)
+                and (fl >= 0)
+                and ((fl + self.numlines) <= self.length)):
+                self.firstline = fl
+                self.redisplay()
+                pass
+            pass
+        pass
+
+    def redisplay(self):
+        i = 0
+        for wl in self.widgetlists:
+            self.list.item_configure(i, 0, text=str(i + self.firstline + 1))
+            j = 0
+            for e in self.entries:
+                e.renumWidget(wl[j], i + self.firstline)
+                j += 1
+            i += 1
+            pass
+        pass
+    
+    def add_one_line(self):
+        widgets = []
+        pos = self.firstline + self.numlines
+        self.list.add(self.numlines, text=str(pos + 1))
+        for e in self.entries:
+            h = e.getWidget(self.list, pos)
+            self.bindWidget(h.widget)
+            self.list.item_create(self.numlines, e.column,
+                                  itemtype=Tix.WINDOW,
+                                  window=h.widget)
+            widgets.append(h)
+            pass
+        self.widgetlists.append(widgets)
+        self.numlines += 1
+        pass
+        
+    def del_one_line(self):
+        if (self.numlines < 0):
+            return
+        self.numlines -= 1
+        del self.widgetlists[self.numlines]
+        self.list.delete_entry(self.numlines)
+        pass
+    
     pass
 
 class Tab(TabBase):
@@ -749,14 +946,16 @@ class Tab(TabBase):
         for e in self.entries:
             e.key = i
             self.list.hlist.add(i, text=e.name)
-            w = e.getWidget(self.list.hlist, 0)
-            self.list.hlist.item_create(i, 1, itemtype=Tix.WINDOW, window=w)
+            h = e.getWidget(self.list.hlist, 0)
+            self.list.hlist.item_create(i, 1, itemtype=Tix.WINDOW,
+                                        window=h.widget)
             i += 1
             pass
 
         self.list.pack(side=Tix.LEFT, fill=Tix.BOTH, expand=1)
 
         pass
+
     pass
 
 quote_hash = {"n" : "\n",

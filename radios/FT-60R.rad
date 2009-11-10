@@ -186,7 +186,7 @@ endenum
 enum ToneMode_e
 	0 "None"
 	1 "Tone"
-	2 "Tone squelch"
+	2 "T-SQL"
 	3 "Rev CTCSS"
 	4 "DCS"
 	5 "D Code"
@@ -223,6 +223,7 @@ enum XmitPower_e
 	2 "High"
 endenum
 
+# FIXME - this needs to be set as a BCD value.
 enum OffsetFreq_e
 	0x02 "100kHz"
 	0x0a "500kHz"
@@ -241,7 +242,7 @@ endenum
 # Empty
 #
 # Address is in the form:
-#  (<byte address>,<bit offset>,<bit size>[:<byte address>,<bit offset>,<bit size>[:...]]
+#  (<byte address>,<bit offset>,<bit size>[,<offset>][:<byte address>,<bit offset>,<bit size>[,<offset>][:...]]
 #
 
 
@@ -276,7 +277,7 @@ enum Skip_e
 	0x2 "P Scan"
 endenum
 
-list Memories 10
+list Memories 1000
 #	Name			Address			type
 	"Enable"		(0x248,7,1,128)		CheckBox
 	"Label\nEnable"		(0x470e,7,1,64)		CheckBox
