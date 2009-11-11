@@ -1,0 +1,94 @@
+.TH yaesu_edit 1 11/02/09 Yaesu "Yaesu radio config editing program"
+
+.SH NAME
+yaesu_config \- A program to edit clone information for Yaesu radios
+
+.SH SYNOPSIS
+.B yaesu_edit 
+[\fIoptions\fR]
+[<filename> ]
+
+.SH DESCRIPTION
+The
+.BR yaesu_edit
+program allows a user to edit cloned data from Yaesu radios.  This
+allows a user to more easily configure the radio, as the limited
+user interfaces on radios often make them difficult to program.
+
+a program exists to modify the information, then the information can be
+extracted from the radio using yaesu_rw, modified, then written back
+using yaesu_rw.
+
+This may not support all Yaesu radios.
+
+.SH OPTIONS
+.TP
+\fB\-f\fR, \fB\-\-configdir\fR \fIdirectory\fR
+Use the given directory for the radio configuration instead of the default
+location.
+
+.SH "USAGE"
+To use this program, you generally transfer the configuration from a
+radio to the computer using
+.B yaesu_rw
+then edit the file with:
+.IP
+yaesu_edit radio_file
+.PP
+and make any changes you desire.  Then you may write the data back
+using
+.B yaesu_rw.
+
+To restore your data, again put the radio in clone mode, do
+.IP
+yaesu_rw -h -w radio_file
+.PP
+This will put a prompt up.  Put your radio into clone RX mode, then press
+enter on the screen to start the transmission to the radio.
+
+.SH "NOTES"
+It's pretty straightforward to use this.  A few notes:
+
+For passwords, DTMF digits, and other hex strings, a space character
+marks the end of the string, at least in some radios.  So don't put
+space in these, except at the end.
+
+.SH "ADDING YOUR RADIO"
+The first thing to do is add the radio to the radios file as described
+in the 
+.B yaesu_rw
+man page.  Once you can transfer files back and forth, then you can
+start decoding your radio.  Basically, you change something, transfer the
+configuration, then use hexdump and diff or something similar to see what
+changed.  This sucks, but unless you can get the info from Yaesu, you
+are stuck with this method.
+.P
+Note that if you have ADMS, you can use it to change things and transfer
+the file over as described in the
+.b yaesu_rw
+man page.  This is a lot easier than using the radio, generally.
+.P
+You should record your information in a layout file like the ones that
+are already in the source configuration.
+.P
+Once you have figured out the layout, you can work on the radio files.  The
+.b RAD_FILES
+file in the configuration directory describes the file format.
+.P
+Note that you might have to add some built-in types.
+.P
+Will this work with your radio?  I don't know how.  I've made it work with
+the ones I have.  See the FAQ for more details.
+
+.SH "SEE ALSO"
+.B yaesu_rw.1
+
+.BR /etc/yaesuconf/RAD_FILES
+has the description of the configuration file.
+
+.SH "KNOWN PROBLEMS"
+None
+
+.SH AUTHOR
+.PP
+Corey Minyard <minyard@acm.org>, AE5KM
