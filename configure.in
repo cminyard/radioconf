@@ -3,7 +3,8 @@ AC_CONFIG_SRCDIR(yaesu_rw.c)
 AM_INIT_AUTOMAKE
 AC_PROG_CC
 AC_STDC_HEADERS
-YAESU_CONFIGDIR="$sysconfdir/yaesuconf"
+YAESU_CONFIGDIR=`eval echo "$sysconfdir/yaesuconf"`
+echo "$YAESU_CONFIGDIR"
 AC_SUBST(YAESU_CONFIGDIR)
 AC_OUTPUT(Makefile)
 AC_OUTPUT(yaesuconf/Makefile)

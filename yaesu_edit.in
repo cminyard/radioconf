@@ -4,7 +4,7 @@ import sys
 import traceback
 import Tix
 
-radiodir = @YAESU_CONFIGDIR@
+radiodir = "@YAESU_CONFIGDIR@"
 
 class ParseException(Exception):
     def __init__(self, filename, lineno, err):
