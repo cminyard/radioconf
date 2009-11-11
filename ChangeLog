@@ -1,3 +1,8 @@
+2009-11-10  Corey Minyard <minyard@acm.org>
+
+	* Tons of rework on everything, got the first cut at an
+	editor.  Release version 0.2.
+
 2009-11-03  Corey Minyard <minyard@acm.org>
 
 	* initial release.
