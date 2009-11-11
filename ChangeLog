@@ -1,3 +1,8 @@
+2009-11-11  Corey Minyard <minyard@acm.org>
+
+	* Added licenses to the files, fixed a few problems for the
+	857 cloning, started work on the 857 description file.
+
 2009-11-10  Corey Minyard <minyard@acm.org>
 
 	* Tons of rework on everything, got the first cut at an
