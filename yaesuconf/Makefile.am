@@ -1,5 +1,5 @@
 
-EXTRA_DIST = RAD_FILES radios FT-60R.rad FT-60R.empty
+EXTRA_DIST = RAD_FILES radios FT-60R.rad FT-60R.empty FT-857D.rad
 
 install-data-am:
 	echo "$(mkinstalldirs) \"$(DESTDIR)$(YAESU_CONFIGDIR)\""
