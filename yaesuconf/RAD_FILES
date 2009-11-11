@@ -69,9 +69,6 @@ BCDFreq - BCD representation of a frequency, this is a 3-byte values
 	as used in the FT-60R and probably others.  Must start on a
 	byte offset and by a byte multiple length.
 
-IntFreq - Integer representation of a frequency, as used in the
-	FT-857D
-
 CheckBox - A true/false value, the address specified should generally
 	 be one bit.
 
@@ -85,6 +82,29 @@ String - An ASCII string (though it's limited to standard characters).
 HexDigits - Unpacked hex digits (one per byte) with 0xff specifying the
 	 end of the string if it's shorter than the length.
          Must start on a byte offset and by a byte multiple length.
+
+Fixed(pre,suf,inc,units[,options]) - This is a fixed-point decimal number
+	represented as bits.  "pre" is the number of digits before the
+	decimal, "suf" is the number of digits after the decimal,
+	inc is the amount each single change in the bits changes
+	the number, and units is a string displayed after the number.
+	For instance, if you have a number like nnn.nnMHz and it goes
+	up by .05MHz increments, you would use Fixed(3,2,5,MHz).  In
+	the bits, 0 would be 000.05MHz, 1 would be 000.10MHz, 100 would be
+	005.00MHz, etc.  If inc is not zero and the user enters an
+	invalid value, it will be rounded to a proper value.
+
+	The units can be anything, but MHz, kHz, and Hz have special
+	meanings.  With these units, if a cut/paste occurs between
+	two radio types, the conversion will occur correctly and
+	automatically.
+
+	options are not required, but may exist.  They are separated by
+	":" and are:
+	sd=n - Sometimes it's useful to show a second decimal place, like
+		on the FT-857 display.  This is the location of the second
+		decimal place.  So, for a 9-digit frequency display,
+		Fixed(3,6,1,MHz,sd=6) will display NNN.NNN.NNN.
 
 Empty - Used as an empty placeholder in lists, to display a string
       in the heading with nothing under it.
@@ -148,7 +168,7 @@ DTMF digit sets, etc.  They use the same format as tabls, except they
 also take a length:
 
 list <name> <length>
-    <string>	<address>	<type>
+    <string>	<address>	<type> [<options>]
     .
     .
 endlist
@@ -156,6 +176,19 @@ endlist
 The length is a number that specifies how many entries are in the list.
 In this, the offset should be specified and gives the number of bits between
 each item of the same type.
+
+List entries may take options at the end.  Options are:
+
+tie=<name> - name is the name of another entry in the same
+  list.  If you modify that entry, any tied entry will be updated.  That
+  way, if two entries represent the same data two different ways, it is
+  possible for updating one to automatically redisplay the other.  Note
+  that if you need quotes, the entire entry must be in quotes, including the
+  "tie=" part.
+
+cutpaste=[true|false] - If cutpaste is set to false, the particular item
+  will not be cut or pasted.  Useful for items that represent the same
+  data, no need to send both of them over.  The default is true.
 
 Cutting and Pasting
 -------------------

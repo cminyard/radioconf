@@ -1,3 +1,22 @@
+/*
+ *  yaesu_rw - Interface to Yaesu radio clone interfaces
+ *  Copyright (C) 2009  Corey Minyard
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *    Boston, MA  02110-1301  USA
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -158,6 +177,7 @@ max_blocksize(struct yaesu_data *d)
 	    max = b->block_len;
 	if (!b->nblocks)
 	    break;
+	b++;
     }
     return max;
 }
@@ -1555,17 +1575,15 @@ main(int argc, char *argv[])
 	    goto out_err;
 	}
 	add_yaesu_block(d, block, len);
-	yaesu_next_block_len(d);
 	    
 	while (d->data_count < d->expect_len) {
 	    len = fread(block, 1, d->block_len, f);
 	    if (len != d->block_len) {
-		fprintf(stderr, "Not enough data in file\n");
+		fprintf(stderr, "Not enough data in file: %d\n",len);
 		goto out_err;
 	    }
 
 	    add_yaesu_block(d, block, len);
-	    yaesu_next_block_len(d);
 	}
 	len = fread(block, 1, 1, f);
 	if (len == 1) {

@@ -6,6 +6,4 @@ AC_STDC_HEADERS
 YAESU_CONFIGDIR=`eval echo "$sysconfdir/yaesuconf"`
 echo "$YAESU_CONFIGDIR"
 AC_SUBST(YAESU_CONFIGDIR)
-AC_OUTPUT(Makefile)
-AC_OUTPUT(yaesuconf/Makefile)
-AC_OUTPUT(yaesu_edit)
+AC_OUTPUT([Makefile yaesuconf/Makefile yaesu_edit.py])

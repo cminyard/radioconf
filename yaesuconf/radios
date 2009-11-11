@@ -56,7 +56,7 @@ radio FT-7800
 	checksum
 endradio
 
-radio FT-857
+radio FT-857D
 	headercmp 00 1f 06 25
 	headerlen 4
 	filesize  7587

@@ -1,10 +1,34 @@
 #!/usr/bin/env python
+#
+#    yaesu_edit - Edit yaesu clone files
+#    Copyright (C) 2009  Corey Minyard
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 51 Franklin Street, Fifth Floor,
+#      Boston, MA  02110-1301  USA
 
 import sys
 import traceback
 import Tix
 
 radiodir = "@YAESU_CONFIGDIR@"
+
+decimal_digits = "0123456789"
+
+# These are internal Yaesu string values for some radios, and a clean set
+# of characters to allow in general strings.
+ys_chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ !\"\\$#%'()*+,-;/|:<=>?@[&]^_"
 
 class ParseException(Exception):
     def __init__(self, filename, lineno, err):
@@ -212,7 +236,7 @@ class RadioFileData:
 
     # The get and set routine throw IndexError if out of range.
     
-    def get_bits(self, addr, num):
+    def get_bits_le(self, addr, num):
         v = 0
         for a in addr.entries:
             byte_off = a[0]
@@ -235,7 +259,7 @@ class RadioFileData:
             pass
         return v
 
-    def set_bits(self, vt, addr, num):
+    def set_bits_le(self, vt, addr, num):
         self.changed = True
         bitsleft = 0
         for a in addr.entries:
@@ -262,7 +286,7 @@ class RadioFileData:
                 continue
             mask = 0xff << bit_off
             x &= ~mask
-            self.data[byte_off] = (v << byte_off) & mask
+            self.data[byte_off] = x | ((v << bit_off) & mask)
             byte_off += 1
             v >>= bit_off
             numbits -= 8 - bit_off
@@ -277,6 +301,80 @@ class RadioFileData:
             x &= mask
             x |= v & ~mask;
             self.data[byte_off] = x
+            pass
+        pass
+
+    def get_bits(self, addr, num):
+        v = 0
+        for a in addr.entries:
+            byte_off = a[0]
+            bit_off = a[1] + a[3] * num
+            byte_off += bit_off / 8
+            bit_off %= 8
+            numbits = a[2]
+            v <<= numbits
+            
+            x = self.data[byte_off] >> bit_off
+            bitsleft = numbits - (8 - bit_off)
+            while (bitsleft >= 8):
+                byte_off += 1
+                x <<= 8
+                x |= self.data[byte_off]
+                bitsleft -= 8
+                pass
+            if (bitsleft > 0):
+                byte_off += 1
+                x <<= bitsleft
+                x |= self.data[byte_off] & ~(0xffffffff << bitsleft)
+                pass
+            v |= x & ~(0xffffffff << numbits)
+            pass
+        return v
+
+    def set_bits(self, vt, addr, num):
+        self.changed = True
+        bitsleft = 0
+        for a in addr.entries:
+            bitsleft += a[2]
+            pass
+        for a in addr.entries:
+            byte_off = a[0]
+            bit_off = a[1] + a[3] * num
+            byte_off += bit_off / 8
+            bit_off %= 8
+            numbits = a[2]
+            bitsleft -= numbits
+
+            v = vt >> bitsleft
+            v = v & ~(0xffffffff << numbits)
+        
+            x = self.data[byte_off]
+            if ((bit_off + numbits) <= 8):
+                # Special case, all in one byte
+                mask = (0xff >> (8 - numbits)) << bit_off
+                x &= ~mask
+                x |= (v << bit_off) & mask
+                self.data[byte_off] = x
+                continue
+            mask = 0xff << bit_off
+            x &= ~mask
+            self.data[byte_off] = x | ((v >> (numbits - (8 -bit_off))) & mask)
+            self.data[byte_off] &= 0xff
+            byte_off += 1
+            numbits -= 8 - bit_off
+            while (numbits >= 8):
+                self.data[byte_off] = (v >> (numbits - 8)) & 0xff
+                self.data[byte_off] &= 0xff
+                byte_off += 1
+                numbits -= 8
+                pass
+            if (numbits > 0):
+                mask = 0xff << numbits
+                x = self.data[byte_off]
+                x &= mask
+                x |= v & ~mask;
+                self.data[byte_off] = x & 0xff
+                pass
             pass
         pass
 
@@ -359,6 +457,7 @@ class Handler:
     def __init__(self, handler, data):
         self.handler = handler
         self.data = data
+        self.tielist = []
         pass
 
     def set(self):
@@ -379,6 +478,11 @@ class BuiltIn:
         self.altnames = []
         pass
 
+    def matchName(self, c, string):
+        if (self.name == string):
+            return self
+        return None
+
     def getWidget(self, parent, t, num):
         h = Handler(None, None)
         h.widget = Tix.Label(parent)
@@ -395,7 +499,316 @@ class BuiltIn:
     
     def setValue(self, v, data, addr, num):
         pass
-    
+
+    # Called when the user modifies a value.  Not required for setValue
+    # because that does a full redisplay.  Causes any tied values to be
+    # redisplayed.
+    def modified(self, h):
+        for i in h.tielist:
+            i[1].renumWidget(i[0], i[0].num)
+            pass
+        pass
+    pass
+
+class BIString(BuiltIn):
+    def __init__(self):
+        BuiltIn.__init__(self, "String")
+        pass
+
+    def checkAddrOk(self, c, addr):
+        if (len(addr.entries) != 1):
+            raise ParseException(c.filename, c.lineno,
+                                 "String formats only support one"
+                                + " location field")
+        if (addr.entries[0][1] != 0):
+            raise ParseException(c.filename, c.lineno,
+                                 "String formats must have a zero bit"
+                                 + " offset")
+        if ((addr.entries[0][2] % 8) != 0):
+            raise ParseException(c.filename, c.lineno,
+                                 "String formats must be a"
+                                 + " byte-multiple size")
+        if ((addr.entries[0][3] % 8) != 0):
+            raise ParseException(c.filename, c.lineno,
+                                 "String formats must have a"
+                                 + " byte-multiple offset")
+        return True
+
+    def get_string(self, data, addr, num):
+        s = data.get_bytes(addr, num)
+        for i in range(0, len(s)):
+            if (chr(s[i]) not in ys_chars):
+                s[i] = ' '
+            else:
+                s[i] = chr(s[i])
+                pass
+            pass
+        s = "".join(s)
+        return s
+
+    def set_string(self, v, data, addr, num, h):
+        numbytes = addr.entries[0][2] / 8
+        inlen = len(v)
+        for i in range(0, numbytes):
+            if (i >= inlen):
+                p = " "
+            else:
+                p = v[i].upper()
+                pass
+            data.set_byte(ord(p), addr, num, i)
+            pass
+        if (h):
+            self.modified(h)
+            pass
+        pass
+
+    def getWidget(self, parent, t, num):
+        v = self.get_string(t.data, t.addr, num)
+        h = Handler(self.set, t)
+        h.v = v
+        h.num = num
+        w = Tix.Entry(parent)
+        h.widget = w
+        w.bind("<KeyRelease>", h.set_event)
+        w.delete(0, 'end')
+        w.insert(0, v)
+        return h
+
+    def renumWidget(self, h, num):
+        h.num = num
+        t = h.data
+        v = self.get_string(t.data, t.addr, num)
+        h.widget.delete(0, 'end')
+        h.widget.insert(0, v)
+        pass
+        
+    def getSelect(self, data, addr, num):
+        return self.get_string(data, addr, num)
+
+    def setValue(self, v, data, addr, num):
+        self.set_string(v, data, addr, num, None)
+        pass
+
+    def set(self, h, event):
+        w = h.widget
+        t = h.data
+        v = w.get()
+        if (v == h.v):
+            return
+        cursor = w.index("insert")
+        self.set_string(v, t.data, t.addr, h.num, h)
+        v = self.get_string(t.data, t.addr, h.num)
+        w.delete(0, 'end')
+        w.insert(0, v)
+        w.icursor(cursor)
+        h.v = v
+        pass
+    pass
+
+
+class BIFixed(BuiltIn):
+    def __init__(self):
+        self.name = "" # Name doesn't matter
+        pass
+
+    def setup(self, pre, suf, inc, units, snddec):
+        # Number of digits to the left of the decimal
+        self.pre = pre
+        # Number of digits to the right of the decimal
+        self.suf = suf
+        # Each integer increment adds this much
+        self.inc = inc
+        # Units (like kHz, MHz, etc)
+        self.units = units
+        # Second decimal place location, -1 for none
+        self.snddec = snddec
+
+        self.numdec = 1
+
+        # Total string length is prefix + suffix + the period
+        self.len = pre + suf + 1
+        if (self.snddec >= 0):
+            self.snddec += 1 # Account for the first '.'
+            self.len += 1
+            self.numdec += 1
+        pass
+
+    def matchName(self, c, string):
+        if not string.startswith("Fixed("):
+            return None
+        if not string.endswith(")"):
+            raise ParseException(c.filename, c.lineno,
+                                 "Fixed does not end with ')'")
+        spec = string[6:len(string)-1].split(",")
+        if (len(spec) < 4) or (len(spec) > 5):
+            raise ParseException(c.filename, c.lineno,
+                                 "Invalid Fixed specifier")
+        pre = c.toNum(spec[0])
+        suf = c.toNum(spec[1])
+        inc = c.toNum(spec[2])
+        units = spec[3]
+        snddec = -1
+        if (len(spec) >= 5):
+            opts = spec[4].split(":")
+            for opt in opts:
+                o = opt.split("=", 1)
+                if (o[0] == "sd"):
+                    if (len(o) != 2):
+                        raise ParseException(c.filename, c.lineno,
+                                             "sd option requires value")
+                    snddec = c.toNum(o[1])
+                    if (snddec <= pre or snddec > (pre + suf)):
+                        raise ParseException(c.filename, c.lineno,
+                                             "sd option must be after pre"
+                                             + " and before the end of the"
+                                             + " number")
+                    pass
+                else:
+                    raise ParseException(c.filename, c.lineno,
+                                         "Invalid Fixed option: " + o[0])
+                pass
+            pass
+        b = BIFixed()
+        b.setup(pre, suf, inc, units, snddec)
+        return b
+
+    def getWidget(self, parent, t, num):
+        v = t.data.get_bits(t.addr, num)
+        h = Handler(self.set, t)
+        w = Tix.Entry(parent)
+        h.widget = w
+        h.num = num
+        w.bind("<Key>", h.set_event)
+        w.delete(0, 'end')
+        w.insert(0, self.conv_to_str(v))
+        return h
+
+    def renumWidget(self, h, num):
+        h.num = num
+        t = h.data
+        v = t.data.get_bits(t.addr, num)
+        h.widget.delete(0, 'end')
+        h.widget.insert(0, self.conv_to_str(v))
+        pass
+        
+    def getSelect(self, data, addr, num):
+        return self.conv_to_str(data.get_bits( addr, num))
+
+    def setValue(self, v, data, addr, num):
+        data.set_bits(self.conv_from_str(v), addr, num)
+        pass
+
+    def set(self, h, event):
+        if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
+            or (event.keysym == "Insert") or (event.keysym == "space")):
+            return "break" # Don't allow deletions
+        if (len(event.keysym) > 1):
+            return # Let other key editing through
+
+        # Now we have normal character keys.  Ignore everything but
+        # digits, don't go past the end or change the "."
+
+        w = h.widget
+        cursor = w.index("insert")
+        if (cursor >= self.len):
+            return "break" # Past the end of the entry
+        if (cursor == self.pre) or (cursor == self.snddec):
+            w.icursor(cursor + 1) # Skip over the '.'
+            return "break"
+
+        c = event.keysym
+        if (c not in decimal_digits):
+            return "break" # Ignore everything but numbers
+
+        t = h.data
+        s = w.get()
+        if (s[cursor] != c):
+            s = s[0:cursor-1] + c + s[cursor:]
+            w.delete(cursor)
+            w.insert(cursor, c)
+            v = self.conv_from_str(w.get())
+            t.data.set_bits(v, t.addr, h.num)
+            self.modified(h)
+            s = self.conv_to_str(v)
+            h.widget.delete(0, 'end')
+            w.insert(0, s)
+            pass
+        if (cursor == self.pre - 1) or (cursor == self.snddec - 1):
+            w.icursor(cursor + 2) # Skip over the '.'
+        else:
+            w.icursor(cursor + 1)
+        return "break"
+
+    def conv_from_str(self, s):
+        v = 0
+        l = 0
+        decloc = -1
+        postdec = 0
+        units = None
+        for c in s:
+            if (c == '.'):
+                if (decloc == -1):
+                    decloc = l
+                    pass
+                continue
+            d = decimal_digits.find(c)
+            if (d == -1):
+                # Must be in the units
+                units = s[l:]
+                if (decloc == -1):
+                    decloc = l
+                    pass
+                break
+            if (decloc != -1):
+                postdec += 1
+                pass
+            v *= 10
+            v += d
+            l += 1
+            pass
+        if (decloc == -1):
+            decloc = l
+            pass
+        if (units and units != self.units):
+            # Need to do a units conversion.
+            if (self.units == "MHz"):
+                if (units == "kHz"):
+                    decloc -= 3
+                    postdec += 3
+                elif (units == "Hz"):
+                    decloc -= 6
+                    postdec += 6
+                    pass
+                pass
+            elif (self.units == "kHz"):
+                if (units == "MHz"):
+                    decloc += 3
+                    postdec -= 6
+                elif (units == "Hz"):
+                    decloc -= 3
+                    postdec += 3
+                    pass
+                pass
+            pass
+        if (postdec > self.suf):
+            v /= 10 * (postdec - self.suf)
+        elif (postdec < self.suf):
+            v *= 10 * (self.suf - postdec)
+            pass
+        
+        # Make sure to round as necessary
+        return (v + (self.inc / 2)) / self.inc
+
+    def conv_to_str(self, v):
+        s = str(v * self.inc)
+        while (len(s) < (self.len - self.numdec)):
+            s = "0" + s
+            pass
+        s = s[0:self.pre] + "." + s[self.pre:] + self.units
+        if (self.snddec != -1):
+            s = s[0:self.snddec] + "." + s[self.snddec:]
+            pass
+        return s
     pass
 
 class BICheckBox(BuiltIn):
@@ -437,6 +850,7 @@ class BICheckBox(BuiltIn):
             h.v = 1
             pass
         t.data.set_bits(h.v, t.addr, h.num)
+        self.modified(h)
         pass
 
     def getSelect(self, data, addr, num):
@@ -455,9 +869,6 @@ class BICheckBox(BuiltIn):
         pass
     
     pass
-
-# These are internal Yaesu string values for some radios.
-ys_chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ !\"\\$#%'()*+,-;/|:<=>?@[&]^_"
 
 class BIYaesuString(BuiltIn):
     def __init__(self):
@@ -495,7 +906,7 @@ class BIYaesuString(BuiltIn):
         s = "".join(s)
         return s
 
-    def set_yaesu_string(self, v, data, addr, num):
+    def set_yaesu_string(self, v, data, addr, num, h):
         numbytes = addr.entries[0][2] / 8
         inlen = len(v)
         for i in range(0, numbytes):
@@ -508,6 +919,9 @@ class BIYaesuString(BuiltIn):
                     pass
                 pass
             data.set_byte(p, addr, num, i)
+            pass
+        if (h):
+            self.modified(h)
             pass
         pass
 
@@ -535,7 +949,7 @@ class BIYaesuString(BuiltIn):
         return self.get_yaesu_string(data, addr, num)
 
     def setValue(self, v, data, addr, num):
-        self.set_yaesu_string(v, data, addr, num)
+        self.set_yaesu_string(v, data, addr, num, None)
         pass
 
     def set(self, h, event):
@@ -545,7 +959,7 @@ class BIYaesuString(BuiltIn):
         if (v == h.v):
             return
         cursor = w.index("insert")
-        self.set_yaesu_string(v, t.data, t.addr, h.num)
+        self.set_yaesu_string(v, t.data, t.addr, h.num, h)
         v = self.get_yaesu_string(t.data, t.addr, h.num)
         w.delete(0, 'end')
         w.insert(0, v)
@@ -554,11 +968,10 @@ class BIYaesuString(BuiltIn):
         pass
     pass
 
-bcd_digits = "0123456789"
 def convFromBCD(v):
     if (v >= 10) or (v < 0):
         return '0'
-    return bcd_digits[v]
+    return decimal_digits[v]
 
 # Yaesu BCD format for frequency, see FT60-layout.txt
 class BIBCDFreq(BuiltIn):
@@ -607,7 +1020,7 @@ class BIBCDFreq(BuiltIn):
         pass
 
     # Yaesu BCD format for frequency, see FT60-layout.txt
-    def set_bcd(self, v, data, addr, num):
+    def set_bcd(self, v, data, addr, num, h):
         numbytes = addr.entries[0][2] / 8
 
         vlen = len(v)
@@ -624,15 +1037,18 @@ class BIBCDFreq(BuiltIn):
                 continue
             if (second):
                 d <<= 4
-                d |= bcd_digits.find(c)
+                d |= decimal_digits.find(c)
                 second = False
                 data.set_byte(d, addr, num, i)
                 i += 1
                 pass
             else:
-                d = bcd_digits.find(c)
+                d = decimal_digits.find(c)
                 second = True
                 pass
+            pass
+        if (h):
+            self.modified(h)
             pass
         pass
 
@@ -678,7 +1094,7 @@ class BIBCDFreq(BuiltIn):
             return "break"
 
         c = event.keysym
-        if (c not in bcd_digits):
+        if (c not in decimal_digits):
             return "break" # Ignore everything but numbers
 
         if (cursor == 6):
@@ -694,7 +1110,7 @@ class BIBCDFreq(BuiltIn):
         if (s[cursor] != c):
             w.delete(cursor)
             w.insert(cursor, c)
-            self.set_bcd(w.get(), t.data, t.addr, h.num)
+            self.set_bcd(w.get(), t.data, t.addr, h.num, h)
             pass
         if (cursor == 2):
             w.icursor(cursor + 2) # Skip over the '.'
@@ -706,7 +1122,7 @@ class BIBCDFreq(BuiltIn):
         firstc = False
         c2 = [ ]
         for c in v:
-            if ((c != '.') and (c not in bcd_digits)):
+            if ((c != '.') and (c not in decimal_digits)):
                 return
             if (c == '.'): # Cut off the last .nnn, if present
                 if (firstc):
@@ -717,7 +1133,7 @@ class BIBCDFreq(BuiltIn):
             pass
 
         v = "".join(c2)
-        self.set_bcd(v, data, addr, num)
+        self.set_bcd(v, data, addr, num, None)
         pass
     pass
 
@@ -765,7 +1181,7 @@ class BIHex(BuiltIn):
         return "".join(v)
         pass
 
-    def set_hex(self, v, data, addr, num):
+    def set_hex(self, v, data, addr, num, h):
         numbytes = addr.entries[0][2] / 8
 
         vlen = len(v)
@@ -778,6 +1194,9 @@ class BIHex(BuiltIn):
                 d = hex_digits.find(c)
             data.set_byte(d, addr, num, i)
             i += 1
+            pass
+        if (h):
+            self.modified(h)
             pass
         pass
 
@@ -831,18 +1250,18 @@ class BIHex(BuiltIn):
         if (s[cursor] != c):
             w.delete(cursor)
             w.insert(cursor, c)
-            self.set_hex(w.get(), t.data, t.addr, h.num)
+            self.set_hex(w.get(), t.data, t.addr, h.num, h)
             pass
         w.icursor(cursor + 1)
         return "break"
 
     def setValue(self, v, data, addr, num):
         for c in v:
-            if (c not in bcd_digits):
+            if (c not in decimal_digits):
                 return
             pass
 
-        self.set_hex(v, data, addr, num)
+        self.set_hex(v, data, addr, num, None)
         pass
     pass
 
@@ -912,16 +1331,21 @@ class Enum(BuiltIn):
         e = h.data
         h.toph.widget.set_label(e.str)
         h.toph.data.set_bits(e.value, h.toph.addr, h.toph.num)
+        self.modified(h.toph)
         pass
 
     def renumWidget(self, toph, num):
         toph.num = num
         v = toph.data.get_bits(toph.addr, num)
+        found = False
         for e in self.entries:
             if (v == e.value):
+                found = True
                 toph.widget.set_label(e.str)
                 break
             pass
+        if (not found):
+            toph.widget.set_label("")
         pass
 
     def getSelect(self, data, addr, num):
@@ -944,8 +1368,9 @@ class Enum(BuiltIn):
 
 
 class TabEntry:
-    def __init__(self, name, addr, type, data):
+    def __init__(self, name, pos, addr, type, data, tielist, cutpaste):
         self.name = name
+        self.pos = pos
         nn = self.name.replace("\n", "")
         nn = nn.replace(" ", "")
         nn = nn.replace("\t", "")
@@ -953,6 +1378,9 @@ class TabEntry:
         self.addr = addr
         self.type = type
         self.data = data
+        self.tielist = tielist
+        self.etielist = []
+        self.cutpaste = cutpaste
         pass
 
     def getWidget(self, parent, num):
@@ -993,9 +1421,10 @@ class TabBase:
         self.entries = []
         pass
 
-    def addItem(self, c, name, addr, type):
+    def addItem(self, c, name, addr, type, tielist, cutpaste):
         type.checkAddrOk(c, addr)
-        self.entries.append(TabEntry(name, addr, type, c.filedata))
+        self.entries.append(TabEntry(name, len(self.entries), addr,
+                                     type, c.filedata, tielist, cutpaste))
         pass
 
 class List(TabBase):
@@ -1007,14 +1436,55 @@ class List(TabBase):
         self.widgetlists = []
         pass
 
+    def finalize(self, c):
+        for i in self.entries:
+            for t in i.tielist:
+                found = False
+                for j in self.entries:
+                    if (j.name == t):
+                        i.etielist.append(j)
+                        found = True
+                        break
+                    pass
+                if (not found):
+                    raise ParseException(c.filename, c.lineno,
+                                         "tie entry for '" + t +"' not found")
+                pass
+            pass
+        pass
+    
     def add(self, c, v):
         if (v[0] == "endlist"):
+            self.finalize(c)
             c.addList(self)
             return
-        if (len(v) != 3):
+        if (len(v) < 3):
             raise ParseException(c.filename, c.lineno,
-                                 "Invalid number of elements for list entry");
-        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]))
+                                 "Invalid number of elements for list entry")
+        tielist = []
+        cutpaste = True
+        for i in v[3:]:
+            s = i.split('=', 1)
+            if len(s) != 2:
+                raise ParseException(c.filename, c.lineno,
+                                     "Invalid option, no '=': " + i)
+            if (s[0] == "tie"):
+                tielist.append(s[1])
+            elif (s[0] == "cutpaste"):
+                if (s[1].lower() == "true"):
+                    cutpaste = True
+                elif (s[1].lower() == "false"):
+                    cutpaste = False
+                else:
+                    raise ParseException(c.filename, c.lineno,
+                                         "cutpaste take true or false")
+            else:
+                raise ParseException(c.filename, c.lineno,
+                                     "Invalid option: " + i);
+            pass
+            
+        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), tielist,
+                     cutpaste)
         pass
 
     def bindWidget(self, widget):
@@ -1091,6 +1561,8 @@ class List(TabBase):
                 pass
             first = True
             for e in self.entries:
+                if (not e.cutpaste):
+                    continue
                 if (not first):
                     s += " "
                 else:
@@ -1165,7 +1637,9 @@ class List(TabBase):
                 vhash[v[0]] = v[1]
                 pass
             for e in self.entries:
-                e.setSelect(linenum, vhash)
+                if (e.cutpaste):
+                    e.setSelect(linenum, vhash)
+                    pass
                 pass
             linenum += 1
             pass
@@ -1274,10 +1748,8 @@ class List(TabBase):
         i = 0
         for wl in self.widgetlists:
             self.list.item_configure(i, 0, text=str(i + self.firstline + 1))
-            j = 0
             for e in self.entries:
-                e.renumWidget(wl[j], i + self.firstline)
-                j += 1
+                e.renumWidget(wl[e.pos], i + self.firstline)
             i += 1
             pass
         pass
@@ -1288,11 +1760,17 @@ class List(TabBase):
         self.list.add(self.numlines, text=str(pos + 1))
         for e in self.entries:
             h = e.getWidget(self.list, pos)
+            h.ename = e.name
             self.bindWidget(h.widget)
             self.list.item_create(self.numlines, e.column,
                                   itemtype=Tix.WINDOW,
                                   window=h.widget)
             widgets.append(h)
+            pass
+        for e in self.entries:
+            for i in e.etielist:
+                widgets[e.pos].tielist.append((widgets[i.pos], i))
+                pass
             pass
         self.widgetlists.append(widgets)
         self.numlines += 1
@@ -1321,7 +1799,7 @@ class Tab(TabBase):
         if (len(v) != 3):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for tab entry");
-        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]))
+        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), [], True)
         pass
 
     def bindWidget(self, widget):
@@ -1418,10 +1896,10 @@ class RadioConfig:
         self.filedata = filedata
         self.curr = None
         self.toplevel = []
-        self.types = [ BIBCDFreq(), BuiltIn("IntFreq"),
+        self.types = [ BIBCDFreq(),
                        BICheckBox(), BIYaesuString(),
-                       BuiltIn("String"), BuiltIn("Empty"),
-                       BIHex() ]
+                       BIString(), BuiltIn("Empty"),
+                       BIHex(), BIFixed() ]
         f = open(filename, "r")
         try:
             self.lineno = 0
@@ -1555,8 +2033,9 @@ class RadioConfig:
 
     def findType(self, s):
         for i in self.types:
-            if (i.name == s):
-                return i
+            t = i.matchName(self, s)
+            if (t):
+                return t
             pass
         raise ParseException(self.filename, self.lineno, "Unknown type: " + s)
     

@@ -33,6 +33,9 @@ A memory is a 28 byte field:
     bytes 14-1b - ASCII encoded name, null terminates if <8 bytes.
 	  if all 0xff then it is not valid.
 
+
 01ef-01f2 - 70cm frequency
 
 0495-0498 - 40m frequency
+
+04f0-1acf - Memorys in 28-byte chunks
