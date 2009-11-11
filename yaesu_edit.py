@@ -656,7 +656,8 @@ class BIBCDFreq(BuiltIn):
         pass
         
     def getSelect(self, data, addr, num):
-        return self.get_bcd(data, addr, num)
+        # Note that we pad it out to Hz for copy/paste, for compatability
+        return self.get_bcd(data, addr, num) + ".000"
 
     def set(self, h, event):
         if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
@@ -702,11 +703,20 @@ class BIBCDFreq(BuiltIn):
         return "break"
 
     def setValue(self, v, data, addr, num):
+        firstc = False
+        c2 = [ ]
         for c in v:
             if ((c != '.') and (c not in bcd_digits)):
                 return
+            if (c == '.'): # Cut off the last .nnn, if present
+                if (firstc):
+                    break;
+                firstc = True;
+                pass
+            c2.append(c)
             pass
 
+        v = "".join(c2)
         self.set_bcd(v, data, addr, num)
         pass
     pass
@@ -860,7 +870,7 @@ class EnumEntry:
 
 class Enum(BuiltIn):
     def __init__(self, name):
-        self.name = name
+        BuiltIn.__init__(self, name)
         self.entries = []
         pass
 
@@ -924,8 +934,8 @@ class Enum(BuiltIn):
 
     def setValue(self, v, data, addr, num):
         for e in self.entries:
-            if (v == e.value.replace(" ", "")):
-                data.set_bits(e.str, addr, num)
+            if (v == e.str.replace(" ", "")):
+                data.set_bits(e.value, addr, num)
                 return
             pass
         pass

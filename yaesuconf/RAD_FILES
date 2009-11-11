@@ -1,0 +1,169 @@
+This directory contains three types of files:
+
+radios - This holds a basic description of all radios, primarily used
+by yaesu_rw to know how to transfer the information, but also use by
+yaesu_edit for the header descriptor.  That file's format is documented
+in the file.
+
+<radio>.rad - The radios file has a radio name, yaesu_edit uses that
+radio name to find the proper rad file.  This contains a description of
+the layout of the data in the memory in a way that yaesu_edit can display
+and modify.
+
+<radio>.empty - This is an clone of a radio in factory configuration.
+It is used by yaesu_edit when you use the "New" operation.
+
+RAD File Format
+---------------
+The descriptor file is a fairly simple format.  It's a pretty loose language,
+there are reserved words, sort of, but not many, and they don't apply in
+a lot of situation.  You should probably stay away from using reserved
+words, and if you use end enum names with _e (like you should), then it
+won't be a problem.
+
+Note that FT-60R.rad has a good description of this.
+
+The sourcecode distribution should have layout files that describe the
+layout of the data in a more human-readable format.
+
+Strings
+-------
+
+You can put anything in quotes ("") to allow you to add spaces in the file.
+The \ works like in "C", a \n is a newline, \t is tab, etc.  The \n is
+all you really need, in general.  Well, you can also use '\ ' (a space after
+a backslash) to insert a space without quotes.
+
+Numbers
+-------
+
+Numbers can use 0x for octal, or just numbers for decimal.  Octal is not
+used, to avoid confusion, so a number that starts with zero is a decimal
+number.
+
+Addresses
+---------
+
+Some things take an address, which describes where to find the information
+in the file.  The format is:
+
+  (<byte address>,<bit start>,<bit size>[,<offset>]
+   [:<byte address>,<bit start>,<bit size>[,<offset>][:...]])
+
+So you specify a byte offset, a bit inside that byte, and a number of
+bits.  The value may span bytes, it's done in little-endian format.
+If a value spans bits that are not contiguous, then the ":" separates
+multiple bit spans, the first one specifies the highest order bits.
+
+Note that the start, size, offset, and offset are all specified in bits.
+
+The offset is useful for lists, it gives a span between the fields.  So
+if the list is specifying a 16-byte value, you use 128 for the offset.
+A bunch of packed bits would use an offset of 1.
+
+Built in types
+--------------
+The following built-in types are availble:
+
+BCDFreq - BCD representation of a frequency, this is a 3-byte values
+	as used in the FT-60R and probably others.  Must start on a
+	byte offset and by a byte multiple length.
+
+IntFreq - Integer representation of a frequency, as used in the
+	FT-857D
+
+CheckBox - A true/false value, the address specified should generally
+	 be one bit.
+
+YaesuString - This is a Yaesu-specific string format used in some radios
+	    like the FT-60R.  Must start on a byte offset and by a byte
+	    multiple length.
+
+String - An ASCII string (though it's limited to standard characters).
+         Must start on a byte offset and by a byte multiple length.
+
+HexDigits - Unpacked hex digits (one per byte) with 0xff specifying the
+	 end of the string if it's shorter than the length.
+         Must start on a byte offset and by a byte multiple length.
+
+Empty - Used as an empty placeholder in lists, to display a string
+      in the heading with nothing under it.
+
+
+User defined types
+------------------
+
+You have three basic things you can define: enums, tabs, and lists
+
+tabs and lists appear in the tabs in the window in the order they are
+specified.  Things appear in the tabs and lists in the order they are
+specified.
+
+Enums
+-----
+
+Enums are name/value pairs, much like in most programming languages.
+The format is a little different, as you must assign a value.  The
+format is:
+
+enum <name>
+     [altname <name>]
+     <number> <string descriptor>
+     [<number> <string descriptor>]
+     ....
+endenum
+
+The name should generally end in "_e".  When you yaesu_edit displays
+a variable of the type, it display the strings in question.  This allow
+a field that is a bitfield with multiple values to have useful displays.
+
+The name can then be used as a type in tabs and lists.
+
+See the Cutting and Pasting section for the meaning of the altname
+field.
+
+Tabs
+----
+
+Tabs are used for configuration type information that is not repeated.
+It has the format:
+
+tab <name>
+    <string>	<address>	<type>
+    .
+    .
+endtab
+
+The string is displayed by yaesu_edit.  The address specifies where to
+get the information for that value, and the type is used to display
+and should be a built-in type or an enum.
+
+An offset in the address has no meaning here.
+
+Lists
+-----
+
+Lists are for things that repeat regularly, like memories, groups of
+DTMF digit sets, etc.  They use the same format as tabls, except they
+also take a length:
+
+list <name> <length>
+    <string>	<address>	<type>
+    .
+    .
+endlist
+
+The length is a number that specifies how many entries are in the list.
+In this, the offset should be specified and gives the number of bits between
+each item of the same type.
+
+Cutting and Pasting
+-------------------
+
+It is best to keep things as consistent as possible in all the radio
+config file for the enum string names.  This allows cutting and pasting
+to work well.  If the type names match between files, it will allow
+the past to occur between two different types of radios.
+
+So look in existing files (especially FT-60R.rad, which is kind of the
+standard) for and keep the types and string names the same.

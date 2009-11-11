@@ -4,7 +4,7 @@
 yaesu_rw \- A program to read and write clone information for Yaesu radios
 
 .SH SYNOPSIS
-.B yaesu
+.B yaesu_rw
 [\fIoptions\fR]
 \fI\-r|\-w\fR
 <filename> 
@@ -14,10 +14,10 @@ The
 .BR yaesu_rw
 program allows a user to read data from Yaesu radios, and write data
 to Yaesu radios, over the clone interface.  This allows the backup
-and restore of memories and configuration information in the radio.  If
-a program exists to modify the information, then the information can be
-extracted from the radio using yaesu_rw, modified, then written back
-using yaesu_rw.
+and restore of memories and configuration information in the radio.  The
+.B yaesu_edit
+program can modify the information, then the information can be
+written back using yaesu_rw.
 
 This may not support all Yaesu radios.
 
@@ -73,9 +73,9 @@ generally set up in the configuration file, but this option will override
 the default.  In timer mode, checksum is off.
 
 .TP
-\fB\-f\fR, \fB\-\-configfile\fR \fIfile\fR
-Use the given file for the radio configuration instead of the default
-config file.
+\fB\-f\fR, \fB\-\-configdir\fR \fIdirectory\fR
+Use the given directory for the radio configuration instead of the default
+location.
 
 .SH "USAGE"
 To use this program, you generally put your radio into clone mode, then do
@@ -162,7 +162,9 @@ However, ADMS, at least on the versions I have, expects characters to
 be echoed by the interface.  Thus the \fI\-\-send_echo\fR option.
 
 .SH "SEE ALSO"
-.BR /etc/yaesu.conf
+.B yaesu_edit.1
+
+.BR /etc/yaesu_conf/radios
 has the description of the configuration file as comments.
 
 .SH "KNOWN PROBLEMS"

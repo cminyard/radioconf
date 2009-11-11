@@ -1,3 +1,6 @@
+#
+# Configuration for a Yaesu FT-60R
+#
 
 enum CTCSS_e
 	0x00 "67.0"
