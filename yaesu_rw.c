@@ -14,8 +14,8 @@
 #include <stdarg.h>
 #include <ctype.h>
 
-#ifndef YAESU_RW_CONFIGDIR
-#define YAESU_RW_CONFIGDIR "/etc/yaesuconf"
+#ifndef YAESU_CONFIGDIR
+#define YAESU_CONFIGDIR "/etc/yaesuconf"
 #endif
 
 char *version = PACKAGE_VERSION;
@@ -1303,7 +1303,7 @@ usage(void)
     printf("  -c, --checksum - Send/expect a checksum at the end\n");
     printf("  -g, --nochecksum - Do not send/expect a checksum at the end\n");
     printf("  -f, --configdir <file> - Use the given directory for the radio"
-	   " configuration instead\nof the default %s\n", YAESU_RW_CONFIGDIR);
+	   " configuration instead\nof the default %s\n", YAESU_CONFIGDIR);
 }
 
 int
@@ -1318,7 +1318,7 @@ main(int argc, char *argv[])
     char dummy;
 
     char *devicename = "/dev/ttyS0";
-    char *configdir = YAESU_RW_CONFIGDIR;
+    char *configdir = YAESU_CONFIGDIR;
     char *filename = NULL;
     int ignerr = 0;
     int dotermios = 1;

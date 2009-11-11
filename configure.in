@@ -1,8 +1,10 @@
-AC_INIT(yaesuconf, 1.0)
+AC_INIT(yaesuconf, 0.2)
 AC_CONFIG_SRCDIR(yaesu_rw.c)
 AM_INIT_AUTOMAKE
 AC_PROG_CC
 AC_STDC_HEADERS
-YAESU_RW_CONFIGFILE="$sysconfdir/yaesu_rw.conf"
-AC_SUBST(YAESU_RW_CONFIGFILE)
+YAESU_CONFIGDIR="$sysconfdir/yaesuconf"
+AC_SUBST(YAESU_CONFIGDIR)
 AC_OUTPUT(Makefile)
+AC_OUTPUT(yaesuconf/Makefile)
+AC_OUTPUT(yaesu_edit)
