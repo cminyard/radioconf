@@ -39,6 +39,13 @@
 #  checksum | nochecksum (optional)
 #    Sets whether the radio send/receives a checksum.  Defaults to nochecksum.
 #
+#  checkblock | nocheckblock (optional)
+#    Sets whether the radio send/receives a checkblock.  In this mode,
+#    the first byte of a block is the block number (starting with 1,
+#    and the header is not included) and the last byte of a block is
+#    a checksum.  Note that these two values are not stored in the file
+#    when it is saved.  Defaults to nocheckblock.
+#
 
 radio FT-60R
 	headercmp 41 48 30 31 37 24 0b 00
