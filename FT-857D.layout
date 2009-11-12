@@ -1,4 +1,14 @@
 
+
+In the transferred data, the first byte of every block is a block
+number, starting at 1.  The last byte is a checksum of the data in
+the block, not including the block number.
+
+So the offsets below are wrong, as they are still including these
+values, which need to be removed and added by the file transfer
+program.
+
+
 Frequency is a 4-byte value that is binary coded.  There is a
 frequency setting per band.
 
@@ -38,4 +48,8 @@ A memory is a 28 byte field:
 
 0495-0498 - 40m frequency
 
-04f0-1acf - Memorys in 28-byte chunks
+04b0-04c8 - Memory enables, byte 0 bit 0 is memory 1, byte 0 bit 1 is
+	  memory2, etc.
+
+04f0-1acf - Memories in 28-byte chunks.  Every 5 memories there is an
+	  extra 2 bytes added.

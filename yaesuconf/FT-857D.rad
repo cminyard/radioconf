@@ -52,6 +52,7 @@ enum CTCSS_e
 endenum
 
 list Memories 200
+        "Enable"		(0x04b8,0,1,1)		CheckBox
 	"Label\nEnable"		(0x04f0,0,7,224)	CheckBox
 	"Label"			(0x0504,0,64,224)	String
 	"Split\nTone"		(0x04f4,4,4,224)	CheckBox
