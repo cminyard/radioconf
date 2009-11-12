@@ -1,4 +1,9 @@
 
+
+In the transferred data, the first byte of every block is a block
+number, starting at 1.  The last byte is a checksum of the data in
+the block, not including the block number.
+
 Frequency is a 4-byte value that is binary coded.  There is a
 frequency setting per band.
 
@@ -34,8 +39,8 @@ A memory is a 28 byte field:
 	  if all 0xff then it is not valid.
 
 
-01ef-01f2 - 70cm frequency
+04ab-04c3 - Memory enables, byte 0 bit 0 is memory 1, byte 0 bit 1 is
+	  memory2, etc.
 
-0495-0498 - 40m frequency
-
-04f0-1acf - Memorys in 28-byte chunks
+04e1-1ac0 - Memories in 28-byte chunks.  Every 5 memories there is an
+	  extra 2 bytes added.

@@ -53,6 +53,8 @@ static struct option long_options[] = {
     {"send_echo",0, NULL, 'y'},
     {"checksum", 0, NULL, 'c'},
     {"nochecksum",0, NULL, 'g'},
+    {"checkblock", 0, NULL, 'p'},
+    {"nocheckblock",0, NULL, 'q'},
     {"configdir",0, NULL, 'f'},
     {NULL,	 0, NULL, 0}
 };
@@ -106,6 +108,7 @@ struct yaesu_data {
     struct yaesu_block head;
     struct yaesu_block *curr_block;
     unsigned int data_count;
+    unsigned int block_count;
     int send_echo;
     int recv_echo;
     unsigned int expect_len;
@@ -121,6 +124,7 @@ struct yaesu_data {
     unsigned int write_len;
     int check_write2;
     int has_checksum;
+    int has_checkblock;
 };
 
 
@@ -129,7 +133,8 @@ const unsigned char ack[1] = { 0x06 };
 
 struct yaesu_data *
 alloc_yaesu_data(int rfd, int wfd, int is_read,
-		 int send_echo, int recv_echo, int has_checksum)
+		 int send_echo, int recv_echo, int has_checksum,
+		 int has_checkblock)
 {
     struct yaesu_data *d;
 
@@ -145,6 +150,7 @@ alloc_yaesu_data(int rfd, int wfd, int is_read,
     d->retries = 0;
     d->pos = 0;
     d->data_count = 0;
+    d->block_count = 0;
     d->head.next = &d->head;
     d->head.prev = &d->head;
     d->csum = 0;
@@ -159,6 +165,7 @@ alloc_yaesu_data(int rfd, int wfd, int is_read,
     d->bsizes = NULL;
     d->timeout_mode = 0;
     d->has_checksum = has_checksum;
+    d->has_checkblock = has_checkblock;
 
     return d;
 }
@@ -246,6 +253,7 @@ yaesu_new_block(struct yaesu_data *d)
 	free(b);
 	return NULL;
     }
+    d->block_count++;
     b->len = 0;
     b->alloc_len = BUFF_ALLOC_INC;
     b->next = &d->head;
@@ -264,6 +272,7 @@ struct yaesu_conf {
     unsigned int block_size;
     int echo;
     int has_checksum;
+    int has_checkblock;
     struct yaesu_blocksizes *bsizes;
     struct yaesu_conf *next;
 };
@@ -307,6 +316,8 @@ check_yaesu_type(struct yaesu_data *d, unsigned char *buff, unsigned int len,
 		d->recv_echo = r->echo;
 	    if (d->has_checksum < 0)
 		d->has_checksum = r->has_checksum;
+	    if (d->has_checkblock < 0)
+		d->has_checkblock = r->has_checkblock;
 	    return 1;
 	}
     }
@@ -320,6 +331,8 @@ check_yaesu_type(struct yaesu_data *d, unsigned char *buff, unsigned int len,
 	    d->recv_echo = 0;
 	if (d->has_checksum < 0)
 	    d->has_checksum = 0;
+	if (d->has_checkblock < 0)
+	    d->has_checkblock = 0;
 	d->timeout_mode = 1;
 	return 1;
     }
@@ -465,6 +478,29 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 }
 
 int
+yaesu_check_block(struct yaesu_data *d, struct yaesu_block *b)
+{
+    unsigned int i;
+    unsigned int sum;
+
+    if (!d->has_checkblock)
+	return 0;
+    if (b->len < 2)
+	return EINVAL;
+    if (b->buff[0] != (d->block_count - 1))
+	return EBADMSG;
+    sum = 0;
+    for (i = 1; i < b->len - 1; i++) {
+	sum += b->buff[i];
+	b->buff[i-1] = b->buff[i];
+    }
+    b->len -= 2; /* We remove the block number and the checksum */
+    if (b->buff[b->len + 1] != (sum & 0xff))
+	return EBADMSG;
+    return 0;
+}
+
+int
 handle_yaesu_read_data(struct yaesu_data *d)
 {
     unsigned char rbuf[16];
@@ -559,6 +595,9 @@ handle_yaesu_read_data(struct yaesu_data *d)
 	if (d->data_count > d->expect_len)
 	    return EINVAL;
 	else if (d->data_count == d->expect_len) {
+	    rv = yaesu_check_block(d, b);
+	    if (rv)
+		return rv;
 	    if (d->has_checksum)
 		d->state = YAESU_STATE_WAITCSUM;
 	    else
@@ -571,6 +610,9 @@ handle_yaesu_read_data(struct yaesu_data *d)
 		printf(".");
 		fflush(stdout);
 	    }
+	    rv = yaesu_check_block(d, b);
+	    if (rv)
+		return rv;
 	    d->state = YAESU_STATE_WAITBLOCK;
 	    rv = yaesu_write(d, ack, 1);
 	    if (rv)
@@ -1061,6 +1103,7 @@ read_yaesu_config(char *configdir)
 	    memset(r, 0, sizeof(*r));
 	    r->echo = -1;
 	    r->has_checksum = -1;
+	    r->has_checkblock = -1;
 	    r->name = strdup(tok);
 	    if (!r->name)
 		conferr(linenum, "out of memory\n");
@@ -1280,6 +1323,20 @@ read_yaesu_config(char *configdir)
 	    goto line_done;
 	}
 
+	if (strcmp(tok, "checkblock") == 0) {
+	    if (r->has_checkblock != -1)
+		conferr(linenum, "checkblock already specified");
+	    r->has_checkblock = 1;
+	    goto line_done;
+	}
+
+	if (strcmp(tok, "nocheckblock") == 0) {
+	    if (r->has_checkblock != -1)
+		conferr(linenum, "checkblock already specified");
+	    r->has_checkblock = 0;
+	    goto line_done;
+	}
+
 	if (strcmp(tok, "nochecksum") == 0) {
 	    if (r->has_checksum != -1)
 		conferr(linenum, "checksum already specified");
@@ -1322,6 +1379,8 @@ usage(void)
     printf("  -y, --send_echo - Echo all received characters.\n");
     printf("  -c, --checksum - Send/expect a checksum at the end\n");
     printf("  -g, --nochecksum - Do not send/expect a checksum at the end\n");
+    printf("  -p, --checkblock - Send/expect block checksums\n");
+    printf("  -q, --nocheckblock - Do not send/expect block checksums\n");
     printf("  -f, --configdir <file> - Use the given directory for the radio"
 	   " configuration instead\nof the default %s\n", YAESU_CONFIGDIR);
 }
@@ -1347,12 +1406,13 @@ main(int argc, char *argv[])
     int send_echo = 0;
     int recv_echo = -1;
     int do_checksum = -1;
+    int do_checkblock = -1;
     struct termios orig_termios, curr_termios;
 
     progname = argv[0];
 
     while (1) {
-	c = getopt_long(argc, argv, "?hvd:inrwtemycgf:", long_options, NULL);
+	c = getopt_long(argc, argv, "?hvd:inrwtemycgf:pq", long_options, NULL);
 	if (c == -1)
 	    break;
 	switch(c) {
@@ -1406,6 +1466,14 @@ main(int argc, char *argv[])
 
 	    case 'y':
 		send_echo = 1;
+		break;
+
+	    case 'p':
+		do_checkblock = 1;
+		break;
+
+	    case 'q':
+		do_checkblock = 0;
 		break;
 
 	    case '?':
@@ -1522,7 +1590,8 @@ main(int argc, char *argv[])
 	    printf("Receive echo is %s\n", recv_echo ? "on" : "off");
     }
 
-    d = alloc_yaesu_data(fd, fd, do_read, send_echo, recv_echo, do_checksum);
+    d = alloc_yaesu_data(fd, fd, do_read, send_echo, recv_echo, do_checksum,
+			 do_checkblock);
     if (!d) {
 	fclose(f);
 	close(fd);
@@ -1535,6 +1604,8 @@ main(int argc, char *argv[])
 	unsigned char *header, *block;
 	unsigned int i;
 	unsigned int len;
+	unsigned int readoff = 0, readsub = 0;
+	unsigned int blocknum = 1;
 
 	hsize = max_header_size();
 	header = malloc(hsize);
@@ -1566,23 +1637,54 @@ main(int argc, char *argv[])
 	    fprintf(stderr, "Out of memory\n");
 	    goto out_err;
 	}
+	if (d->has_checkblock) {
+	    bsize -= 2; /* The blocknum and checksum won't be in the file. */
+	    readoff = 1; /* Leave space for the blocknum first */
+	    readsub = 2; /* Won't read the blocknum or checksum */
+	}
 
-	memcpy(block, header + i, len);
+	memcpy(block + readoff, header + i, len);
 	free(header);
-	len += fread(block + len, 1, d->block_len - len, f);
-	if (len != d->block_len) {
+	len += fread(block + len + readoff, 1, d->block_len - len - readsub, f);
+	if (len != (d->block_len - readsub)) {
 	    fprintf(stderr, "Not enough data in file\n");
 	    goto out_err;
 	}
+	if (d->has_checkblock) {
+	    unsigned int sum;
+	    unsigned int u;
+
+	    block[0] = blocknum;
+	    len++;
+	    sum = 0;
+	    for (u = 1; u < len; u++)
+		sum += block[u];
+	    block[len] = sum;
+	    len++;
+	}
+	blocknum++;
 	add_yaesu_block(d, block, len);
 	    
 	while (d->data_count < d->expect_len) {
-	    len = fread(block, 1, d->block_len, f);
-	    if (len != d->block_len) {
+	    len = fread(block + readoff, 1, d->block_len - readsub, f);
+	    if (len != (d->block_len - readsub)) {
 		fprintf(stderr, "Not enough data in file: %d\n",len);
 		goto out_err;
 	    }
 
+	    if (d->has_checkblock) {
+		unsigned int sum;
+		unsigned int u;
+
+		block[0] = blocknum;
+		len++;
+		sum = 0;
+		for (u = 1; u < len; u++)
+		    sum += block[u];
+		block[len] = sum;
+		len++;
+	    }
+	    blocknum++;
 	    add_yaesu_block(d, block, len);
 	}
 	len = fread(block, 1, 1, f);

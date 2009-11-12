@@ -52,11 +52,12 @@ enum CTCSS_e
 endenum
 
 list Memories 200
-	"Label\nEnable"		(0x04f0,0,7,224)	CheckBox
-	"Label"			(0x0504,0,64,224)	String
-	"Split\nTone"		(0x04f4,4,4,224)	CheckBox
-	"CTTS\nTone"		(0x04f6,0,8,224)	CTCSS_e
-	"Recv\nTone"		(0x04f7,0,8,224)	CTCSS_e
-	"Rx\nFreq"		(0x04fc,0,32,224)	Fixed(3,5,1,MHz,sd=6)
-	"Tx\nFreq"		(0x0500,0,32,224)	Fixed(3,5,1,MHz,sd=6)
+        "Enable"		(0x04ab,0,1,1)		CheckBox
+	"Label\nEnable"		(0x04e1,0,7,224)	CheckBox
+	"Label"			(0x04f5,0,64,224)	String
+	"Split\nTone"		(0x04e5,4,4,224)	CheckBox
+	"CTTS\nTone"		(0x04e7,0,8,224)	CTCSS_e
+	"Recv\nTone"		(0x04e8,0,8,224)	CTCSS_e
+	"Rx\nFreq"		(0x04ed,0,32,224)	Fixed(3,5,1,MHz,sd=6)
+	"Tx\nFreq"		(0x05f1,0,32,224)	Fixed(3,5,1,MHz,sd=6)
 endlist
