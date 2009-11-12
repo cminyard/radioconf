@@ -1,4 +1,7 @@
 
+In the transferred data, all the blocks are 64 bytes, with an 8 byte
+header, and the end of the file is 1-byte block that is a checksum
+of all the data.
 
 Frequencies take up 3 bytes and are in the following format:
     byte 0 bits 4-7 - This is the last 5khz, 8 to enable the last

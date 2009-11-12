@@ -63,4 +63,5 @@ radio FT-857D
 	blocksizelist (1, 84) (1, 254) (1, 198) (1, 254) (1, 198) \
 		(1, 214) (1, 57) (42, 142) (1, 40) (1, 178) (0, 142)
 	nochecksum
+	checkblock
 endradio
