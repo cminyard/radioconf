@@ -164,6 +164,7 @@ class Address:
             raise ParseException(c.filename, c.lineno,
                                  "Address doesn't end with )");
         self.entries = []
+        self.revbits = False # Bits are numbered from 0 by default
         i = 1
         l -= 1
         pos = 0
@@ -197,6 +198,11 @@ class Address:
             raise ParseException(c.filename, c.lineno,
                                  "Address has too few values"
                                  + " in a field");
+        if ((pos == 3) and (s[start] == 'r')):
+            # Number bits starting with the high order.
+            start += 1
+            self.revbits = True
+            pass
         v[pos] = c.toNum(s[start:i])
     pass
 
@@ -313,8 +319,13 @@ class RadioFileData:
             bit_off %= 8
             numbits = a[2]
             v <<= numbits
-            
-            x = self.data[byte_off] >> bit_off
+
+            if (addr.revbits):
+                # FIXME - This doesn't work for multi-byte revbits
+                x = self.data[byte_off] >> (8 - numbits - bit_off)
+            else:
+                x = self.data[byte_off] >> bit_off
+                pass
             bitsleft = numbits - (8 - bit_off)
             while (bitsleft >= 8):
                 byte_off += 1
@@ -325,7 +336,13 @@ class RadioFileData:
             if (bitsleft > 0):
                 byte_off += 1
                 x <<= bitsleft
-                x |= self.data[byte_off] & ~(0xffffffff << bitsleft)
+                if (addr.revbits):
+                    x1 = self.data[byte_off] >> (8 - bitsleft)
+                    x1 &= ~(0xffffffff << bitsleft)
+                    x |= x1
+                else:
+                    x |= self.data[byte_off] & ~(0xffffffff << bitsleft)
+                    pass
                 pass
             v |= x & ~(0xffffffff << numbits)
             pass
@@ -351,11 +368,20 @@ class RadioFileData:
             x = self.data[byte_off]
             if ((bit_off + numbits) <= 8):
                 # Special case, all in one byte
-                mask = (0xff >> (8 - numbits)) << bit_off
+                if (addr.revbits):
+                    mask = (0xff >> (8 - numbits)) << (8 - numbits - bit_off)
+                else:
+                    mask = (0xff >> (8 - numbits)) << bit_off
+                    pass
                 x &= ~mask
-                x |= (v << bit_off) & mask
+                if (addr.revbits):
+                    x |= (v << (8 - numbits - bit_off)) & mask
+                else:
+                    x |= (v << bit_off) & mask
+                    pass
                 self.data[byte_off] = x
                 continue
+            # FIXME - no support for the 'r' flag in the following.
             mask = 0xff << bit_off
             x &= ~mask
             self.data[byte_off] = x | ((v >> (numbits - (8 -bit_off))) & mask)

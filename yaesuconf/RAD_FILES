@@ -47,19 +47,32 @@ Addresses
 Some things take an address, which describes where to find the information
 in the file.  The format is:
 
-  (<byte address>,<bit start>,<bit size>[,<offset>]
+  (<byte address>,<bit start>,<bit size>[,[r]<offset>]
    [:<byte address>,<bit start>,<bit size>[,<offset>][:...]])
 
 So you specify a byte offset, a bit inside that byte, and a number of
-bits.  The value may span bytes, it's done in little-endian format.
+bits.  The value may span bytes, it's done in big-endian format.
 If a value spans bits that are not contiguous, then the ":" separates
 multiple bit spans, the first one specifies the highest order bits.
+This can be used to combine values that are related, like if setting
+one value requires another value to be set to a specific number, it's
+best to combine them both together and do a single enum for them.
 
 Note that the start, size, offset, and offset are all specified in bits.
 
 The offset is useful for lists, it gives a span between the fields.  So
 if the list is specifying a 16-byte value, you use 128 for the offset.
 A bunch of packed bits would use an offset of 1.
+
+The offset may optionally start with 'r' in the last span.  This means
+that bits are ordered "backwards" in the byte.  Normally, the
+rightmost bit is considered bit 0, the bit to the left of it is bit 1,
+etc.  In this case, 0x80 means that bit 7 is set.  The 'r' flag
+switches the order so that the leftmost bit the first bit, so that 0x80
+means that bit 0 is set.  This really only makes sense with sub-byte
+fields, values larger than a byte my not work with this flag.  You would
+think this would be consistent between radios, but the FT-60 and FT-7800
+have this backwards from each other on memory banks and skips.
 
 Built in types
 --------------

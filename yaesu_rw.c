@@ -1125,6 +1125,8 @@ read_yaesu_config(char *configdir)
 		r->echo = 0;
 	    if (r->has_checksum == -1)
 		r->has_checksum = 0;
+	    if (r->has_checkblock == -1)
+		r->has_checkblock = 0;
 
 	    r->next = radios;
 	    radios = r;

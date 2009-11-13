@@ -232,7 +232,6 @@ enum RXSave_e
 endenum
 
 enum LockType_e
-	0 "Off"
 	1 "Key"
 	2 "Dial"
 	3 "Key+Dial"
@@ -398,6 +397,7 @@ endenum
 enum XmitPower_e
 	0 "High"
 	1 "Med"
+	1 "Med2
 	2 "Low"
 endenum
 
@@ -468,58 +468,50 @@ enum MenuItem_e
 	 2 "AR Bep - Beep during ARTS"
 	 3 "AR Int - ARTS Polling Interval"
 	 4 "ARS - Automatic Repeater Shift"
-	 5 "BCLO - Busy CHannel Lock-Out"
-	 6 "BEEP - Beep setting"
-	 7 "BELL - CTCSS/DCS Bell repetitions"
-	 8 "BSY.LED - Busy LED setting when squelch open"
-	 9 "CLK.SFT - Shift the CPU clock frequency"
-	10 "CWID - ARTS CW id setting"
-	11 "CW WRT - Program the CW ID"
-	12 "DC VL - Display the DC voltage"
-	13 "DT DLY - DTMF Autodialer setting"
-	14 "DCS N/R - Inverted DCS code decoding"
-	15 "DT DLY - DTMF autodialer delay"
-	16 "DT SPD - DTMF autodialer speed"
-	17 "DT WRT - Program the DTMF autodialer"
-	18 "EAI - Emergency AutoID"
-	19 "EDG.BEP - Band-edge beeper"
-	20 "EMG S - Select alarm for emergency function"
-	21 "I Net - Internet Link Connection mode"
-	22 "Int CD - Access number for WIRES"
-	23 "INT MR - Memory register for WIRES"
-	24 "LAMP - LCD/Keypad Lamp mode"
-	25 "LOCK - Locking lockout combination"
-	26 "M/T-CL - MONI switch function"
-	27 "NAME - Toggle frequency/name memory display"
-	28 "NM WRT - Store a name for a memory"
-	29 "PAGER - Enahanced CTCSS paging/squelch"
-	30 "PAG.ABK - Answer back for CTCSS paging/squelch"
-	31 "PAG.CDR - Receiver pager code for CTCSS paging/squelch"
-	32 "PAG.CDT - Transmit pager code for CTCSS paging/squelch"
-	33 "PSWD - Enable/disable password"
-	34 "PSWD W - Store the password"
-	35 "RESUME - Scan/Resume mode"
-	36 "REV/HM - Function of the HM/RV key"
-	37 "RF SQL - Adjust the RF quelch threshold"
-	38 "RPT.MOD - Set the repeater shift direction"
-	39 "PRI.RVT - Priority revert"
-	40 "RX MOD - Receiving mode"
-	41 "RXSAVE - Receive mode battery saver ratio"
-	42 "S SRCH - Smart search sweep mode"
-	43 "SCN MD - Memory scan channel selection mode"
-	44 "SCN.LMP - Scan lamp while paused"
-	45 "SHIFT - Repeater shift size"
-	46 "SKIP - Memory scan skip channel selection mode"
-	47 "SPLIT - Split CTCSS/DCS coding"
-	48 "SQL.TYP - Tone squelch mode"
-	49 "STEP - Frequency steps"
-	50 "TN FRQ - CTCSS tone frequency"
-	51 "TOT - Setting of the TOT time"
-	52 "TX.LED - TX led while transmitting"
-	53 "TXSAV - Transmitter battery saver"
-	54 "VFO.BND - VFO band edge limiting"
-	55 "WID.NAR - Wide or narrow TX deviation"
-	56 "WX ALT - Weather alert scan"
+	 5 "BEEP - Beep setting"
+	 6 "CLK.SFT - Shift the CPU clock frequency"
+	 7 "CWID - ARTS CW id setting"
+	 8 "CW WRT - Program the CW ID"
+	 9 "DCS.COD - Setting of the DCS Code"
+	10 "DCS N/R - Inverted DCS code decoding"
+	11 "DIMMER - Display brightness level"
+	12 "DT DLY - DTMF Autodialer setting"
+	13 "DT SPD - DTMF autodialer speed"
+	14 "DT WRT - Program the DTMF autodialer"
+	15 "EDG.BEP - Band-edge beeper"
+	16 "REV/HM - Function of the HM/RV key"
+	17 "HYPER - Auto hypermemory writing setting"
+	18 "I Net - Internet Link Connection mode"
+	19 "Int CD - Access number for WIRES"
+	20 "INT MR - Memory register for WIRES"
+	21 "LOCK - Locking lockout combination"
+	22 "MIC - Select the microphone type"
+	23 "NAME - Toggle frequency/name memory display"
+	24 "NM WRT - Store a name for a memory"
+	25 "PKT.MIC - Microphone enable/disable during packet"
+	26 "PKT.SPD - Set the packet speed"
+	27 "PRG.PNL - Set the function for the LOW(ACC) key"
+	28 "PRG P1 - Set the P1/ACC button function"
+	29 "PRG P2 - Set the P2/P button function"
+	30 "PRG P3 - Set the P3/P1 button function"
+	31 "PRG P4 - Set the P4/P2 button function"
+	32 "RF SQL - Adjust the RF quelch threshold"
+	33 "RPT.MOD - Set the repeater shift direction"
+	34 "PRI.RVT - Priority revert"
+	35 "RX MOD - Receiving mode"
+	36 "S SRCH - Smart search sweep mode"
+	37 "RESUME - Scan/Resume mode"
+	38 "SCN MD - Memory scan channel selection mode"
+	39 "SHIFT - Repeater shift size"
+	40 "SKIP - Memory scan skip channel selection mode"
+	41 "SPLIT - Split CTCSS/DCS coding"
+	42 "SQL.TYP - Tone squelch mode"
+	43 "STEP - Frequency steps"
+	44 "TN FRQ - CTCSS tone frequency"
+	45 "TOT - Setting of the TOT time"
+	46 "VFO.BND - VFO band edge limiting"
+	47 "WID.NAR - Wide or narrow TX deviation"
+	48 "WX ALT - Weather alert scan"
 endenum
 
 enum RFSquelch_e
@@ -554,36 +546,46 @@ endenum
 
 list Memories 1000
 #	Name			Address			type
-	"Enable"		(0x248,7,1,128)		CheckBox
-	"Label\nEnable"		(0x470e,7,1,64)		CheckBox
-	"Label\nValid"		(0x470f,7,1,64)		CheckBox
-	"Label"			(0x4708,0,48,64)	YaesuString	
-	"Pager\nEnable"		(0x248,6,1,128)		CheckBox
-	"Tx\nNarrow"		(0x248,5,1,128)		CheckBox
-	"Offset\nDirect"	(0x248,0,3,128)		OffsetDir_e
-	"Rx\nFreq"		(0x249,0,24,128)	BCDFreq
-	"Tone\nMode"		(0x24c,0,4,128)		ToneMode_e
-	"Step"			(0x24c,4,4,128)		Step_e
-	"Clock\nShift"		(0x24c,7,1,128)		CheckBox
-	"Tx\nFreq"		(0x24d,0,24,128)	BCDFreq
-	"CTCSS\nTone"		(0x250,0,6,128)		CTCSS_e
-	"Xmit\nPower"		(0x250,6,2,128)		XmitPower_e
-	"DCS\nCode"		(0x251,0,8,128)		DCSCode_e
-	"Offset\nFreq"		(0x253,0,16,128)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
-	"Offset\nFTab"		(0x253,0,16,128)	OffsetFreq_e "tie=Offset\nFreq"
-	"AM/FM"			(0x248,4,1,128)		ReceiveMode_e
-	"Skip"			(0x6ec8,0,2,2)		Skip_e
-	"Bank"			(0x69c8,0,1,1)		Empty
-	"1"			(0x69c8,0,1,1)		CheckBox
-	"2"			(0x6a48,0,1,1)		CheckBox
-	"3"			(0x6ac8,0,1,1)		CheckBox
-	"4"			(0x6b48,0,1,1)		CheckBox
-	"5"			(0x6bc8,0,1,1)		CheckBox
-	"6"			(0x6c48,0,1,1)		CheckBox
-	"7"			(0x6cc8,0,1,1)		CheckBox
-	"8"			(0x6d48,0,1,1)		CheckBox
-	"9"			(0x6dc8,0,1,1)		CheckBox
-	"10"			(0x6e48,0,1,1)		CheckBox
+	"Enable"		(0x4c8,7,1,128)		CheckBox
+	"Label\nEnable"		(0x498e,7,1,64)		CheckBox
+	"Label\nValid"		(0x498f,7,1,64)		CheckBox
+	"Label"			(0x4988,0,48,64)	YaesuString	
+	"Pager\nEnable"		(0x4c8,6,1,128)		CheckBox
+	"Tx\nNarrow"		(0x4c8,5,1,128)		CheckBox
+	"Offset\nDirect"	(0x4c8,0,3,128)		OffsetDir_e
+	"Rx\nFreq"		(0x4c9,0,24,128)	BCDFreq
+	"Tone\nMode"		(0x4cc,0,4,128)		ToneMode_e
+	"Step"			(0x4cc,4,4,128)		Step_e
+	"Clock\nShift"		(0x4cc,7,1,128)		CheckBox
+	"Tx\nFreq"		(0x4cd,0,24,128)	BCDFreq
+	"CTCSS\nTone"		(0x4d0,0,6,128)		CTCSS_e
+	"Xmit\nPower"		(0x4d0,6,2,128)		XmitPower_e
+	"DCS\nCode"		(0x4d1,0,8,128)		DCSCode_e
+	"Offset\nFreq"		(0x4d3,0,16,128)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x4d3,0,16,128)	OffsetFreq_e "tie=Offset\nFreq"
+	"AM/FM"			(0x4c8,4,1,128)		ReceiveMode_e
+	"Skip"			(0x7648,0,2,r2)		Skip_e
+	"Bank"			(0x6c48,0,1,1)		Empty
+	"1"			(0x6c48,0,1,r1)		CheckBox
+	"2"			(0x6cc8,0,1,r1)		CheckBox
+	"3"			(0x6d48,0,1,r1)		CheckBox
+	"4"			(0x6dc8,0,1,r1)		CheckBox
+	"5"			(0x6e48,0,1,r1)		CheckBox
+	"6"			(0x6ec8,0,1,r1)		CheckBox
+	"7"			(0x6f48,0,1,r1)		CheckBox
+	"8"			(0x6fc8,0,1,r1)		CheckBox
+	"9"			(0x7048,0,1,r1)		CheckBox
+	"10"			(0x70c8,0,1,r1)		CheckBox
+	"11"			(0x7148,0,1,r1)		CheckBox
+	"12"			(0x71c8,0,1,r1)		CheckBox
+	"13"			(0x7248,0,1,r1)		CheckBox
+	"14"			(0x72c8,0,1,r1)		CheckBox
+	"15"			(0x7348,0,1,r1)		CheckBox
+	"16"			(0x73c8,0,1,r1)		CheckBox
+	"17"			(0x7448,0,1,r1)		CheckBox
+	"18"			(0x74c8,0,1,r1)		CheckBox
+	"19"			(0x7548,0,1,r1)		CheckBox
+	"20"			(0x75c8,0,1,r1)		CheckBox
 endlist
 
 list VFOs 5
@@ -605,44 +607,44 @@ endlist
 
 list Lower_Limit 50
 #	Name			Address			type
-	"Enable"		(0x40c8,7,1,256)	CheckBox
-	"Label\nEnable"		(0x664e,7,1,128)	CheckBox
-	"Label\nValid"		(0x664f,7,1,128)	CheckBox
-	"Label"			(0x6648,0,48,128)	YaesuString	
-	"Pager\nEnable"		(0x40c8,6,1,256)	CheckBox
-	"Tx\nNarrow"		(0x40c8,5,1,256)	CheckBox
-	"Offset\nDirect"	(0x40c8,0,3,256)	OffsetDir_e
-	"Rx\nFreq"		(0x40c9,0,24,256)	BCDFreq
-	"Tone\nMode"		(0x40cc,0,3,256)	ToneMode_e
-	"Step"			(0x40cc,4,3,256)	Step_e
-	"Clock\nShift"		(0x40cc,7,1,256)	CheckBox
-	"Tx\nFreq"		(0x40cd,0,24,256)	BCDFreq
-	"CTCSS\nTone"		(0x40d0,0,6,256)	CTCSS_e
-	"Xmit\nPower"		(0x40d0,6,2,256)	XmitPower_e
-	"DCS\nCode"		(0x40d1,0,8,256)	DCSCode_e
-	"Offset\nFreq"		(0x40d3,0,16,256)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
-	"Offset\nFTab"		(0x40d3,0,16,256)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
+	"Enable"		(0x4348,7,1,256)	CheckBox
+	"Label\nEnable"		(0x68ce,7,1,128)	CheckBox
+	"Label\nValid"		(0x68cf,7,1,128)	CheckBox
+	"Label"			(0x68c8,0,48,128)	YaesuString	
+	"Pager\nEnable"		(0x4348,6,1,256)	CheckBox
+	"Tx\nNarrow"		(0x4348,5,1,256)	CheckBox
+	"Offset\nDirect"	(0x4348,0,3,256)	OffsetDir_e
+	"Rx\nFreq"		(0x4349,0,24,256)	BCDFreq
+	"Tone\nMode"		(0x434c,0,3,256)	ToneMode_e
+	"Step"			(0x434c,4,3,256)	Step_e
+	"Clock\nShift"		(0x434c,7,1,256)	CheckBox
+	"Tx\nFreq"		(0x434d,0,24,256)	BCDFreq
+	"CTCSS\nTone"		(0x4350,0,6,256)	CTCSS_e
+	"Xmit\nPower"		(0x4350,6,2,256)	XmitPower_e
+	"DCS\nCode"		(0x4351,0,8,256)	DCSCode_e
+	"Offset\nFreq"		(0x4353,0,16,256)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x4035,0,16,256)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
 endlist
 
 list Upper_Limit 50
 #	Name			Address			type
-	"Enable"		(0x40d8,7,1,256)	CheckBox
-	"Label\nEnable"		(0x6656,7,1,128)	CheckBox
-	"Label\nValid"		(0x6657,7,1,128)	CheckBox
-	"Label"			(0x6650,0,48,128)	YaesuString	
-	"Pager\nEnable"		(0x40d8,6,1,256)	CheckBox
-	"Tx\nNarrow"		(0x40d8,5,1,256)	CheckBox
-	"Offset\nDirect"	(0x40d8,0,3,256)	OffsetDir_e
-	"Rx\nFreq"		(0x40d9,0,24,256)	BCDFreq
-	"Tone\nMode"		(0x40dc,0,3,256)	ToneMode_e
-	"Step"			(0x40dc,4,3,256)	Step_e
-	"Clock\nShift"		(0x40dc,7,1,256)	CheckBox
-	"Tx\nFreq"		(0x40dd,0,24,256)	BCDFreq
-	"CTCSS\nTone"		(0x40e0,0,6,256)	CTCSS_e
-	"Xmit\nPower"		(0x40e0,6,2,256)	XmitPower_e
-	"DCS\nCode"		(0x40e1,0,8,256)	DCSCode_e
-	"Offset\nFreq"		(0x40e3,0,16,256)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
-	"Offset\nFTab"		(0x40e3,0,16,256)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
+	"Enable"		(0x4358,7,1,256)	CheckBox
+	"Label\nEnable"		(0x68d6,7,1,128)	CheckBox
+	"Label\nValid"		(0x68d7,7,1,128)	CheckBox
+	"Label"			(0x68d0,0,48,128)	YaesuString	
+	"Pager\nEnable"		(0x4358,6,1,256)	CheckBox
+	"Tx\nNarrow"		(0x4358,5,1,256)	CheckBox
+	"Offset\nDirect"	(0x4358,0,3,256)	OffsetDir_e
+	"Rx\nFreq"		(0x4359,0,24,256)	BCDFreq
+	"Tone\nMode"		(0x435c,0,3,256)	ToneMode_e
+	"Step"			(0x435c,4,3,256)	Step_e
+	"Clock\nShift"		(0x435c,7,1,256)	CheckBox
+	"Tx\nFreq"		(0x435d,0,24,256)	BCDFreq
+	"CTCSS\nTone"		(0x4360,0,6,256)	CTCSS_e
+	"Xmit\nPower"		(0x4360,6,2,256)	XmitPower_e
+	"DCS\nCode"		(0x4361,0,8,256)	DCSCode_e
+	"Offset\nFreq"		(0x4363,0,16,256)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x4363,0,16,256)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
 endlist
 
 tab Config
@@ -660,8 +662,8 @@ tab Config
 	"Selected DTMF"		(0x001a,0,4)		SelectedDTMFe
 	"Auto Power Off"	(0x0024,0,5)		AutoPowerOff_e
 	"Timeout Timer"		(0x0025,0,8)		TimeoutTimer_e
-	"P1 key setting"	(0x0026,0,8)		MenuItem_e
-	"P2 key setting"	(0x0027,0,8)		MenuItem_e
+#	"P1 key setting"	(0x0026,0,8)		MenuItem_e
+#	"P2 key setting"	(0x0027,0,8)		MenuItem_e
 	"RF Squelch"		(0x0028,0,5)		RFSquelch_e
 	"Internet DTMF"		(0x0029,0,4)		DTMFDigit_e
 	"Internet DTMF Memory"	(0x002a,0,4)		SelectedDTMFe
@@ -706,7 +708,7 @@ tab Config
 	"Password"		(0x021e,0,32)		HexDigits
 endtab
 
-list "DTMF_Tone" 9
+list "DTMF_Tone" 16
 #	Name			Address			type
 	"Digits"		(0x00c8,0,128,128)	HexDigits
 endlist

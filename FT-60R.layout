@@ -3,6 +3,8 @@ In the transferred data, all the blocks are 64 bytes, with an 8 byte
 header, and the end of the file is 1-byte block that is a checksum
 of all the data.
 
+FIXME - chosen weather channel
+
 Frequencies take up 3 bytes and are in the following format:
     byte 0 bits 4-7 - This is the last 5khz, 8 to enable the last
 		5khz, 0 to not.  Like 145.805 if set to 8
@@ -75,9 +77,9 @@ DCS code
 	60-703 61-712 62-723 63-731 64-732 65-734 66-743 67-754
 
 Transmit power
-	0 - High
-	1 - Med
-	2 - Low
+	0 - High (5w)
+	1 - Med (2w)
+	2 - Low (.5w)
 
 
 Memories take up 16 bytes in the format:
@@ -87,7 +89,8 @@ Memories take up 16 bytes in the format:
 			      2 - minus
 			      3 - plus
 			      4 - split (transmit frequency valid)
-		   bits 3-4 - ?
+		   bit 3 - ?
+		   bit 4 - 0=FM, 1=AM
 		   bit 5 - TX Narrow
 		   bit 6 - Pager Enable (menu 29)
 		   bit 7 - 1 to enable and 0 to disable a channel
@@ -202,7 +205,7 @@ cycled on the radio, there appears to be no memory for it.
 
 002a	bits 0-3 - Internet DTMF Memory: 0=D1, 1=D2, ..., 8=D9
 
-002b	bits 0-2 - Lock type (menu 25): 1=Key, 2=Dial, 3=Key+Dial,
+002b	bits 0-2 - Lock type (menu 25): 0=off, 1=Key, 2=Dial, 3=Key+Dial,
 		4=PTT, 5=PTT+Key, 6=PTT+Dial, 7=All
 
 002c	bits 0-2 - DTMF delay (menu 15): 0=50ms, 1=100ms 2=250ms,
@@ -305,10 +308,10 @@ cycled on the radio, there appears to be no memory for it.
 0248-40c7 - Memory data, stored in 16-byte chunks.  First is memory 1, second
 	    is memory 2, etc, last is memory 0.
 
-40c8-4107 - Limit memories, in the standard memory format (though some
-	    fields don't make sense), in the order: L1, U1, L2, U2
+40c8-4107 - Limit memories, in the standard memory format, in the
+	 order: L1, U1, L2, U2
 
-4708-663f - Character strings for the 1000 memories, each 8 bytes.
+4708-6647 - Character strings for the 1000 memories, each 8 bytes.
 	    The first 6 bytes is the characters, the last 2 bytes
 	    has an unknown format, but appears to be 00 00 if the
 	    data is not valid and 00 80 if the data is valid but the.
@@ -317,10 +320,13 @@ cycled on the radio, there appears to be no memory for it.
 	    and byte 7 bit 7 is the "data valid" bit.
 	    Memory 000 is at 6638.
 
+6648-6967 - Character strings for the 100 limit memories, same format
+	as the ones immediately above.
+
 69c8-6ec8 - Bank settings.  Each of these is 128 bytes holding 1000 bit
 	    entries for each bank.  So bank 1 start at 69c8, bank 2 starts
 	    at 6a48, etc.  Memories start at the low order bit, so 69c8
-	    bit 0 is memory 1, bit 1 is memory 2, etc.
+	    bit 0 is memory 1, bit 1 is memory 2, etc.  There are 10 banks.
 
 
 6ec8-6fc1 - This is 1000 2-bit values holding the Skip field, starting

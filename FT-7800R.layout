@@ -1,0 +1,112 @@
+
+This uses the same base protocol as the FT-60R.
+
+The frequency definition is the same as the FT-60R.
+
+Memories are in the same 16-byte format as the FT-60R, all fields appear to
+be the same
+
+Transmit power
+	0 - High (50/40w)
+	1 - Mid1 (20w)
+	2 - Mid2 (10w)
+	3 - Low  (5w)
+
+Hyperchannel information appears in 128-byte chunks in the form:
+
+	00-49 - 5 VFO memories
+	56-58 - Bitmask for bank links, Byte 56 bit 7 is bank1, byte 56 bit 6
+		is bank2, etc, to byte 58 bit 4 is bank 20.  Byte 58 bits 0-3
+		are not used.
+	70 - bit 0-1 - Mode: 0=VFO, 1=Home, 2=Memory
+	71 - bits 0-3 - DTMF Memory: 0=1, 1=2, etc.
+	75 - bits 0-2 - Band 0=144MHz, 1=250MHz, 2=350MHz, 4=430MHz, 5=800MHz
+	76 - Menu#
+	77 - VFO scan mode 0=Band, 1=+/-1MHz, 2=+/-2MHz, 3=+/-5MHz, 4=All,
+		5=PMS-01, 6=PMS-02, ..., 54=PMS50
+	78 - bits 0-3 - Wx Channel#: 0=1, 1=2, ..., 9=10
+ 	7b - bit 7 - Wx Alert
+	7c - bit 0 - Auto Step Mode
+	     bit 1 - Auto Receive Mode
+	     bit 2 - VFO Band Edge
+	     bit 4 - Packet Mic
+	     bit 5 - Auto Repeater Split
+	     bit 6 - Packet speed: 0=1200bps, 1=9600bps
+	    
+	Notes: Memory bank# is broken in ADMS, need to get from radio
+
+
+003a -	*bits 0-4 - Auto power off (menu 1):
+		off = v * (.5 hours) up to 12 hours.
+
+003c -	*bit 4 - ARTS polling interval (menu ?): 0=25sec, 1=15sec
+	*bits 5-7 - Lock type (menu ??): 0=off, 1=Key, 2=Dial, 3=Key+Dial,
+		4=PTT, 5=PTT+Key, 6=PTT+Dial, 7=All
+
+0042 -	*bits 0-3 - Internet DTMF Digit:  0=Code0, 1=Code1, ..., 9=Code9
+	*bits 4-7 - Internet DTMF Memory:  0=D1, 1=D2, ..., f=D16
+
+0043 -	*bits 0-1 - Dimmer: 0=Off, 1=Dim1, 2=Dim2, 3=Dim3
+	*bit 2 - Memory Only
+	*bits 3-4 - Hyper write: 0=Manual, 2=1-Auto, 1=Auto
+	*bit 7 - ARTS CW ID
+
+0044 -	*bit3 - Internet mode: 0=Code, 1=Memory
+	*bit 5 - Key beep, must be set to set Scan beep, see bit 7
+	*bit 6 - Band Edge Beep (menu 15)
+	*bit 7 - Scan beep.  Key beep must be enabled to set this, see
+		bit 5.
+
+0045 -	*bit 4 - Priority Revert (menu ??)
+	*bits 6-7 - DCS N/R, values are (menu ??): 0=T/RX N, 1=RX R,
+		2=TX R, 3=T/RX R
+
+0046 -	*bits 0-1 - ARTS Beep: 0=Off, 1=Always, 2=Inrange
+
+0048-00a7 - VFO (current) frequencies, in the memory format, though some fields
+	    don't make sense.  The occur in the order: VHF, 250, 350, UHF
+	    800.
+
+00c8-01c8 - 16 sets of DTMF tones (menu 14), 16 values in each set,
+	  where the value is the DTMF digit (0=0, 1=1, etc), taking the
+	  whole byte.  0xff marks the end of the string.  First set is
+	  set 1, 2nd set is set 2, etc.  Selected by byte ???.
+
+01c8-04c7 - 6 home/hypermemory configuration, each 128 bytes.  The first
+	one is for home, the next for hypermemory1, etc.  Only the VFOs
+	are used for the home memory.
+
+*0240-0244 - CW ID
+
+04c8-4340 - Memories in 16-byte format
+
+4348-4987 - Limit memories, in the standard memory format, in the
+	 order: L1, U1, L2, U2
+
+4988-68c7 - Character strings for the 1000 memories, each 8 bytes.
+	    The first 6 bytes is the characters, the last 2 bytes
+	    has an unknown format, but appears to be 00 00 if the
+	    data is not valid and 00 80 if the data is valid but the.
+	    frequency is displayed and 80 80 if the data is valid and 
+	    the name is displayed.  So byte 6 bit 7 is the alpha/freq bit
+	    and byte 7 bit 7 is the "data valid" bit.
+	    Memory 000 is at 6638.
+
+68c8-6be7 - Character strings for the 100 limit memories, same format
+	as the ones immediately above.
+
+6c48-7647 - Bank settings.  Each of these is 128 bytes holding 1000 bit
+	    entries for each bank.  So bank 1 start at 6c48, bank 2 starts
+	    at 6cc8, etc.  Memories settings are, unfortunately, backwards
+	    from the FT-60R.  Byte 0 bit 7 is memory 1, byte 0 bit 6, is
+	    memory 2, etc, Byte 1 bit 7 is memory 9, and so on.  There are
+	    20 banks.
+
+7648-7741 - This is 1000 2-bit values holding the Skip field, starting
+	    from high-order bits and going to low, which is unfortunately
+	    backwards from the FT-60R.  So 7648 bits 6-7 are channel 1,
+	    7648 bits 4-5 are channel 2, 7649 bits 6-7 are channel 4, etc.
+	    (menu 40) The values are:
+		0 - off
+		1 - Skip
+		2 - P Scan
