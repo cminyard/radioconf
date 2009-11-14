@@ -12,69 +12,109 @@ Transmit power
 	2 - Mid2 (10w)
 	3 - Low  (5w)
 
+There is a common 16-byte configuration area shared among the hypermemories,
+main configuration, and home memory.  It has the format:
+
+	0 - bit 0-1 - Mode: 0=VFO, 1=Home, 2=Memory
+	1 - bits 0-3 - DTMF Memory: 0=1, 1=2, etc.
+	5 - bits 0-2 - Band 0=144MHz, 1=250MHz, 2=350MHz, 4=430MHz, 5=800MHz
+	6 - Menu#
+	7 - VFO scan mode 0=Band, 1=+/-1MHz, 2=+/-2MHz, 3=+/-5MHz, 4=All,
+		5=PMS-01, 6=PMS-02, ..., 54=PMS50
+	8 - bits 0-3 - Wx Channel#: 0=1, 1=2, ..., 9=10
+ 	b - bit 7 - Wx Alert
+	c - bit 0 - Auto Step Mode
+	    bit 1 - Auto Receive Mode
+	    bit 2 - VFO Band Edge
+	    bit 4 - Packet Mic
+	    bit 5 - Auto Repeater Split
+	    bit 6 - Packet speed: 0=1200bps, 1=9600bps
+	    
+	Notes: Memory bank# is broken in ADMS, need to get from radio
+
 Hyperchannel information appears in 128-byte chunks in the form:
 
 	00-49 - 5 VFO memories
 	56-58 - Bitmask for bank links, Byte 56 bit 7 is bank1, byte 56 bit 6
 		is bank2, etc, to byte 58 bit 4 is bank 20.  Byte 58 bits 0-3
 		are not used.
-	70 - bit 0-1 - Mode: 0=VFO, 1=Home, 2=Memory
-	71 - bits 0-3 - DTMF Memory: 0=1, 1=2, etc.
-	75 - bits 0-2 - Band 0=144MHz, 1=250MHz, 2=350MHz, 4=430MHz, 5=800MHz
-	76 - Menu#
-	77 - VFO scan mode 0=Band, 1=+/-1MHz, 2=+/-2MHz, 3=+/-5MHz, 4=All,
-		5=PMS-01, 6=PMS-02, ..., 54=PMS50
-	78 - bits 0-3 - Wx Channel#: 0=1, 1=2, ..., 9=10
- 	7b - bit 7 - Wx Alert
-	7c - bit 0 - Auto Step Mode
-	     bit 1 - Auto Receive Mode
-	     bit 2 - VFO Band Edge
-	     bit 4 - Packet Mic
-	     bit 5 - Auto Repeater Split
-	     bit 6 - Packet speed: 0=1200bps, 1=9600bps
-	    
-	Notes: Memory bank# is broken in ADMS, need to get from radio
+	70-7f - common configuration data
 
+0028-0037 - Main configuration area.  Note that ADMS sets this along with
+	the area at 00c0 and hypermemory 1 whenever setting hypermemory 1
+	settings, but I don't know what that means.
 
 003a -	*bits 0-4 - Auto power off (menu 1):
 		off = v * (.5 hours) up to 12 hours.
 
-003c -	*bit 4 - ARTS polling interval (menu ?): 0=25sec, 1=15sec
+003b -	*bits 0-4 - Time out timer: 0=off, 1=1Min, ..., 30=30Min
+
+003c -	*bits 0-2 - Prg LOW(ACC): 0=Weather, 1=Reverse, 2=Repeater,
+		3=Squelch Off, 4=Lock, 5=Dimmer
+	*bit 4 - ARTS polling interval (menu ?): 0=25sec, 1=15sec
 	*bits 5-7 - Lock type (menu ??): 0=off, 1=Key, 2=Dial, 3=Key+Dial,
 		4=PTT, 5=PTT+Key, 6=PTT+Dial, 7=All
 
+003d-0040 - Px key assignments, values are:
+	26 "Priority"
+	27 "Low"
+	28 "Tone"
+	29 "MHz"
+	30 "Reverse"
+	31 "Home"
+	32 "Band"
+	33 "VFO/MR"
+	34 "Scan"
+	35 "Sql Off"
+	36 "TCall"
+	37 "SSCH"
+	38 "ARTS"
+	39 "TN FQ"
+	40 "DCSC"
+	41 "Weather"
+	42 "Repeater"
+
+0041 -	*bits 0-3 - RF Squelch: 0=off, 1=S2, 2=S3, .., 8=S9, 9=S-Full
 0042 -	*bits 0-3 - Internet DTMF Digit:  0=Code0, 1=Code1, ..., 9=Code9
 	*bits 4-7 - Internet DTMF Memory:  0=D1, 1=D2, ..., f=D16
 
 0043 -	*bits 0-1 - Dimmer: 0=Off, 1=Dim1, 2=Dim2, 3=Dim3
 	*bit 2 - Memory Only
 	*bits 3-4 - Hyper write: 0=Manual, 2=1-Auto, 1=Auto
+	*bit 6 - HM/Rev key 0=Reverse, 1=Home
 	*bit 7 - ARTS CW ID
 
-0044 -	*bit3 - Internet mode: 0=Code, 1=Memory
+0044 -	*bits 0-1 - DTMF Speed: 0=50ms, 1=75ms, 2=100ms
+	*bit 3 - Internet mode: 0=Code, 1=Memory
 	*bit 5 - Key beep, must be set to set Scan beep, see bit 7
 	*bit 6 - Band Edge Beep (menu 15)
 	*bit 7 - Scan beep.  Key beep must be enabled to set this, see
 		bit 5.
 
-0045 -	*bit 4 - Priority Revert (menu ??)
+0045 -	*bits 0-2 - DTMF Delay: 0=50ms, 1=250ms, 2=450ms, 3=750ms, 4=1sec
+	*bit 4 - Priority Revert (menu ??)
+	*bit 5 = Smart Search: 0=Single, 1=Continuous
 	*bits 6-7 - DCS N/R, values are (menu ??): 0=T/RX N, 1=RX R,
 		2=TX R, 3=T/RX R
 
 0046 -	*bits 0-1 - ARTS Beep: 0=Off, 1=Always, 2=Inrange
+	*bits 2-3 - Scan Resume: 0=Time, 1=Hold, 2=Busy
+	*bit 4 - Microphone: 0=MH-42, 1=MH-48
 
 0048-00a7 - VFO (current) frequencies, in the memory format, though some fields
 	    don't make sense.  The occur in the order: VHF, 250, 350, UHF
 	    800.
 
+00b8-00c7 - Home configuration area?  See note for location 0028.
+
 00c8-01c8 - 16 sets of DTMF tones (menu 14), 16 values in each set,
 	  where the value is the DTMF digit (0=0, 1=1, etc), taking the
 	  whole byte.  0xff marks the end of the string.  First set is
-	  set 1, 2nd set is set 2, etc.  Selected by byte ???.
+	  set 1, 2nd set is set 2, etc.  Selected by byte 0042.
 
 01c8-04c7 - 6 home/hypermemory configuration, each 128 bytes.  The first
 	one is for home, the next for hypermemory1, etc.  Only the VFOs
-	are used for the home memory.
+	are used for the home memory.  See also note for location 0028.
 
 *0240-0244 - CW ID
 

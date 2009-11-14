@@ -476,7 +476,7 @@ enum MenuItem_e
 	10 "CWID - ARTS CW id setting"
 	11 "CW WRT - Program the CW ID"
 	12 "DC VL - Display the DC voltage"
-	13 "DT DLY - DTMF Autodialer setting"
+	13 "DCS.COD - DCS Code"
 	14 "DCS N/R - Inverted DCS code decoding"
 	15 "DT DLY - DTMF autodialer delay"
 	16 "DT SPD - DTMF autodialer speed"
