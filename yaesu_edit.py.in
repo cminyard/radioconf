@@ -2021,21 +2021,21 @@ class RadioConfig:
     def parseLine(self, s):
         if (self.curr == None):
             if (s[0] == "enum"):
-                if (len(s) < 1):
+                if (len(s) < 2):
                     raise ParseException(self.filename, self.lineno,
                                          "Enum has no name")
                 self.curr = Enum(s[1])
             elif (s[0] == "list"):
-                if (len(s) < 1):
+                if (len(s) < 2):
                     raise ParseException(self.filename, self.lineno,
                                          "List has no name")
-                if (len(s) < 2):
+                if (len(s) < 3):
                     raise ParseException(self.filename, self.lineno,
                                          "List has no length")
                 length = self.toNum(s[2])
                 self.curr = List(s[1], length)
             elif (s[0] == "tab"):
-                if (len(s) < 1):
+                if (len(s) < 2):
                     raise ParseException(self.filename, self.lineno,
                                          "Tab has no name")
                 self.curr = Tab(s[1])

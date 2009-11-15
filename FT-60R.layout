@@ -197,7 +197,7 @@ cycled on the radio, there appears to be no memory for it.
 
 0027	P2 key setting: see byte 0026 
 
-0028	bits 0-4 - RF Squelch (menu 37): 0=off, 1=S1, 2=S2, .., 6=S6,
+0028	bits 0-3 - RF Squelch (menu 37): 0=off, 1=S1, 2=S2, .., 6=S6,
 	     7=S8, 8=S-Full
 	     Careful on above numbers, S7 is missing
 

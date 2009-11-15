@@ -162,7 +162,7 @@ enum DCSCode_e
 	0x67 "754"
 endenum
 
-enum SelectedDTMFe
+enum SelectedDTMF_e
 	0 "1"
 	1 "2"
 	2 "3"
@@ -657,14 +657,14 @@ tab Config
 	"DCS Code"		(0x0011,0,8)		DCSCode_e
 	"Xmit Power"		(0x0010,6,2)		XmitPower_e
 	"Offset Frequency"	(0x0013,0,16)		OffsetFreq_e
-	"Selected DTMF"		(0x001a,0,4)		SelectedDTMFe
+	"Selected DTMF"		(0x001a,0,4)		SelectedDTMF_e
 	"Auto Power Off"	(0x0024,0,5)		AutoPowerOff_e
 	"Timeout Timer"		(0x0025,0,8)		TimeoutTimer_e
 	"P1 key setting"	(0x0026,0,8)		MenuItem_e
 	"P2 key setting"	(0x0027,0,8)		MenuItem_e
-	"RF Squelch"		(0x0028,0,5)		RFSquelch_e
+	"RF Squelch"		(0x0028,0,4)		RFSquelch_e
 	"Internet DTMF"		(0x0029,0,4)		DTMFDigit_e
-	"Internet DTMF Memory"	(0x002a,0,4)		SelectedDTMFe
+	"Internet DTMF Memory"	(0x002a,0,4)		SelectedDTMF_e
 	"Lock type"		(0x002b,0,3)		LockType_e
 	"DTMF Delay"		(0x002c,0,3)		DTMFDelay_e
 	"DTMF Speed"		(0x002d,0,1)		DTMFSpeed_e
@@ -685,6 +685,7 @@ tab Config
 	"VFO Band Edge Limit"	(0x0039,3,1)		CheckBox
 	"Auto Repeater Shift"	(0x0039,4,1)		CheckBox
 	"ARTS CWID Enable"	(0x0039,7,1)		CheckBox
+	"CWID"			(0x0218,0,32)		HexDigits
 	"Lock"			(0x003a,0,1)		CheckBox
 	"Internet Mode"		(0x003a,1,2)		InternetMode_e
 	"Scan Beep"		(0x003a,5,1:0x003a,3,1)	ScanBeep_e

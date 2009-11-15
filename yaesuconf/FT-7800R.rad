@@ -162,7 +162,7 @@ enum DCSCode_e
 	0x67 "754"
 endenum
 
-enum SelectedDTMFe
+enum SelectedDTMF_e
 	0 "1"
 	1 "2"
 	2 "3"
@@ -172,6 +172,13 @@ enum SelectedDTMFe
 	6 "7"
 	7 "8"
 	8 "9"
+	9 "10"
+	10 "11"
+	11 "12"
+	12 "13"
+	13 "14"
+	14 "15"
+	15 "16"
 endenum
 
 enum DTMFDigit_e
@@ -198,37 +205,14 @@ endenum
 
 enum DTMFSpeed_e
 	0 "50ms"
-	1 "100ms"
+	1 "75ms"
+	2 "100ms"
 endenum
 
 enum ARTSBeep_e
 	0 "Off"
 	1 "InRange"
 	2 "Always"
-endenum
-
-enum LampMode_e
-	0 "Key"
-	1 "5Sec"
-	2 "Toggle"
-endenum
-
-enum Bell_e
-	0 "Off"
-	1 "1 time"
-	2 "3 times"
-	3 "5 times"
-	4 "8 times"
-	5 "Continuous"
-endenum
-
-enum RXSave_e
-	0 "Off"
-	1 "200ms"
-	2 "300ms"
-	3 "500ms"
-	4 "1sec"
-	5 "2sec"
 endenum
 
 enum LockType_e
@@ -239,51 +223,6 @@ enum LockType_e
 	5 "PTT+Key"
 	6 "PTT+Dial"
 	7 "All"
-endenum
-
-enum EmergSig_e
-	0 "Off"
-	1 "Beep"
-	2 "Lamp"
-	3 "Beep+Lamp"
-	4 "CWT"
-	5 "CWT+Beep"
-	6 "CWT+Lamp"
-	7 "All"
-endenum
-
-enum EAI_e
-	0x00 "off"
-	0x01 "1min interval"
-	0x02 "2min interval"
-	0x03 "3min interval"
-	0x04 "4min interval"
-	0x05 "5min interval"
-	0x06 "6min interval"
-	0x06 "7min interval"
-	0x08 "8min interval"
-	0x09 "9min interval"
-	0x0a "10min interval"
-	0x0b "15min interval"
-	0x0c "20min interval"
-	0x0d "30min interval"
-	0x0e "40min interval"
-	0x0f "50min interval"
-	0x11 "1min continuous"
-	0x12 "2min continuous"
-	0x13 "3min continuous"
-	0x14 "4min continuous"
-	0x15 "5min continuous"
-	0x16 "6min continuous"
-	0x17 "7min continuous"
-	0x18 "8min continuous"
-	0x19 "9min continuous"
-	0x0a "10min continuous"
-	0x1b "15min continuous"
-	0x1c "20min continuous"
-	0x1d "30min continuous"
-	0x1e "40min continuous"
-	0x1f "50min continuous"
 endenum
 
 enum ARTSPoll_e
@@ -304,9 +243,8 @@ enum DCSNR_e
 endenum
 
 enum InternetMode_e
-	0 "Off"
-	1 "Code"
-	3 "Memory"
+	0 "Code"
+	1 "Memory"
 endenum
 
 enum ScanBeep_e
@@ -326,20 +264,9 @@ enum ScanResume_e
 	2 "Busy"
 endenum
 
-enum MoniTCall_e
-	0 "Moni"
-	1 "TCall"
-endenum
-
 enum HMREV_e
 	0 "Reverse"
 	1 "Home"
-endenum
-
-enum Frequencies_e
-	0 "All"
-	1 "VHF Only"
-	2 "UHF Only"
 endenum
 
 enum OffsetDir_e
@@ -397,7 +324,7 @@ endenum
 enum XmitPower_e
 	0 "High"
 	1 "Med"
-	1 "Med2
+	1 "Med2"
 	2 "Low"
 endenum
 
@@ -483,6 +410,118 @@ enum PKeyAssignments_e
 	42 "Repeater"
 endenum
 
+enum Dimmer_e
+	0 "Off"
+	1 "Dim1"
+	2 "Dim2"
+	3 "Dim3"
+endenum
+
+enum HyperWrite_e
+	0 "Manual"
+	1 "1-Auto"
+	2 "Auto"
+endenum
+
+enum Microphone_e
+	0 "MH-42"
+	1 "MH-48"
+endenum
+
+enum LOWACCKey_e
+	0 "Weather"
+	1 "Reverse"
+	2 "Repeater"
+	3 "Squelch Off"
+	4 "Lock"
+	5 "Dimmer"
+endenum
+
+enum Mode_e
+	0 "VFO"
+	1 "Home"
+	2 "Memory"
+endenum
+
+enum Band_e
+	0 "144MHz"
+	1 "250MHz"
+	2 "350MHz"
+	4 "430MHz"
+	5 "800MHz"
+endenum
+
+enum VFOScanMode_e
+	 0 "Band"
+	 1 "+/-1MHz"
+	 2 "+/-2MHz"
+	 3 "+/-5MHz"
+	 4 "All"
+	 5 "PMS-01"
+	 6 "PMS-02"
+	 7 "PMS-03"
+	 8 "PMS-04"
+	 9 "PMS-05"
+	10 "PMS-06"
+	11 "PMS-07"
+	12 "PMS-08"
+	13 "PMS-09"
+	14 "PMS-10"
+	15 "PMS-11"
+	16 "PMS-12"
+	17 "PMS-13"
+	18 "PMS-14"
+	19 "PMS-15"
+	20 "PMS-16"
+	21 "PMS-17"
+	22 "PMS-18"
+	23 "PMS-19"
+	24 "PMS-20"
+	25 "PMS-21"
+	26 "PMS-22"
+	27 "PMS-23"
+	28 "PMS-24"
+	29 "PMS-25"
+	30 "PMS-26"
+	31 "PMS-27"
+	32 "PMS-28"
+	33 "PMS-29"
+	34 "PMS-30"
+	35 "PMS-31"
+	36 "PMS-32"
+	37 "PMS-33"
+	38 "PMS-34"
+	39 "PMS-35"
+	40 "PMS-36"
+	41 "PMS-37"
+	42 "PMS-38"
+	43 "PMS-39"
+	44 "PMS-40"
+	45 "PMS-41"
+	46 "PMS-42"
+	47 "PMS-43"
+	48 "PMS-44"
+	49 "PMS-45"
+	50 "PMS-46"
+	51 "PMS-47"
+	52 "PMS-48"
+	53 "PMS-49"
+	54 "PMS-50"
+endenum
+
+enum WxChannel_e
+	 0 "1"
+	 1 "2"
+	 2 "3"
+	 3 "4"
+	 4 "5"
+	 5 "6"
+	 6 "7"
+	 7 "8"
+	 8 "9"
+	 9 "10"
+endenum
+
 enum MenuItem_e
 	 1 "APO - Auto Power Off"
 	 2 "AR Bep - Beep during ARTS"
@@ -564,6 +603,11 @@ enum Skip_e
 	0x2 "P Scan"
 endenum
 
+enum PacketSpeed_e
+	0 "1200bps"
+	1 "9600bps"
+endenum
+
 list Memories 1000
 #	Name			Address			type
 	"Enable"		(0x4c8,7,1,128)		CheckBox
@@ -625,7 +669,199 @@ list VFOs 5
 	"Offset\nFTab"		(0x53,0,16,128)		OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
 endlist
 
-list Lower_Limit 50
+list Home 5
+	"Pager\nEnable"		(0x1c8,6,1,128)		CheckBox
+	"Tx\nNarrow"		(0x1c8,5,1,128)		CheckBox
+	"Offset\nDirect"	(0x1c8,0,3,128)		OffsetDir_e
+	"Rx\nFreq"		(0x1c9,0,24,128)	BCDFreq
+	"Tone\nMode"		(0x1cc,0,3,128)		ToneMode_e
+	"Step"			(0x1cc,4,3,128)		Step_e
+	"Clock\nShift"		(0x1cc,7,1,128)		CheckBox
+	"Tx\nFreq"		(0x1cd,0,24,128)	BCDFreq
+	"CTCSS\nTone"		(0x1d0,0,6,128)		CTCSS_e
+	"Xmit\nPower"		(0x1d0,6,2,128)		XmitPower_e
+	"DCS\nCode"		(0x1d1,0,8,128)		DCSCode_e
+	"Offset\nFreq"		(0x1d3,0,16,128)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x1d3,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
+endlist
+
+tab HConf
+	"Mode"			(0xb8,0,2)		Mode_e
+	"Selected DTMF"		(0xb9,0,4)		SelectedDTMF_e
+	"Band"			(0xbd,0,2)		Band_e
+	"Menu#"			(0xbe,0,8)		MenuItem_e
+	"VFO Scan Mode"		(0xbf,0,8)		VFOScanMode_e
+	"Wx Channel"		(0xc0,0,4)		WxChannel_e
+	"Wx Alert"		(0xc3,7,1)		CheckBox
+	"Auto Step Mode"	(0xc4,0,1)		CheckBox
+	"Auto Receive Mode"	(0xc4,1,1)		CheckBox
+	"VFO Band Edge Beep"	(0xc4,2,1)		CheckBox
+	"Packet Mic"		(0xc4,3,1)		CheckBox
+	"Auto Repeater Split"	(0xc4,4,1)		CheckBox
+	"Packet Speed"		(0xc4,5,1)		CheckBox
+endtab	
+
+list Hyper1 5
+	"Pager\nEnable"		(0x248,6,1,128)		CheckBox
+	"Tx\nNarrow"		(0x248,5,1,128)		CheckBox
+	"Offset\nDirect"	(0x248,0,3,128)		OffsetDir_e
+	"Rx\nFreq"		(0x249,0,24,128)	BCDFreq
+	"Tone\nMode"		(0x24c,0,3,128)		ToneMode_e
+	"Step"			(0x24c,4,3,128)		Step_e
+	"Clock\nShift"		(0x24c,7,1,128)		CheckBox
+	"Tx\nFreq"		(0x24d,0,24,128)	BCDFreq
+	"CTCSS\nTone"		(0x250,0,6,128)		CTCSS_e
+	"Xmit\nPower"		(0x250,6,2,128)		XmitPower_e
+	"DCS\nCode"		(0x251,0,8,128)		DCSCode_e
+	"Offset\nFreq"		(0x253,0,16,128)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x253,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
+endlist
+
+tab H1_Conf
+	"Mode"			(0x2b8,0,2)		Mode_e
+	"Selected DTMF"		(0x2b9,0,4)		SelectedDTMF_e
+	"Band"			(0x2bd,0,2)		Band_e
+	"Menu#"			(0x2be,0,8)		MenuItem_e
+	"VFO Scan Mode"		(0x2bf,0,8)		VFOScanMode_e
+	"Wx Channel"		(0x2c0,0,4)		WxChannel_e
+	"Wx Alert"		(0x2c3,7,1)		CheckBox
+	"Auto Step Mode"	(0x2c4,0,1)		CheckBox
+	"Auto Receive Mode"	(0x2c4,1,1)		CheckBox
+	"VFO Band Edge Beep"	(0x2c4,2,1)		CheckBox
+	"Packet Mic"		(0x2c4,3,1)		CheckBox
+	"Auto Repeater Split"	(0x2c4,4,1)		CheckBox
+	"Packet Speed"		(0x2c4,5,1)		CheckBox
+endtab
+
+list Hyper2 5
+	"Pager\nEnable"		(0x2c8,6,1,128)		CheckBox
+	"Tx\nNarrow"		(0x2c8,5,1,128)		CheckBox
+	"Offset\nDirect"	(0x2c8,0,3,128)		OffsetDir_e
+	"Rx\nFreq"		(0x2c9,0,24,128)	BCDFreq
+	"Tone\nMode"		(0x2cc,0,3,128)		ToneMode_e
+	"Step"			(0x2cc,4,3,128)		Step_e
+	"Clock\nShift"		(0x2cc,7,1,128)		CheckBox
+	"Tx\nFreq"		(0x2cd,0,24,128)	BCDFreq
+	"CTCSS\nTone"		(0x2d0,0,6,128)		CTCSS_e
+	"Xmit\nPower"		(0x2d0,6,2,128)		XmitPower_e
+	"DCS\nCode"		(0x2d1,0,8,128)		DCSCode_e
+	"Offset\nFreq"		(0x2d3,0,16,128)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x2d3,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
+endlist
+
+tab H2_Conf
+	"Mode"			(0x338,0,2)		Mode_e
+	"Selected DTMF"		(0x339,0,4)		SelectedDTMF_e
+	"Band"			(0x33d,0,2)		Band_e
+	"Menu#"			(0x33e,0,8)		MenuItem_e
+	"VFO Scan Mode"		(0x33f,0,8)		VFOScanMode_e
+	"Wx Channel"		(0x340,0,4)		WxChannel_e
+	"Wx Alert"		(0x343,7,1)		CheckBox
+	"Auto Step Mode"	(0x344,0,1)		CheckBox
+	"Auto Receive Mode"	(0x344,1,1)		CheckBox
+	"VFO Band Edge Beep"	(0x344,2,1)		CheckBox
+	"Packet Mic"		(0x344,3,1)		CheckBox
+	"Auto Repeater Split"	(0x344,4,1)		CheckBox
+	"Packet Speed"		(0x344,5,1)		CheckBox
+endtab
+
+list Hyper3 5
+	"Pager\nEnable"		(0x348,6,1,128)		CheckBox
+	"Tx\nNarrow"		(0x348,5,1,128)		CheckBox
+	"Offset\nDirect"	(0x348,0,3,128)		OffsetDir_e
+	"Rx\nFreq"		(0x349,0,24,128)	BCDFreq
+	"Tone\nMode"		(0x34c,0,3,128)		ToneMode_e
+	"Step"			(0x34c,4,3,128)		Step_e
+	"Clock\nShift"		(0x34c,7,1,128)		CheckBox
+	"Tx\nFreq"		(0x34d,0,24,128)	BCDFreq
+	"CTCSS\nTone"		(0x350,0,6,128)		CTCSS_e
+	"Xmit\nPower"		(0x350,6,2,128)		XmitPower_e
+	"DCS\nCode"		(0x351,0,8,128)		DCSCode_e
+	"Offset\nFreq"		(0x353,0,16,128)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x353,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
+endlist
+
+tab H3_Conf
+	"Mode"			(0x3b8,0,2)		Mode_e
+	"Selected DTMF"		(0x3b9,0,4)		SelectedDTMF_e
+	"Band"			(0x3bd,0,2)		Band_e
+	"Menu#"			(0x3be,0,8)		MenuItem_e
+	"VFO Scan Mode"		(0x3bf,0,8)		VFOScanMode_e
+	"Wx Channel"		(0x3c0,0,4)		WxChannel_e
+	"Wx Alert"		(0x3c3,7,1)		CheckBox
+	"Auto Step Mode"	(0x3c4,0,1)		CheckBox
+	"Auto Receive Mode"	(0x3c4,1,1)		CheckBox
+	"VFO Band Edge Beep"	(0x3c4,2,1)		CheckBox
+	"Packet Mic"		(0x3c4,3,1)		CheckBox
+	"Auto Repeater Split"	(0x3c4,4,1)		CheckBox
+	"Packet Speed"		(0x3c4,5,1)		CheckBox
+endtab
+
+list Hyper4 5
+	"Pager\nEnable"		(0x3c8,6,1,128)		CheckBox
+	"Tx\nNarrow"		(0x3c8,5,1,128)		CheckBox
+	"Offset\nDirect"	(0x3c8,0,3,128)		OffsetDir_e
+	"Rx\nFreq"		(0x3c9,0,24,128)	BCDFreq
+	"Tone\nMode"		(0x3cc,0,3,128)		ToneMode_e
+	"Step"			(0x23c,4,3,128)		Step_e
+	"Clock\nShift"		(0x3cc,7,1,128)		CheckBox
+	"Tx\nFreq"		(0x3cd,0,24,128)	BCDFreq
+	"CTCSS\nTone"		(0x3d0,0,6,128)		CTCSS_e
+	"Xmit\nPower"		(0x3d0,6,2,128)		XmitPower_e
+	"DCS\nCode"		(0x3d1,0,8,128)		DCSCode_e
+	"Offset\nFreq"		(0x3d3,0,16,128)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x3d3,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
+endlist
+
+tab H4_Conf
+	"Mode"			(0x438,0,2)		Mode_e
+	"Selected DTMF"		(0x439,0,4)		SelectedDTMF_e
+	"Band"			(0x43d,0,2)		Band_e
+	"Menu#"			(0x43e,0,8)		MenuItem_e
+	"VFO Scan Mode"		(0x43f,0,8)		VFOScanMode_e
+	"Wx Channel"		(0x440,0,4)		WxChannel_e
+	"Wx Alert"		(0x443,7,1)		CheckBox
+	"Auto Step Mode"	(0x444,0,1)		CheckBox
+	"Auto Receive Mode"	(0x444,1,1)		CheckBox
+	"VFO Band Edge Beep"	(0x444,2,1)		CheckBox
+	"Packet Mic"		(0x444,3,1)		CheckBox
+	"Auto Repeater Split"	(0x444,4,1)		CheckBox
+	"Packet Speed"		(0x444,5,1)		CheckBox
+endtab
+
+list Hyper5 5
+	"Pager\nEnable"		(0x448,6,1,128)		CheckBox
+	"Tx\nNarrow"		(0x448,5,1,128)		CheckBox
+	"Offset\nDirect"	(0x448,0,3,128)		OffsetDir_e
+	"Rx\nFreq"		(0x449,0,24,128)	BCDFreq
+	"Tone\nMode"		(0x44c,0,3,128)		ToneMode_e
+	"Step"			(0x44c,4,3,128)		Step_e
+	"Clock\nShift"		(0x44c,7,1,128)		CheckBox
+	"Tx\nFreq"		(0x44d,0,24,128)	BCDFreq
+	"CTCSS\nTone"		(0x450,0,6,128)		CTCSS_e
+	"Xmit\nPower"		(0x450,6,2,128)		XmitPower_e
+	"DCS\nCode"		(0x451,0,8,128)		DCSCode_e
+	"Offset\nFreq"		(0x453,0,16,128)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x453,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
+endlist
+
+tab H5_Conf
+	"Mode"			(0x4b8,0,2)		Mode_e
+	"Selected DTMF"		(0x4b9,0,4)		SelectedDTMF_e
+	"Band"			(0x4bd,0,2)		Band_e
+	"Menu#"			(0x4be,0,8)		MenuItem_e
+	"VFO Scan Mode"		(0x4bf,0,8)		VFOScanMode_e
+	"Wx Channel"		(0x4c0,0,4)		WxChannel_e
+	"Wx Alert"		(0x4c3,7,1)		CheckBox
+	"Auto Step Mode"	(0x4c4,0,1)		CheckBox
+	"Auto Receive Mode"	(0x4c4,1,1)		CheckBox
+	"VFO Band Edge Beep"	(0x4c4,2,1)		CheckBox
+	"Packet Mic"		(0x4c4,3,1)		CheckBox
+	"Auto Repeater Split"	(0x4c4,4,1)		CheckBox
+	"Packet Speed"		(0x4c4,5,1)		CheckBox
+endtab
+
+list Low_Lim 50
 #	Name			Address			type
 	"Enable"		(0x4348,7,1,256)	CheckBox
 	"Label\nEnable"		(0x68ce,7,1,128)	CheckBox
@@ -646,7 +882,7 @@ list Lower_Limit 50
 	"Offset\nFTab"		(0x4035,0,16,256)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
 endlist
 
-list Upper_Limit 50
+list Up_Lim 50
 #	Name			Address			type
 	"Enable"		(0x4358,7,1,256)	CheckBox
 	"Label\nEnable"		(0x68d6,7,1,128)	CheckBox
@@ -669,66 +905,52 @@ endlist
 
 tab Config
 #	Name			Address			type
-	"Step"			(0x0038,0,1:0x000c,4,3)	StepAuto_e
-	"Offset Direction"	(0x0008,0,2)		OffsetDir_e
-	"AM Receive Mode"	(0x0038,1,1:0x0008,4,1)	ReceiveMode_e
-	"Wide/Narrow"		(0x0012,7,1:0x0008,5,1)	WideNarrow_e
-	"Tone Mode"		(0x000c,0,3)		ToneMode_e
-	"Clock Shift"		(0x000c,7,1)		CheckBox
-	"CTCSS Tone"		(0x0010,0,6)		CTCSS_e
-	"DCS Code"		(0x0011,0,8)		DCSCode_e
-	"Xmit Power"		(0x0010,6,2)		XmitPower_e
-	"Offset Frequency"	(0x0013,0,16)		OffsetFreq_e
-	"Selected DTMF"		(0x001a,0,4)		SelectedDTMFe
-	"Auto Power Off"	(0x0024,0,5)		AutoPowerOff_e
-	"Timeout Timer"		(0x0025,0,8)		TimeoutTimer_e
-#	"P1 key setting"	(0x0026,0,8)		MenuItem_e
-#	"P2 key setting"	(0x0027,0,8)		MenuItem_e
-	"RF Squelch"		(0x0028,0,5)		RFSquelch_e
-	"Internet DTMF"		(0x0029,0,4)		DTMFDigit_e
-	"Internet DTMF Memory"	(0x002a,0,4)		SelectedDTMFe
-	"Lock type"		(0x002b,0,3)		LockType_e
-	"DTMF Delay"		(0x002c,0,3)		DTMFDelay_e
-	"DTMF Speed"		(0x002d,0,1)		DTMFSpeed_e
-	"ARTS Beep"		(0x002e,0,2)		ARTSBeep_e
-	"Lamp Mode"		(0x002f,0,2)		LampMode_e
-	"Bell"			(0x0030,0,3)		Bell_e
-	"RX Save"		(0x0031,0,3)		RXSave_e
-	"Rcv Pager Code 1"	(0x0032,0,8)		CTCSS_e
-	"Xmit Pager Code 1"	(0x0033,0,8)		CTCSS_e
-	"Rcv Pager Code 2"	(0x0034,0,8)		CTCSS_e
-	"Xmit Pager Code 2"	(0x0035,0,8)		CTCSS_e
-	"Emergency Signal"	(0x0036,0,3)		EmergSig_e
-	"Emergency Auto ID"	(0x0037,0,5)		EAI_e
-	"ARTS Polling Interval"	(0x0038,3,1)		ARTSPoll_e
-	"Weather Alert"		(0x0038,6,1)		CheckBox
-	"Smart Search"		(0x0039,0,1)		SmartSearch_e
-	"DCS N/R"		(0x0039,1,2)		DCSNR_e
-	"VFO Band Edge Limit"	(0x0039,3,1)		CheckBox
-	"Auto Repeater Shift"	(0x0039,4,1)		CheckBox
-	"ARTS CWID Enable"	(0x0039,7,1)		CheckBox
-	"Lock"			(0x003a,0,1)		CheckBox
-	"Internet Mode"		(0x003a,1,2)		InternetMode_e
-	"Scan Beep"		(0x003a,5,1:0x003a,3,1)	ScanBeep_e
-	"Band Edge Beep"	(0x003a,4,1)		CheckBox
-	"Split Tone"		(0x003a,6,1)		CheckBox
-	"Priority Revert"	(0x003a,7,1)		CheckBox
-	"Scan Mode"		(0x003b,3,1)		ScanMode_e
-	"Pager Anwwer Back"	(0x003c,0,1)		CheckBox
-	"TX Save"		(0x003c,1,1)		CheckBox
-	"Scan Resume"		(0x003c,2,2)		ScanResume_e
-	"Moni/TCall Key"	(0x003c,4,1)		MoniTCall_e
-	"HM/REV Key"		(0x003c,5,1)		HMREV_e
-	"Password Enable"	(0x003d,1,1)		CheckBox
-	"TX LED Enable"		(0x003d,2,1)		CheckBox
-	"Busy LED Enable"	(0x003d,4,1)		CheckBox
-	"Busy Channel Lockout"	(0x003d,5,1)		CheckBox
-	"Scan Lamp"		(0x003d,6,1)		CheckBox
-	"Frequencies"		(0x003e,6,2)		Frequencies_e
-	"Password"		(0x021e,0,32)		HexDigits
+	"Mode"			(0x28,0,2)		Mode_e
+	"Selected DTMF"		(0x29,0,4)		SelectedDTMF_e
+	"Band"			(0x2d,0,2)		Band_e
+	"Menu#"			(0x2e,0,8)		MenuItem_e
+	"VFO Scan Mode"		(0x2f,0,8)		VFOScanMode_e
+	"Wx Channel"		(0x30,0,4)		WxChannel_e
+	"Wx Alert"		(0x33,7,1)		CheckBox
+	"Auto Step Mode"	(0x34,0,1)		CheckBox
+	"Auto Receive Mode"	(0x34,1,1)		CheckBox
+	"VFO Band Edge Beep"	(0x34,2,1)		CheckBox
+	"Packet Mic"		(0x34,3,1)		CheckBox
+	"Auto Repeater Split"	(0x34,4,1)		CheckBox
+	"Packet Speed"		(0x34,5,1)		CheckBox
+	"Auto Power Off"	(0x3a,0,5)		AutoPowerOff_e
+	"Timeout Timer"		(0x3b,0,5)		TimeoutTimer_e
+	"LOW(ACC) key setting"	(0x3c,0,3)		LOWACCKey_e
+	"ARTS Polling Interval"	(0x3c,4,1)		ARTSPoll_e
+	"Lock type"		(0x3c,5,3)		LockType_e
+	"P1 Key"		(0x3c,0,8)		PKeyAssignments_e
+	"P2 Key"		(0x3d,0,8)		PKeyAssignments_e
+	"P3 Key"		(0x3e,0,8)		PKeyAssignments_e
+	"P4 Key"		(0x3f,0,8)		PKeyAssignments_e
+
+	"RF Squelch"		(0x41,0,4)		RFSquelch_e
+	"Internet DTMF"		(0x42,0,4)		DTMFDigit_e
+	"Internet DTMF Memory"	(0x42,4,4)		SelectedDTMF_e
+	"Dimmer"		(0x43,0,2)		Dimmer_e
+#	"Memory Only"		(0x43,2,1)		CheckBox
+	"Hypermemory Write"	(0x43,3,2)		HyperWrite_e
+	"HM/REV Key"		(0x43,6,1)		HMREV_e
+	"ARTS CWID Enable"	(0x43,7,1)		CheckBox
+	"CWID"			(0x0240,0,32)		HexDigits
+	"DTMF Speed"		(0x44,0,2)		DTMFSpeed_e
+	"Internet Mode"		(0x44,2,1)		InternetMode_e
+	"Scan Beep"		(0x44,7,1:0x44,5,1)	ScanBeep_e
+	"Band Edge Beep"	(0x44,6,1)		CheckBox
+	"DTMF Delay"		(0x45,0,3)		DTMFDelay_e
+	"Priority Revert"	(0x45,4,1)		CheckBox
+	"Smart Search"		(0x45,5,1)		SmartSearch_e
+	"DCS N/R"		(0x45,6,2)		DCSNR_e
+	"ARTS Beep"		(0x46,0,2)		ARTSBeep_e
+	"Scan Resume"		(0x46,2,2)		ScanResume_e
+	"Microphone"		(0x46,4,1)		Microphone_e
 endtab
 
-list "DTMF_Tone" 16
+list "DTMF" 16
 #	Name			Address			type
 	"Digits"		(0x00c8,0,128,128)	HexDigits
 endlist

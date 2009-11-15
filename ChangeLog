@@ -1,3 +1,8 @@
+2009-11-13  Corey Minyard <minyard@acm.org>
+
+	* Lots of work on the FT-7800R editing, mostly finished at
+	this point.
+
 2009-11-11  Corey Minyard <minyard@acm.org>
 
 	* Added licenses to the files, fixed a few problems for the

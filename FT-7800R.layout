@@ -17,7 +17,7 @@ main configuration, and home memory.  It has the format:
 
 	0 - bit 0-1 - Mode: 0=VFO, 1=Home, 2=Memory
 	1 - bits 0-3 - DTMF Memory: 0=1, 1=2, etc.
-	5 - bits 0-2 - Band 0=144MHz, 1=250MHz, 2=350MHz, 4=430MHz, 5=800MHz
+	5 - bits 0-2 - Band: 0=144MHz, 1=250MHz, 2=350MHz, 4=430MHz, 5=800MHz
 	6 - Menu#
 	7 - VFO scan mode 0=Band, 1=+/-1MHz, 2=+/-2MHz, 3=+/-5MHz, 4=All,
 		5=PMS-01, 6=PMS-02, ..., 54=PMS50
@@ -25,7 +25,7 @@ main configuration, and home memory.  It has the format:
  	b - bit 7 - Wx Alert
 	c - bit 0 - Auto Step Mode
 	    bit 1 - Auto Receive Mode
-	    bit 2 - VFO Band Edge
+	    bit 2 - VFO Band Edge Beep
 	    bit 4 - Packet Mic
 	    bit 5 - Auto Repeater Split
 	    bit 6 - Packet speed: 0=1200bps, 1=9600bps
@@ -82,12 +82,12 @@ Hyperchannel information appears in 128-byte chunks in the form:
 	*bit 2 - Memory Only
 	*bits 3-4 - Hyper write: 0=Manual, 2=1-Auto, 1=Auto
 	*bit 6 - HM/Rev key 0=Reverse, 1=Home
-	*bit 7 - ARTS CW ID
+	*bit 7 - ARTS CW ID Enable
 
 0044 -	*bits 0-1 - DTMF Speed: 0=50ms, 1=75ms, 2=100ms
 	*bit 3 - Internet mode: 0=Code, 1=Memory
 	*bit 5 - Key beep, must be set to set Scan beep, see bit 7
-	*bit 6 - Band Edge Beep (menu 15)
+	*bit 6 - Band Edge Beep (menu ??)
 	*bit 7 - Scan beep.  Key beep must be enabled to set this, see
 		bit 5.
 
