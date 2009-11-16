@@ -1000,6 +1000,7 @@ def convFromBCD(v):
     return decimal_digits[v]
 
 # Yaesu BCD format for frequency, see FT60-layout.txt
+# FIXME - This does not properly do the 2.5kHz steps.
 class BIBCDFreq(BuiltIn):
     def __init__(self):
         BuiltIn.__init__(self, "BCDFreq")

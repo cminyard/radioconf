@@ -216,6 +216,7 @@ enum ARTSBeep_e
 endenum
 
 enum LockType_e
+        0 "Off"
 	1 "Key"
 	2 "Dial"
 	3 "Key+Dial"
@@ -447,8 +448,8 @@ enum Band_e
 	0 "144MHz"
 	1 "250MHz"
 	2 "350MHz"
-	4 "430MHz"
-	5 "800MHz"
+	3 "430MHz"
+	4 "800MHz"
 endenum
 
 enum VFOScanMode_e
@@ -523,54 +524,54 @@ enum WxChannel_e
 endenum
 
 enum MenuItem_e
-	 1 "APO - Auto Power Off"
-	 2 "AR Bep - Beep during ARTS"
-	 3 "AR Int - ARTS Polling Interval"
-	 4 "ARS - Automatic Repeater Shift"
-	 5 "BEEP - Beep setting"
-	 6 "CLK.SFT - Shift the CPU clock frequency"
-	 7 "CWID - ARTS CW id setting"
-	 8 "CW WRT - Program the CW ID"
-	 9 "DCS.COD - DCS Code"
-	10 "DCS N/R - Inverted DCS code decoding"
-	11 "DIMMER - Display brightness"
-	12 "DT DLY - DTMF autodialer delay"
-	13 "DT SPD - DTMF autodialer speed"
-	14 "DT WRT - Program the DTMF autodialer"
-	15 "EDG.BEP - Band-edge beeper"
-	16 "REV/HM - Function of the HM/RV key"
-	17 "HYPER - Hypermemory auto writing setting"
-	18 "I Net - Internet Link Connection mode"
-	19 "Int CD - Access number for WIRES"
-	20 "INT MR - Memory register for WIRES"
-	21 "LOCK - Locking lockout combination"
-	22 "MIC - Selects microphone type"
-	23 "NAME - Toggle frequency/name memory display"
-	24 "NM WRT - Store a name for a memory"
-	25 "PKT.MIC - Sets microphone enable during packet"
-	26 "PKT.SPD - Set packet speed"
-	27 "PRG.PNL - Set the operation of the LOW(ACC) key"
-	28 "PRG P1 - Set the P1/ACC key's functions"
-	29 "PRG P2 - Set the P2/P key's functions"
-	30 "PRG P3 - Set the P3/P1 key's functions"
-	31 "PRG P4 - Set the P4/P2 key's functions"
-	32 "RF SQL - Adjust the RF quelch threshold"
-	33 "RPT.MOD - Set the repeater shift direction"
-	34 "PRI.RVT - Priority revert"
-	35 "RX MOD - Receiving mode"
-	36 "S SRCH - Smart search sweep mode"
-	37 "RESUME - Scan/Resume mode"
-	38 "SCN MD - Memory scan channel selection mode"
-	39 "SHIFT - Repeater shift size"
-	40 "SKIP - Memory scan skip channel selection mode"
-	41 "SPLIT - Split CTCSS/DCS coding"
-	42 "SQL.TYP - Tone squelch mode"
-	43 "STEP - Frequency steps"
-	44 "TN FRQ - CTCSS tone frequency"
-	45 "TOT - Setting of the TOT time"
-	46 "VFO.BND - VFO band edge limiting"
-	47 "WID.NAR - Wide or narrow TX deviation"
-	48 "WX ALT - Weather alert scan"
+	 0 "APO - Auto Power Off"
+	 1 "AR Bep - Beep during ARTS"
+	 2 "AR Int - ARTS Polling Interval"
+	 3 "ARS - Automatic Repeater Shift"
+	 4 "BEEP - Beep setting"
+	 5 "CLK.SFT - Shift the CPU clock frequency"
+	 6 "CWID - ARTS CW id setting"
+	 7 "CW WRT - Program the CW ID"
+	 8 "DCS.COD - DCS Code"
+	 9 "DCS N/R - Inverted DCS code decoding"
+	10 "DIMMER - Display brightness"
+	11 "DT DLY - DTMF autodialer delay"
+	12 "DT SPD - DTMF autodialer speed"
+	13 "DT WRT - Program the DTMF autodialer"
+	14 "EDG.BEP - Band-edge beeper"
+	15 "REV/HM - Function of the HM/RV key"
+	16 "HYPER - Hypermemory auto writing setting"
+	17 "I Net - Internet Link Connection mode"
+	18 "Int CD - Access number for WIRES"
+	19 "INT MR - Memory register for WIRES"
+	20 "LOCK - Locking lockout combination"
+	21 "MIC - Selects microphone type"
+	22 "NAME - Toggle frequency/name memory display"
+	23 "NM WRT - Store a name for a memory"
+	24 "PKT.MIC - Sets microphone enable during packet"
+	25 "PKT.SPD - Set packet speed"
+	26 "PRG.PNL - Set the operation of the LOW(ACC) key"
+	27 "PRG P1 - Set the P1/ACC key's functions"
+	28 "PRG P2 - Set the P2/P key's functions"
+	29 "PRG P3 - Set the P3/P1 key's functions"
+	30 "PRG P4 - Set the P4/P2 key's functions"
+	31 "RF SQL - Adjust the RF quelch threshold"
+	32 "RPT.MOD - Set the repeater shift direction"
+	33 "PRI.RVT - Priority revert"
+	34 "RX MOD - Receiving mode"
+	35 "S SRCH - Smart search sweep mode"
+	36 "RESUME - Scan/Resume mode"
+	37 "SCN MD - Memory scan channel selection mode"
+	38 "SHIFT - Repeater shift size"
+	39 "SKIP - Memory scan skip channel selection mode"
+	40 "SPLIT - Split CTCSS/DCS coding"
+	41 "SQL.TYP - Tone squelch mode"
+	42 "STEP - Frequency steps"
+	43 "TN FRQ - CTCSS tone frequency"
+	44 "TOT - Setting of the TOT time"
+	45 "VFO.BND - VFO band edge limiting"
+	46 "WID.NAR - Wide or narrow TX deviation"
+	47 "WX ALT - Weather alert scan"
 endenum
 
 enum RFSquelch_e
@@ -670,6 +671,9 @@ list VFOs 5
 endlist
 
 list Home 5
+	"Label\nEnable"		(0x6c0e,7,1,64)	CheckBox
+	"Label\nValid"		(0x6c0f,7,1,64)	CheckBox
+	"Label"			(0x6c08,0,48,64)	YaesuString	
 	"Pager\nEnable"		(0x1c8,6,1,128)		CheckBox
 	"Tx\nNarrow"		(0x1c8,5,1,128)		CheckBox
 	"Offset\nDirect"	(0x1c8,0,3,128)		OffsetDir_e
@@ -688,7 +692,7 @@ endlist
 tab Home_Conf
 	"Mode"			(0xb8,0,2)		Mode_e
 	"Selected DTMF"		(0xb9,0,4)		SelectedDTMF_e
-	"Band"			(0xbd,0,2)		Band_e
+	"Band"			(0xbd,0,3)		Band_e
 	"Menu#"			(0xbe,0,8)		MenuItem_e
 	"VFO Scan Mode"		(0xbf,0,8)		VFOScanMode_e
 	"Wx Channel"		(0xc0,0,4)		WxChannel_e
@@ -698,7 +702,7 @@ tab Home_Conf
 	"VFO Band Edge Beep"	(0xc4,2,1)		CheckBox
 	"Packet Mic"		(0xc4,3,1)		CheckBox
 	"Auto Repeater Split"	(0xc4,4,1)		CheckBox
-	"Packet Speed"		(0xc4,5,1)		CheckBox
+	"Packet Speed"		(0xc4,5,1)		PacketSpeed_e
 endtab	
 
 multi HyperMem
@@ -721,7 +725,7 @@ multi HyperMem
  tab Conf1
 	"Mode"			(0x2b8,0,2)		Mode_e
 	"Selected DTMF"		(0x2b9,0,4)		SelectedDTMF_e
-	"Band"			(0x2bd,0,2)		Band_e
+	"Band"			(0x2bd,0,3)		Band_e
 	"Menu#"			(0x2be,0,8)		MenuItem_e
 	"VFO Scan Mode"		(0x2bf,0,8)		VFOScanMode_e
 	"Wx Channel"		(0x2c0,0,4)		WxChannel_e
@@ -753,7 +757,7 @@ multi HyperMem
  tab Conf2
 	"Mode"			(0x338,0,2)		Mode_e
 	"Selected DTMF"		(0x339,0,4)		SelectedDTMF_e
-	"Band"			(0x33d,0,2)		Band_e
+	"Band"			(0x33d,0,3)		Band_e
 	"Menu#"			(0x33e,0,8)		MenuItem_e
 	"VFO Scan Mode"		(0x33f,0,8)		VFOScanMode_e
 	"Wx Channel"		(0x340,0,4)		WxChannel_e
@@ -785,7 +789,7 @@ multi HyperMem
  tab Conf3
 	"Mode"			(0x3b8,0,2)		Mode_e
 	"Selected DTMF"		(0x3b9,0,4)		SelectedDTMF_e
-	"Band"			(0x3bd,0,2)		Band_e
+	"Band"			(0x3bd,0,3)		Band_e
 	"Menu#"			(0x3be,0,8)		MenuItem_e
 	"VFO Scan Mode"		(0x3bf,0,8)		VFOScanMode_e
 	"Wx Channel"		(0x3c0,0,4)		WxChannel_e
@@ -817,7 +821,7 @@ multi HyperMem
  tab Conf4
 	"Mode"			(0x438,0,2)		Mode_e
 	"Selected DTMF"		(0x439,0,4)		SelectedDTMF_e
-	"Band"			(0x43d,0,2)		Band_e
+	"Band"			(0x43d,0,3)		Band_e
 	"Menu#"			(0x43e,0,8)		MenuItem_e
 	"VFO Scan Mode"		(0x43f,0,8)		VFOScanMode_e
 	"Wx Channel"		(0x440,0,4)		WxChannel_e
@@ -849,7 +853,7 @@ endlist
  tab Conf5
 	"Mode"			(0x4b8,0,2)		Mode_e
 	"Selected DTMF"		(0x4b9,0,4)		SelectedDTMF_e
-	"Band"			(0x4bd,0,2)		Band_e
+	"Band"			(0x4bd,0,3)		Band_e
 	"Menu#"			(0x4be,0,8)		MenuItem_e
 	"VFO Scan Mode"		(0x4bf,0,8)		VFOScanMode_e
 	"Wx Channel"		(0x4c0,0,4)		WxChannel_e
@@ -909,7 +913,7 @@ tab Config
 #	Name			Address			type
 	"Mode"			(0x28,0,2)		Mode_e
 	"Selected DTMF"		(0x29,0,4)		SelectedDTMF_e
-	"Band"			(0x2d,0,2)		Band_e
+	"Band"			(0x2d,0,3)		Band_e
 	"Menu#"			(0x2e,0,8)		MenuItem_e
 	"VFO Scan Mode"		(0x2f,0,8)		VFOScanMode_e
 	"Wx Channel"		(0x30,0,4)		WxChannel_e
@@ -917,18 +921,18 @@ tab Config
 	"Auto Step Mode"	(0x34,0,1)		CheckBox
 	"Auto Receive Mode"	(0x34,1,1)		CheckBox
 	"VFO Band Edge Beep"	(0x34,2,1)		CheckBox
-	"Packet Mic"		(0x34,3,1)		CheckBox
-	"Auto Repeater Split"	(0x34,4,1)		CheckBox
-	"Packet Speed"		(0x34,5,1)		CheckBox
+	"Packet Mic"		(0x34,4,1)		CheckBox
+	"Auto Repeater Split"	(0x34,5,1)		CheckBox
+	"Packet Speed"		(0x34,6,1)		PacketSpeed_e
 	"Auto Power Off"	(0x3a,0,5)		AutoPowerOff_e
 	"Timeout Timer"		(0x3b,0,5)		TimeoutTimer_e
 	"LOW(ACC) key setting"	(0x3c,0,3)		LOWACCKey_e
 	"ARTS Polling Interval"	(0x3c,4,1)		ARTSPoll_e
 	"Lock type"		(0x3c,5,3)		LockType_e
-	"P1 Key"		(0x3c,0,8)		PKeyAssignments_e
-	"P2 Key"		(0x3d,0,8)		PKeyAssignments_e
-	"P3 Key"		(0x3e,0,8)		PKeyAssignments_e
-	"P4 Key"		(0x3f,0,8)		PKeyAssignments_e
+	"P1 Key"		(0x3d,0,8)		PKeyAssignments_e
+	"P2 Key"		(0x3e,0,8)		PKeyAssignments_e
+	"P3 Key"		(0x3f,0,8)		PKeyAssignments_e
+	"P4 Key"		(0x40,0,8)		PKeyAssignments_e
 
 	"RF Squelch"		(0x41,0,4)		RFSquelch_e
 	"Internet DTMF"		(0x42,0,4)		DTMFDigit_e
