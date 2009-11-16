@@ -33,7 +33,7 @@ ys_chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ !\"\\$#%'()*+,-;/|:<=>?@[&]^_"
 class ParseException(Exception):
     def __init__(self, filename, lineno, err):
         self.filename = filename
-        self.lineno = lineno
+        self.lineno = lineno.get()
         self.err = err
         pass
     
@@ -1250,7 +1250,6 @@ class BIHex(BuiltIn):
         return self.get_hex(data, addr, num)
 
     def set(self, h, event):
-        print event.keysym
         if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
             or (event.keysym == "Insert")):
             return "break" # Don't allow deletions
@@ -1916,37 +1915,70 @@ def unquote(s):
         pass
     return "".join(v)
 
+class LineNum:
+    def __init__(self):
+        self.val = 0
+        return
+    
+    def get(self):
+        return self.val
+
+    def inc(self):
+        self.val += 1
+        return
+    pass
+
 class RadioConfig:
-    def __init__(self, filename, filedata):
+    def __init__(self, filename, filedata, parent=None, name=None):
         self.filename = filename
         self.filedata = filedata
+        self.parent = parent
+        self.name = name
         self.curr = None
         self.toplevel = []
-        self.types = [ BIBCDFreq(),
-                       BICheckBox(), BIYaesuString(),
-                       BIString(), BuiltIn("Empty"),
-                       BIHex(), BIFixed() ]
-        f = open(filename, "r")
+        if (parent):
+            self.types = self.parent.types
+            self.infile = parent.infile
+            self.lineno = parent.lineno
+        else:
+            self.types = [ BIBCDFreq(),
+                           BICheckBox(), BIYaesuString(),
+                           BIString(), BuiltIn("Empty"),
+                           BIHex(), BIFixed() ]
+            self.infile = open(filename, "r")
+            self.lineno = LineNum()
+            pass
         try:
-            self.lineno = 0
             while True:
-                l = f.readline();
+                l = self.infile.readline();
                 if (not l):
                     break
-                self.lineno += 1
+                self.lineno.inc()
                 if l[0] == '#':
                     continue
                 v = self.splitup_line(l);
                 if (not v):
                     continue
+                if (v[0] == "endmulti"):
+                    if (not self.parent):
+                        raise ParseException(self.filename, self.lineno,
+                                             "got endmulti, but not in multi")
+                    self.parent.addMulti(self)
+                    return
+                
                 self.parseLine(v)
                 pass
             pass
         except Exception, e:
             exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
-            f.close()
+            self.infile.close()
             raise exceptionType, exceptionValue, exceptionTraceback
-        f.close()
+        self.infile.close()
+        pass
+
+    def add(self, c, v):
+        raise ParseException(c.filename, c.lineno,
+                             "Can't add elements to a multi");
         pass
 
     def toNum(self, s):
@@ -2039,6 +2071,12 @@ class RadioConfig:
                     raise ParseException(self.filename, self.lineno,
                                          "Tab has no name")
                 self.curr = Tab(s[1])
+            elif (s[0] == "multi"):
+                if (len(s) < 2):
+                    raise ParseException(self.filename, self.lineno,
+                                         "Multi has no name")
+                RadioConfig(self.filename, self.filedata,
+                            parent=self, name=s[1])
             else:
                 raise ParseException(self.filename, self.lineno,
                                      "Invalid token: '" + s[0] + "'")
@@ -2074,6 +2112,19 @@ class RadioConfig:
         self.toplevel.append(e)
         self.curr = None
         pass
+
+    def addMulti(self, e):
+        self.toplevel.append(e)
+        self.curr = None
+        pass
+
+    def setup(self, pwid):
+        self.tabs = Tix.NoteBook(pwid);
+        self.tabs.pack(side=Tix.TOP, fill=Tix.BOTH, expand=1)
+        for t in self.toplevel:
+            t.tab = self.tabs.add(t.name.lower(), label=t.name)
+            t.setup(t.tab)
+            pass
 
     pass
 
@@ -2146,10 +2197,7 @@ class GUI(Tix.Frame):
             print str(e)
             return
         self.master.wm_title(filename + " (" + self.radioname + ")")
-        for t in self.radio.toplevel:
-            t.tab = self.tabs.add(t.name.lower(), label=t.name)
-            t.setup(t.tab)
-            pass
+        self.radio.setup(self)
         pass
     
     def quitcmd(self, event=None):
@@ -2241,9 +2289,6 @@ class GUI(Tix.Frame):
 #         self.editmenu.add_command(label="Preferences", underline=1,
 #                                   command = lambda self=self: self.opencmd() )
 #         self.editbutton.pack(side=Tix.LEFT)
-
-        self.tabs = Tix.NoteBook(self);
-        self.tabs.pack(side=Tix.TOP, fill=Tix.BOTH, expand=1)
 
         pass
 

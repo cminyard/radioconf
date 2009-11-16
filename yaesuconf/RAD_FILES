@@ -203,6 +203,20 @@ cutpaste=[true|false] - If cutpaste is set to false, the particular item
   will not be cut or pasted.  Useful for items that represent the same
   data, no need to send both of them over.  The default is true.
 
+Multis
+------
+
+Multis may contain other lists and tabs, it is, in effect, a tabset with
+a tab.  This is useful if you have a lot of related things and things
+don't fit well into a single tab line.  Format is:
+
+multi <name>
+    <tab or list>
+    .
+    .
+endmulti
+
+
 Cutting and Pasting
 -------------------
 

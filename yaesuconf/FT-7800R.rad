@@ -685,7 +685,7 @@ list Home 5
 	"Offset\nFTab"		(0x1d3,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
 endlist
 
-tab HConf
+tab Home_Conf
 	"Mode"			(0xb8,0,2)		Mode_e
 	"Selected DTMF"		(0xb9,0,4)		SelectedDTMF_e
 	"Band"			(0xbd,0,2)		Band_e
@@ -701,7 +701,8 @@ tab HConf
 	"Packet Speed"		(0xc4,5,1)		CheckBox
 endtab	
 
-list Hyper1 5
+multi HyperMem
+ list VFO1 5
 	"Pager\nEnable"		(0x248,6,1,128)		CheckBox
 	"Tx\nNarrow"		(0x248,5,1,128)		CheckBox
 	"Offset\nDirect"	(0x248,0,3,128)		OffsetDir_e
@@ -715,9 +716,9 @@ list Hyper1 5
 	"DCS\nCode"		(0x251,0,8,128)		DCSCode_e
 	"Offset\nFreq"		(0x253,0,16,128)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
 	"Offset\nFTab"		(0x253,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
-endlist
+ endlist
 
-tab H1_Conf
+ tab Conf1
 	"Mode"			(0x2b8,0,2)		Mode_e
 	"Selected DTMF"		(0x2b9,0,4)		SelectedDTMF_e
 	"Band"			(0x2bd,0,2)		Band_e
@@ -731,9 +732,9 @@ tab H1_Conf
 	"Packet Mic"		(0x2c4,3,1)		CheckBox
 	"Auto Repeater Split"	(0x2c4,4,1)		CheckBox
 	"Packet Speed"		(0x2c4,5,1)		CheckBox
-endtab
+ endtab
 
-list Hyper2 5
+ list VFO2 5
 	"Pager\nEnable"		(0x2c8,6,1,128)		CheckBox
 	"Tx\nNarrow"		(0x2c8,5,1,128)		CheckBox
 	"Offset\nDirect"	(0x2c8,0,3,128)		OffsetDir_e
@@ -747,9 +748,9 @@ list Hyper2 5
 	"DCS\nCode"		(0x2d1,0,8,128)		DCSCode_e
 	"Offset\nFreq"		(0x2d3,0,16,128)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
 	"Offset\nFTab"		(0x2d3,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
-endlist
+ endlist
 
-tab H2_Conf
+ tab Conf2
 	"Mode"			(0x338,0,2)		Mode_e
 	"Selected DTMF"		(0x339,0,4)		SelectedDTMF_e
 	"Band"			(0x33d,0,2)		Band_e
@@ -763,9 +764,9 @@ tab H2_Conf
 	"Packet Mic"		(0x344,3,1)		CheckBox
 	"Auto Repeater Split"	(0x344,4,1)		CheckBox
 	"Packet Speed"		(0x344,5,1)		CheckBox
-endtab
+ endtab
 
-list Hyper3 5
+ list VFO3 5
 	"Pager\nEnable"		(0x348,6,1,128)		CheckBox
 	"Tx\nNarrow"		(0x348,5,1,128)		CheckBox
 	"Offset\nDirect"	(0x348,0,3,128)		OffsetDir_e
@@ -779,9 +780,9 @@ list Hyper3 5
 	"DCS\nCode"		(0x351,0,8,128)		DCSCode_e
 	"Offset\nFreq"		(0x353,0,16,128)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
 	"Offset\nFTab"		(0x353,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
-endlist
+ endlist
 
-tab H3_Conf
+ tab Conf3
 	"Mode"			(0x3b8,0,2)		Mode_e
 	"Selected DTMF"		(0x3b9,0,4)		SelectedDTMF_e
 	"Band"			(0x3bd,0,2)		Band_e
@@ -795,9 +796,9 @@ tab H3_Conf
 	"Packet Mic"		(0x3c4,3,1)		CheckBox
 	"Auto Repeater Split"	(0x3c4,4,1)		CheckBox
 	"Packet Speed"		(0x3c4,5,1)		CheckBox
-endtab
+ endtab
 
-list Hyper4 5
+ list VFO4 5
 	"Pager\nEnable"		(0x3c8,6,1,128)		CheckBox
 	"Tx\nNarrow"		(0x3c8,5,1,128)		CheckBox
 	"Offset\nDirect"	(0x3c8,0,3,128)		OffsetDir_e
@@ -811,9 +812,9 @@ list Hyper4 5
 	"DCS\nCode"		(0x3d1,0,8,128)		DCSCode_e
 	"Offset\nFreq"		(0x3d3,0,16,128)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
 	"Offset\nFTab"		(0x3d3,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
-endlist
+ endlist
 
-tab H4_Conf
+ tab Conf4
 	"Mode"			(0x438,0,2)		Mode_e
 	"Selected DTMF"		(0x439,0,4)		SelectedDTMF_e
 	"Band"			(0x43d,0,2)		Band_e
@@ -827,9 +828,9 @@ tab H4_Conf
 	"Packet Mic"		(0x444,3,1)		CheckBox
 	"Auto Repeater Split"	(0x444,4,1)		CheckBox
 	"Packet Speed"		(0x444,5,1)		CheckBox
-endtab
+ endtab
 
-list Hyper5 5
+ list VFO5 5
 	"Pager\nEnable"		(0x448,6,1,128)		CheckBox
 	"Tx\nNarrow"		(0x448,5,1,128)		CheckBox
 	"Offset\nDirect"	(0x448,0,3,128)		OffsetDir_e
@@ -845,7 +846,7 @@ list Hyper5 5
 	"Offset\nFTab"		(0x453,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
 endlist
 
-tab H5_Conf
+ tab Conf5
 	"Mode"			(0x4b8,0,2)		Mode_e
 	"Selected DTMF"		(0x4b9,0,4)		SelectedDTMF_e
 	"Band"			(0x4bd,0,2)		Band_e
@@ -859,7 +860,8 @@ tab H5_Conf
 	"Packet Mic"		(0x4c4,3,1)		CheckBox
 	"Auto Repeater Split"	(0x4c4,4,1)		CheckBox
 	"Packet Speed"		(0x4c4,5,1)		CheckBox
-endtab
+ endtab
+endmulti
 
 list Low_Lim 50
 #	Name			Address			type
