@@ -1,10 +1,51 @@
 
+FIXME -
+	33 "PRI.RVT - Priority revert"
+	37 "SCN MD - Memory scan channel selection mode"
+	40 "SPLIT - Split CTCSS/DCS coding"
+
+Memory bank# is broken in ADMS, need to get from radio
+
+
+
 This uses the same base protocol as the FT-60R.
 
 The frequency definition is the same as the FT-60R.
 
-Memories are in the same 16-byte format as the FT-60R, all fields appear to
-be the same
+Memories are in a similar 16-byte format as the FT-60R, all fields appear to
+be the same, but some semantics are different, and the menus are different.
+
+Memories take up 16 bytes in the format:
+	    byte 0 bits 0-2 - repeater offset direction (menu 33):
+		              0 - simplex
+			      1 - ?
+			      2 - minus
+			      3 - plus
+			      4 - split (transmit frequency valid)
+		   bit 3 - ?
+		   bit 4 - 0=FM, 1=AM (menu 35, see byte c bit 1 on "main"
+			configuration for details on this)
+		   bit 5 - TX Narrow (menu 47):  0=Wide, 1=Narrow
+		   bit 7 - 1 to enable and 0 to disable a channel
+	    byte 1 - byte 3 - Receive frequency
+	    byte 4 bits 0-2 - Tone mode (menu 42) (see table)
+		   bits 4-6 - Step (see note below) (see table)
+		   bit 7 - Clock shift (menu 6)
+	    byte 5 - byte 7 - transmit frequency
+	    byte 8 bits 0-5 - CTCSS tone (menu 44)
+	           bits 6-7 - Transmit power (see table)
+	    byte 9 - DCS code (menu 9)
+	    byte 10 - unknown, always 0f.  Note, on the main memory, bit 7
+		seems to get set with wide/narry in byte 0.  (FIXME - is
+		the last statement true for the FT-7800?)
+	    byte 11-12 - Shift (Offset frequency), only valid with minus
+		 or plus offset) (menu 39)
+	    byte 13-15 - unknown, always 00
+
+There is not a "STEP" setting outside of frequencies, only
+auto-step mode.  So if you set the step to non-auto and
+non-default, power off, power on, the step will be set back
+to the default.  It is only "saved" when written to a memory.
 
 Transmit power
 	0 - High (50/40w)
@@ -20,18 +61,16 @@ main configuration, and home memory.  It has the format:
 	5 - bits 0-2 - Band: 0=144MHz, 1=250MHz, 2=350MHz, 4=430MHz, 5=800MHz
 	6 - Menu#
 	7 - VFO scan mode 0=Band, 1=+/-1MHz, 2=+/-2MHz, 3=+/-5MHz, 4=All,
-		5=PMS-01, 6=PMS-02, ..., 54=PMS50
+		5=PMS-01, 6=PMS-02, ..., 54=PMS50 (1/2 Sec SCAN(SEL))
 	8 - bits 0-3 - Wx Channel#: 0=1, 1=2, ..., 9=10
- 	b - bit 7 - Wx Alert
-	c - bit 0 - Auto Step Mode
-	    bit 1 - Auto Receive Mode
-	    bit 2 - VFO Band Edge Beep
-	    bit 4 - Packet Mic
-	    bit 5 - Auto Repeater Split
-	    bit 6 - Packet speed: 0=1200bps, 1=9600bps
+ 	b - bit 7 - Wx Alert (menu 48)
+	c - bit 0 - Auto Step Mode (menu 43, sort of)
+	    bit 1 - Auto Receive Mode (menu 35)
+	    bit 2 - VFO Band Edge Limiting (menu 46)
+	    bit 4 - Packet Mic (menu 25)
+	    bit 5 - Auto Repeater Split (menu 4)
+	    bit 6 - Packet speed: 0=1200bps, 1=9600bps (menu 26)
 	    
-	Notes: Memory bank# is broken in ADMS, need to get from radio
-
 Hyperchannel information appears in 128-byte chunks in the form:
 
 	00-49 - 5 VFO memories
@@ -40,6 +79,8 @@ Hyperchannel information appears in 128-byte chunks in the form:
 		are not used.
 	70-7f - common configuration data
 
+0008-0018 - current display "memory", holds the current configuration.
+
 0028-0037 - Main configuration area.  Note that ADMS sets this along with
 	the area at 00c0 and hypermemory 1 whenever setting hypermemory 1
 	settings, but I don't know what that means.
@@ -47,15 +88,15 @@ Hyperchannel information appears in 128-byte chunks in the form:
 003a -	*bits 0-4 - Auto power off (menu 1):
 		off = v * (.5 hours) up to 12 hours.
 
-003b -	*bits 0-4 - Time out timer: 0=off, 1=1Min, ..., 30=30Min
+003b -	*bits 0-4 - Time out timer: 0=off, 1=1Min, ..., 30=30Min (menu 45)
 
 003c -	*bits 0-2 - Prg LOW(ACC): 0=Weather, 1=Reverse, 2=Repeater,
-		3=Squelch Off, 4=Lock, 5=Dimmer
-	*bit 4 - ARTS polling interval (menu ?): 0=25sec, 1=15sec
+		3=Squelch Off, 4=Lock, 5=Dimmer (menu 27)
+	*bit 4 - ARTS polling interval (menu ?): 0=25sec, 1=15sec (menu 3)
 	*bits 5-7 - Lock type (menu ??): 0=off, 1=Key, 2=Dial, 3=Key+Dial,
-		4=PTT, 5=PTT+Key, 6=PTT+Dial, 7=All
+		4=PTT, 5=PTT+Key, 6=PTT+Dial, 7=All (menu 21)
 
-003d-0040 - Px key assignments, values are:
+003d-0040 - Px key assignments (menu 28-21), values are:
 	26 "Priority"
 	27 "Low"
 	28 "Tone"
@@ -74,32 +115,34 @@ Hyperchannel information appears in 128-byte chunks in the form:
 	41 "Weather"
 	42 "Repeater"
 
-0041 -	*bits 0-3 - RF Squelch: 0=off, 1=S2, 2=S3, .., 8=S9, 9=S-Full
+0041 -	*bits 0-3 - RF Squelch: 0=off, 1=S2, 2=S3, .., 8=S9, 9=S-Full (menu 32)
 0042 -	*bits 0-3 - Internet DTMF Digit:  0=Code0, 1=Code1, ..., 9=Code9
-	*bits 4-7 - Internet DTMF Memory:  0=D1, 1=D2, ..., f=D16
+		(menu 19)
+	*bits 4-7 - Internet DTMF Memory:  0=D1, 1=D2, ..., f=D16 (menu 20)
 
-0043 -	*bits 0-1 - Dimmer: 0=Off, 1=Dim1, 2=Dim2, 3=Dim3
-	*bit 2 - Memory Only
-	*bits 3-4 - Hyper write: 0=Manual, 2=1-Auto, 1=Auto
-	*bit 6 - HM/Rev key 0=Reverse, 1=Home
-	*bit 7 - ARTS CW ID Enable
+0043 -	*bits 0-1 - Dimmer: 0=Off, 1=Dim1, 2=Dim2, 3=Dim3 (menu 11)
+	*bit 2 - Memory Only (menu ??)
+	*bits 3-4 - Hyper write: 0=Manual, 2=1-Auto, 1=Auto (menu 17)
+	*bit 6 - HM/Rev key 0=Reverse, 1=Home (menu 16)
+	*bit 7 - ARTS CW ID Enable (menu 7)
 
-0044 -	*bits 0-1 - DTMF Speed: 0=50ms, 1=75ms, 2=100ms
-	*bit 3 - Internet mode: 0=Code, 1=Memory
-	*bit 5 - Key beep, must be set to set Scan beep, see bit 7
-	*bit 6 - Band Edge Beep (menu ??)
+0044 -	*bits 0-1 - DTMF Speed: 0=50ms, 1=75ms, 2=100ms (menu 13)
+	*bit 3 - Internet mode: 0=Code, 1=Memory (menu 18)
+	*bit 5 - Key beep, must be set to set Scan beep, see bit 7 (menu 5)
+	*bit 6 - Band Edge Beep (menu 15)
 	*bit 7 - Scan beep.  Key beep must be enabled to set this, see
-		bit 5.
+		bit 5. (menu 5)
 
 0045 -	*bits 0-2 - DTMF Delay: 0=50ms, 1=250ms, 2=450ms, 3=750ms, 4=1sec
-	*bit 4 - Priority Revert (menu ??)
-	*bit 5 = Smart Search: 0=Single, 1=Continuous
-	*bits 6-7 - DCS N/R, values are (menu ??): 0=T/RX N, 1=RX R,
+		(menu 12)
+	*bit 4 - Priority Revert (menu 34)
+	*bit 5 = Smart Search: 0=Single, 1=Continuous (menu 36)
+	*bits 6-7 - DCS N/R, values are (menu 10): 0=T/RX N, 1=RX R,
 		2=TX R, 3=T/RX R
 
-0046 -	*bits 0-1 - ARTS Beep: 0=Off, 1=Always, 2=Inrange
-	*bits 2-3 - Scan Resume: 0=Time, 1=Hold, 2=Busy
-	*bit 4 - Microphone: 0=MH-42, 1=MH-48
+0046 -	*bits 0-1 - ARTS Beep: 0=Off, 1=Always, 2=Inrange (menu 2)
+	*bits 2-3 - Scan Resume: 0=Time, 1=Hold, 2=Busy (menu 37)
+	*bit 4 - Microphone: 0=MH-42, 1=MH-48 (menu 21)
 
 0048-00a7 - VFO (current) frequencies, in the memory format, though some fields
 	    don't make sense.  The occur in the order: VHF, 250, 350, UHF
@@ -110,13 +153,13 @@ Hyperchannel information appears in 128-byte chunks in the form:
 00c8-01c8 - 16 sets of DTMF tones (menu 14), 16 values in each set,
 	  where the value is the DTMF digit (0=0, 1=1, etc), taking the
 	  whole byte.  0xff marks the end of the string.  First set is
-	  set 1, 2nd set is set 2, etc.  Selected by byte 0042.
+	  set 1, 2nd set is set 2, etc.  Selected by byte 0042. (menu 14)
 
 01c8-04c7 - 6 home/hypermemory configuration, each 128 bytes.  The first
 	one is for home, the next for hypermemory1, etc.  Only the VFOs
 	are used for the home memory.  See also note for location 0028.
 
-*0240-0244 - CW ID
+*0240-0244 - CW ID (menu 8)
 
 04c8-4340 - Memories in 16-byte format
 
@@ -130,13 +173,13 @@ Hyperchannel information appears in 128-byte chunks in the form:
 	    frequency is displayed and 80 80 if the data is valid and 
 	    the name is displayed.  So byte 6 bit 7 is the alpha/freq bit
 	    and byte 7 bit 7 is the "data valid" bit.
-	    Memory 000 is at 6638.
+	    Memory 000 is at 6638. (menu 24)
 
 68c8-6be7 - Character strings for the 100 limit memories, same format
-	as the ones immediately above.
+	as the ones immediately above. (menu 24)
 
 6c08-6c3f - Character strings for the Home memories, same format as
-	  the ones above.
+	  the ones above. (menu 24)
 
 6c48-7647 - Bank settings.  Each of these is 128 bytes holding 1000 bit
 	    entries for each bank.  So bank 1 start at 6c48, bank 2 starts

@@ -87,28 +87,30 @@ Transmit power
 
 
 Memories take up 16 bytes in the format:
-	    byte 0 bits 0-2 - offset direction:
+	    byte 0 bits 0-2 - repeater offset direction (menu 38):
 		              0 - simplex
 			      1 - ?
 			      2 - minus
 			      3 - plus
 			      4 - split (transmit frequency valid)
 		   bit 3 - ?
-		   bit 4 - 0=FM, 1=AM
-		   bit 5 - TX Narrow
+		   bit 4 - 0=FM, 1=AM (menu 40, see byte 38 bit 1 on "main"
+			memory at byte 8 for details on this)
+		   bit 5 - TX Narrow (menu 55):  0=Wide, 1=Narrow
 		   bit 6 - Pager Enable (menu 29)
 		   bit 7 - 1 to enable and 0 to disable a channel
 	    byte 1 - byte 3 - Receive frequency
-	    byte 4 bits 0-2 - Tone mode (see table)
-		   bits 4-6 - Step (see table)
-		   bit 7 - Clock shift
+	    byte 4 bits 0-2 - Tone mode (menu 50) (see table)
+		   bits 4-6 - Step (menu 49) (see table)
+		   bit 7 - Clock shift (menu 9)
 	    byte 5 - byte 7 - transmit frequency
-	    byte 8 bits 0-5 - CTCSS tone
-	           bits 6-7 - Transmit power
-	    byte 9 - DCS code
-	    byte 10 - unknown, always 0f
+	    byte 8 bits 0-5 - CTCSS tone (menu 50)
+	           bits 6-7 - Transmit power (see table)
+	    byte 9 - DCS code (menu 13)
+	    byte 10 - unknown, always 0f.  Note, on the main memory, bit 7
+		seems to get set with wide/narry in byte 0.
 	    byte 11-12 - Shift (Offset frequency), only valid with minus
-		 or plus offset)
+		 or plus offset) (menu 45)
 	    byte 13-15 - unknown, always 00
 
 Display characters are in the following format:
@@ -155,25 +157,7 @@ cycled on the radio, there appears to be no memory for it.
 	    This is an 8-byte record that is sent first.
 	    The rest of the records are 64-bits.
 
-0008	bits 0-1 - Repeater shift direction (menu 38)
-		0=off, 1=-, 2=+
-	bit 4 - AM Receive mode (menu 40) (see also byte 38 bit 1)
-	bit 5 - Wide/Narrow (also see byte 12) (menu 55): 0=Wide, 1=Narrow
-
-0009-000b - Current frequency
-
-000c	bits 0-2 - Current Tone Mode (Menu 48) - see table
-	bits 4-6 - Step (menu 49) - see table, and byte 38
-	bit 7 - Clock shift (menu 9)
-
-0010	bits 0-5 - CTCSS Tone (menu 50)
-	bits 6-7 - Transmit power (f-3)
-
-0011	DCS code (menu 13)
-
-0012    bit 7 - Wide/Narrow (also see byte 8) (menu 55): 0=Wide, 1=Narrow
-
-0013-0014 - Shift (Offset Frequency) (menu 45)
+0008-17 - a "memory" for the current mode.
 
 0019	bit 1 - V/M mode (see also bit 3b) - 0=memory, 1=VFO
 

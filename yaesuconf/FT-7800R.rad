@@ -310,18 +310,6 @@ enum Step_e
 	7 "100kHz"
 endenum
 
-enum StepAuto_e
-	0 "5kHz"
-	1 "10kHz"
-	2 "12.5kHz"
-	3 "15kHz"
-	4 "20kHz"
-	5 "25kHz"
-	6 "60kHz"
-	7 "100kHz"
-	8 "Auto"
-endenum
-
 enum XmitPower_e
 	0 "High"
 	1 "Med"
