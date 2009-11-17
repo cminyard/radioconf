@@ -511,6 +511,30 @@ enum WxChannel_e
 	 9 "10"
 endenum
 
+enum MemoryBank_e
+	 0    "No Bank"
+	 0x20 "Bank 1"
+	 0x21 "Bank 2"
+	 0x22 "Bank 3"
+	 0x23 "Bank 4"
+	 0x24 "Bank 5"
+	 0x25 "Bank 6"
+	 0x26 "Bank 7"
+	 0x27 "Bank 8"
+	 0x28 "Bank 9"
+	 0x29 "Bank 10"
+	 0x2a "Bank 11"
+	 0x2b "Bank 12"
+	 0x2c "Bank 13"
+	 0x2d "Bank 14"
+	 0x2e "Bank 15"
+	 0x2f "Bank 16"
+	 0x30 "Bank 17"
+	 0x31 "Bank 18"
+	 0x32 "Bank 19"
+	 0x33 "Bank 20"
+endenum
+
 enum MenuItem_e
 	 0 "APO - Auto Power Off"
 	 1 "AR Bep - Beep during ARTS"
@@ -659,8 +683,8 @@ list VFOs 5
 endlist
 
 list Home 5
-	"Label\nEnable"		(0x6c0e,7,1,64)	CheckBox
-	"Label\nValid"		(0x6c0f,7,1,64)	CheckBox
+	"Label\nEnable"		(0x6c0e,7,1,64)		CheckBox
+	"Label\nValid"		(0x6c0f,7,1,64)		CheckBox
 	"Label"			(0x6c08,0,48,64)	YaesuString	
 	"Pager\nEnable"		(0x1c8,6,1,128)		CheckBox
 	"Tx\nNarrow"		(0x1c8,5,1,128)		CheckBox
@@ -688,9 +712,11 @@ tab Home_Conf
 	"Auto Step Mode"	(0xc4,0,1)		CheckBox
 	"Auto Receive Mode"	(0xc4,1,1)		CheckBox
 	"VFO Band Edge Beep"	(0xc4,2,1)		CheckBox
-	"Packet Mic"		(0xc4,3,1)		CheckBox
-	"Auto Repeater Split"	(0xc4,4,1)		CheckBox
-	"Packet Speed"		(0xc4,5,1)		PacketSpeed_e
+	"Packet Mic"		(0xc4,4,1)		CheckBox
+	"Auto Repeater Split"	(0xc4,5,1)		CheckBox
+	"Packet Speed"		(0xc4,6,1)		PacketSpeed_e
+	"Scan Chan Sel"		(0xc5,1,1)		ScanMode_e
+	"Memory Bank"		(0xc5,4,1:0xba,0,5)	MemoryBank_e
 endtab	
 
 multi HyperMem
@@ -721,9 +747,11 @@ multi HyperMem
 	"Auto Step Mode"	(0x2c4,0,1)		CheckBox
 	"Auto Receive Mode"	(0x2c4,1,1)		CheckBox
 	"VFO Band Edge Beep"	(0x2c4,2,1)		CheckBox
-	"Packet Mic"		(0x2c4,3,1)		CheckBox
-	"Auto Repeater Split"	(0x2c4,4,1)		CheckBox
-	"Packet Speed"		(0x2c4,5,1)		CheckBox
+	"Packet Mic"		(0x2c4,4,1)		CheckBox
+	"Auto Repeater Split"	(0x2c4,5,1)		CheckBox
+	"Packet Speed"		(0x2c4,6,1)		PacketSpeed_e
+	"Scan Chan Sel"		(0x2c5,1,1)		ScanMode_e
+	"Memory Bank"		(0x2c5,4,1:0x2ba,0,5)	MemoryBank_e
  endtab
 
  list VFO2 5
@@ -753,9 +781,11 @@ multi HyperMem
 	"Auto Step Mode"	(0x344,0,1)		CheckBox
 	"Auto Receive Mode"	(0x344,1,1)		CheckBox
 	"VFO Band Edge Beep"	(0x344,2,1)		CheckBox
-	"Packet Mic"		(0x344,3,1)		CheckBox
-	"Auto Repeater Split"	(0x344,4,1)		CheckBox
-	"Packet Speed"		(0x344,5,1)		CheckBox
+	"Packet Mic"		(0x344,4,1)		CheckBox
+	"Auto Repeater Split"	(0x344,5,1)		CheckBox
+	"Packet Speed"		(0x344,6,1)		PacketSpeed_e
+	"Scan Chan Sel"		(0x345,1,1)		ScanMode_e
+	"Memory Bank"		(0x345,4,1:0x33a,0,5)	MemoryBank_e
  endtab
 
  list VFO3 5
@@ -785,9 +815,11 @@ multi HyperMem
 	"Auto Step Mode"	(0x3c4,0,1)		CheckBox
 	"Auto Receive Mode"	(0x3c4,1,1)		CheckBox
 	"VFO Band Edge Beep"	(0x3c4,2,1)		CheckBox
-	"Packet Mic"		(0x3c4,3,1)		CheckBox
-	"Auto Repeater Split"	(0x3c4,4,1)		CheckBox
-	"Packet Speed"		(0x3c4,5,1)		CheckBox
+	"Packet Mic"		(0x3c4,4,1)		CheckBox
+	"Auto Repeater Split"	(0x3c4,5,1)		CheckBox
+	"Packet Speed"		(0x3c4,6,1)		PacketSpeed_e
+	"Scan Chan Sel"		(0x3c5,1,1)		ScanMode_e
+	"Memory Bank"		(0x3c5,4,1:0x3ba,0,5)	MemoryBank_e
  endtab
 
  list VFO4 5
@@ -817,9 +849,11 @@ multi HyperMem
 	"Auto Step Mode"	(0x444,0,1)		CheckBox
 	"Auto Receive Mode"	(0x444,1,1)		CheckBox
 	"VFO Band Edge Beep"	(0x444,2,1)		CheckBox
-	"Packet Mic"		(0x444,3,1)		CheckBox
-	"Auto Repeater Split"	(0x444,4,1)		CheckBox
-	"Packet Speed"		(0x444,5,1)		CheckBox
+	"Packet Mic"		(0x444,4,1)		CheckBox
+	"Auto Repeater Split"	(0x444,5,1)		CheckBox
+	"Packet Speed"		(0x444,6,1)		PacketSpeed_e
+	"Scan Chan Sel"		(0x445,1,1)		ScanMode_e
+	"Memory Bank"		(0x335,4,1:0x43a,0,5)	MemoryBank_e
  endtab
 
  list VFO5 5
@@ -849,9 +883,11 @@ endlist
 	"Auto Step Mode"	(0x4c4,0,1)		CheckBox
 	"Auto Receive Mode"	(0x4c4,1,1)		CheckBox
 	"VFO Band Edge Beep"	(0x4c4,2,1)		CheckBox
-	"Packet Mic"		(0x4c4,3,1)		CheckBox
-	"Auto Repeater Split"	(0x4c4,4,1)		CheckBox
-	"Packet Speed"		(0x4c4,5,1)		CheckBox
+	"Packet Mic"		(0x4c4,4,1)		CheckBox
+	"Auto Repeater Split"	(0x4c4,5,1)		CheckBox
+	"Packet Speed"		(0x4c4,6,1)		PacketSpeed_e
+	"Scan Chan Sel"		(0x4c5,1,1)		ScanMode_e
+	"Memory Bank"		(0x4c5,4,1:0x4ba,0,5)	MemoryBank_e
  endtab
 endmulti
 
@@ -899,6 +935,19 @@ endlist
 
 tab Config
 #	Name			Address			type
+	"Pager Enable"		(0x8,6,1)		CheckBox
+	"Tx Narrow"		(0x8,5,1)		CheckBox
+	"Offset Direct"		(0x8,0,3)		OffsetDir_e
+	"Rx Freq"		(0x9,0,24)		BCDFreq
+	"Tone Mode"		(0xc,0,3)		ToneMode_e
+	"Step"			(0xc,4,3)		Step_e
+	"Clock Shift"		(0xc,7,1)		CheckBox
+	"Tx Freq"		(0xd,0,24)		BCDFreq
+	"CTCSS Tone"		(0x10,0,6)		CTCSS_e
+	"Xmit Power"		(0x10,6,2)		XmitPower_e
+	"DCS Code"		(0x11,0,8)		DCSCode_e
+	"Offset Freq"		(0x13,0,16)		Fixed(2,2,5,MHz) "tie=Offset FTab"
+	"Offset FTab"		(0x13,0,16)		OffsetFreq_e "tie=Offset Freq" cutpaste=False
 	"Mode"			(0x28,0,2)		Mode_e
 	"Selected DTMF"		(0x29,0,4)		SelectedDTMF_e
 	"Band"			(0x2d,0,3)		Band_e
@@ -912,6 +961,8 @@ tab Config
 	"Packet Mic"		(0x34,4,1)		CheckBox
 	"Auto Repeater Split"	(0x34,5,1)		CheckBox
 	"Packet Speed"		(0x34,6,1)		PacketSpeed_e
+	"Scan Chan Sel"		(0x35,1,1)		ScanMode_e
+	"Memory Bank"		(0x35,4,1:0x2a,0,5)	MemoryBank_e
 	"Auto Power Off"	(0x3a,0,5)		AutoPowerOff_e
 	"Timeout Timer"		(0x3b,0,5)		TimeoutTimer_e
 	"LOW(ACC) key setting"	(0x3c,0,3)		LOWACCKey_e
@@ -936,6 +987,7 @@ tab Config
 	"Scan Beep"		(0x44,7,1:0x44,5,1)	ScanBeep_e
 	"Band Edge Beep"	(0x44,6,1)		CheckBox
 	"DTMF Delay"		(0x45,0,3)		DTMFDelay_e
+	"Split tone coding"	(0x45,3,1)		CheckBox
 	"Priority Revert"	(0x45,4,1)		CheckBox
 	"Smart Search"		(0x45,5,1)		SmartSearch_e
 	"DCS N/R"		(0x45,6,2)		DCSNR_e

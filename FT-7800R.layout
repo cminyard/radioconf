@@ -1,9 +1,4 @@
 
-FIXME -
-	33 "PRI.RVT - Priority revert"
-	37 "SCN MD - Memory scan channel selection mode"
-	40 "SPLIT - Split CTCSS/DCS coding"
-
 Memory bank# is broken in ADMS, need to get from radio
 
 
@@ -58,6 +53,7 @@ main configuration, and home memory.  It has the format:
 
 	0 - bit 0-1 - Mode: 0=VFO, 1=Home, 2=Memory
 	1 - bits 0-3 - DTMF Memory: 0=1, 1=2, etc.
+	2 - bits 0-4 - Memory Bank Number (see also byte d bit 4)
 	5 - bits 0-2 - Band: 0=144MHz, 1=250MHz, 2=350MHz, 4=430MHz, 5=800MHz
 	6 - Menu#
 	7 - VFO scan mode 0=Band, 1=+/-1MHz, 2=+/-2MHz, 3=+/-5MHz, 4=All,
@@ -70,6 +66,8 @@ main configuration, and home memory.  It has the format:
 	    bit 4 - Packet Mic (menu 25)
 	    bit 5 - Auto Repeater Split (menu 4)
 	    bit 6 - Packet speed: 0=1200bps, 1=9600bps (menu 26)
+	d - bit 1 - Memory scan channel selection mode (menu 38) (0=mem, 1=only)
+	    bit 4 - Enable memory bank
 	    
 Hyperchannel information appears in 128-byte chunks in the form:
 
@@ -135,6 +133,7 @@ Hyperchannel information appears in 128-byte chunks in the form:
 
 0045 -	*bits 0-2 - DTMF Delay: 0=50ms, 1=250ms, 2=450ms, 3=750ms, 4=1sec
 		(menu 12)
+	bit 3 - Split CTSS/DCS coding (menu 40)
 	*bit 4 - Priority Revert (menu 34)
 	*bit 5 = Smart Search: 0=Single, 1=Continuous (menu 36)
 	*bits 6-7 - DCS N/R, values are (menu 10): 0=T/RX N, 1=RX R,

@@ -647,16 +647,21 @@ endlist
 
 tab Config
 #	Name			Address			type
-	"Step"			(0x0038,0,1:0x000c,4,3)	StepAuto_e
-	"Offset Direction"	(0x0008,0,2)		OffsetDir_e
-	"AM Receive Mode"	(0x0038,1,1:0x0008,4,1)	ReceiveMode_e
+	"Pager Enable"		(0x8,6,1)		CheckBox
 	"Wide/Narrow"		(0x0012,7,1:0x0008,5,1)	WideNarrow_e
-	"Tone Mode"		(0x000c,0,3)		ToneMode_e
-	"Clock Shift"		(0x000c,7,1)		CheckBox
-	"CTCSS Tone"		(0x0010,0,6)		CTCSS_e
-	"DCS Code"		(0x0011,0,8)		DCSCode_e
-	"Xmit Power"		(0x0010,6,2)		XmitPower_e
-	"Offset Frequency"	(0x0013,0,16)		OffsetFreq_e
+	"Offset Direct"		(0x8,0,3)		OffsetDir_e
+	"AM Receive Mode"	(0x0038,1,1:0x0008,4,1)	ReceiveMode_e
+	"Rx Freq"		(0x9,0,24)		BCDFreq
+	"Tone Mode"		(0xc,0,3)		ToneMode_e
+	"Step"			(0xc,4,3)		Step_e
+	"Clock Shift"		(0xc,7,1)		CheckBox
+	"Tx Freq"		(0xd,0,24)		BCDFreq
+	"CTCSS Tone"		(0x10,0,6)		CTCSS_e
+	"Xmit Power"		(0x10,6,2)		XmitPower_e
+	"DCS Code"		(0x11,0,8)		DCSCode_e
+	"Offset Freq"		(0x13,0,16)		Fixed(2,2,5,MHz) "tie=Offset FTab"
+	"Offset FTab"		(0x13,0,16)		OffsetFreq_e "tie=Offset Freq" cutpaste=False
+	"Step"			(0x0038,0,1:0x000c,4,3)	StepAuto_e
 	"Selected DTMF"		(0x001a,0,4)		SelectedDTMF_e
 	"Auto Power Off"	(0x0024,0,5)		AutoPowerOff_e
 	"Timeout Timer"		(0x0025,0,8)		TimeoutTimer_e

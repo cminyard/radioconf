@@ -1818,14 +1818,55 @@ class Tab(TabBase):
         self.entries = []
         pass
 
+    def finalize(self, c):
+        for i in self.entries:
+            for t in i.tielist:
+                found = False
+                for j in self.entries:
+                    if (j.name == t):
+                        i.etielist.append(j)
+                        found = True
+                        break
+                    pass
+                if (not found):
+                    raise ParseException(c.filename, c.lineno,
+                                         "tie entry for '" + t +"' not found")
+                pass
+            pass
+        pass
+    
     def add(self, c, v):
         if (v[0] == "endtab"):
+            self.finalize(c)
             c.addTab(self)
             return
-        if (len(v) != 3):
+        if (len(v) < 3):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for tab entry");
-        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), [], True)
+        tielist = []
+        cutpaste = True
+        for i in v[3:]:
+            s = i.split('=', 1)
+            if len(s) != 2:
+                raise ParseException(c.filename, c.lineno,
+                                     "Invalid option, no '=': " + i)
+            if (s[0] == "tie"):
+                tielist.append(s[1])
+            elif (s[0] == "cutpaste"):
+                if (s[1].lower() == "true"):
+                    cutpaste = True
+                elif (s[1].lower() == "false"):
+                    cutpaste = False
+                else:
+                    raise ParseException(c.filename, c.lineno,
+                                         "cutpaste take true or false")
+            else:
+                raise ParseException(c.filename, c.lineno,
+                                     "Invalid option: " + i);
+            pass
+
+        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), tielist,
+                     cutpaste)
         pass
 
     def bindWidget(self, widget):
@@ -1875,18 +1916,24 @@ class Tab(TabBase):
         self.bindWidget(self.list.vsb)
 
         i = 0
+        widgets = []
         for e in self.entries:
             e.key = i
             self.list.hlist.add(i, text=e.name)
-            h = e.getWidget(self.list.hlist, 0)
+            h = e.getWidget(self.list.hlist, i)
             self.list.hlist.item_create(i, 1, itemtype=Tix.WINDOW,
                                         window=h.widget)
             self.bindWidget(h.widget)
+            widgets.append(h)
             i += 1
+            pass
+        for e in self.entries:
+            for i in e.etielist:
+                widgets[e.pos].tielist.append((widgets[i.pos], i))
+                pass
             pass
 
         self.list.pack(side=Tix.LEFT, fill=Tix.BOTH, expand=1)
-
         pass
 
     pass
