@@ -135,6 +135,9 @@ Hyperchannel information appears in 128-byte chunks in the form:
 68c8-6be7 - Character strings for the 100 limit memories, same format
 	as the ones immediately above.
 
+6c08-6c3f - Character strings for the Home memories, same format as
+	  the ones above.
+
 6c48-7647 - Bank settings.  Each of these is 128 bytes holding 1000 bit
 	    entries for each bank.  So bank 1 start at 6c48, bank 2 starts
 	    at 6cc8, etc.  Memories settings are, unfortunately, backwards
