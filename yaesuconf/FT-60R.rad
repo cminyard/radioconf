@@ -653,7 +653,7 @@ tab Config
 	"AM Receive Mode"	(0x0038,1,1:0x0008,4,1)	ReceiveMode_e
 	"Rx Freq"		(0x9,0,24)		BCDFreq
 	"Tone Mode"		(0xc,0,3)		ToneMode_e
-	"Step"			(0xc,4,3)		Step_e
+	"Step"			(0x0038,0,1:0x000c,4,3)	StepAuto_e
 	"Clock Shift"		(0xc,7,1)		CheckBox
 	"Tx Freq"		(0xd,0,24)		BCDFreq
 	"CTCSS Tone"		(0x10,0,6)		CTCSS_e
@@ -661,7 +661,6 @@ tab Config
 	"DCS Code"		(0x11,0,8)		DCSCode_e
 	"Offset Freq"		(0x13,0,16)		Fixed(2,2,5,MHz) "tie=Offset FTab"
 	"Offset FTab"		(0x13,0,16)		OffsetFreq_e "tie=Offset Freq" cutpaste=False
-	"Step"			(0x0038,0,1:0x000c,4,3)	StepAuto_e
 	"Selected DTMF"		(0x001a,0,4)		SelectedDTMF_e
 	"Auto Power Off"	(0x0024,0,5)		AutoPowerOff_e
 	"Timeout Timer"		(0x0025,0,8)		TimeoutTimer_e
