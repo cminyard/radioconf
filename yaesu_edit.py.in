@@ -830,6 +830,7 @@ class BIFixed(BuiltIn):
         while (len(s) < (self.len - self.numdec)):
             s = "0" + s
             pass
+        s = s[0:self.len - self.numdec]
         s = s[0:self.pre] + "." + s[self.pre:] + self.units
         if (self.snddec != -1):
             s = s[0:self.snddec] + "." + s[self.snddec:]

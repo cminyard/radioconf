@@ -1,5 +1,7 @@
 
 
+Menus done through 42.
+
 In the transferred data, the first byte of every block is a block
 number, starting at 1.  The last byte is a checksum of the data in
 the block, not including the block number.
@@ -22,25 +24,156 @@ CTCSS Tones:
       2c - 225.7  2d - 229.1  2e - 233.6  2f - 241.8
       30 - 250.3  31 - 254.1
 
-A memory is a 28 byte field:
-    byte 0 bit 7 - Alphanumeric tag is enabled
+DCS code
+	00-023 01-025 02-026 03-031 04-032 05-036 06-043 07-047
+	08-051 09-053 0a-054 0b-065 0c-071 0d-072 0e-073 0f-074
+	10-114 11-115 12-116 13-122 14-125 15-131 16-132 17-134
+	18-143 19-145 1a-152 1b-155 1c-156 1d-162 1e-165 1f-172
+	20-174 21-205 22-212 23-223 24-225 25-226 26-243 27-244
+	28-245 29-246 2a-251 2b-252 2c-255 2d-261 2e-263 2f-265
+	30-266 31-271 32-274 33-306 34-311 35-315 36-325 37-331
+	38-332 39-343 3a-346 3b-351 3c-356 3d-364 3e-365 3f-371
+	40-411 41-412 42-413 43-423 44-431 45-432 46-445 47-446
+	48-452 49-454 4a-455 4b-462 4c-464 4d-465 4e-466 4f-503
+	50-506 51-516 52-523 53-526 54-532 55-546 56-565 57-606
+	58-612 59-624 5a-627 5b-631 5c-632 5d-654 5e-662 5f-664
+	60-703 61-712 62-723 63-731 64-732 65-734 66-743 67-754
 
-    byte 4 bit 4 - Split tone mode
+A memory is a 28 byte field:
+    byte 0 - bits 0-2 - Mode - 0=LSB, 1=USB, 2=CW, 3=CWR, 4=AM, 5=FM, 6=DIG
+    	     	  7 = PKT
+    	   - bit 7 - Alphanumeric tag is enabled
+
+    byte 1 - bits 6-7 - Repeater mode: 0=off, 1=- 2=+, 3=split
+
+    byte 3 - bits 3-5 - AM Step: 0=2.5kHz, 1=5kHz, 2=9kHz, 3=10kHz, 4=12.5kHz,
+    	     	  5=25kHz (menu 6)
+
+    byte 4 - bits 0-1 - receive tone mode: 0=off, 1=tone, 2=DCS
+    	   - bits 2-3 - transmit tone mode: 0=off, 1=tone, 2=DCS
+    	   - bit 4 - Split tone mode (menu 79)
 
     byte 6 - Transmit CTCSS tone
 
     byte 7 - Receive CTCSS tone
 
+    byte 8 - Transmit DCS code (menu 33)
+
+    byte 9 - Receive DCS code (menu 33)
+
     bytes 0c-0f - Frequency (Receive frequency when split)
 
-    bytes 10-13 - Transmit frequency when split
+    bytes 10-13 - Transmit frequency when split, offset freq when repeater mode
+    	  is + or -.
 
     bytes 14-1b - ASCII encoded name, null terminates if <8 bytes.
 	  if all 0xff then it is not valid.
 
+0004 - bits 5-7 - VFO/Memory mode: 2=Memory, 3=Home, 4=VFO
+
+0007 - bit 2 - CW key reverse: 0=Normal, 1=Reverse (menu 25)
+
+0008 - bits 0-3 - Current band: 0=180m, 1=80m, 2=60m, 3=40m, 4=30m, 5=20m,
+       6=17m, 7=15m, 8=12m, 9=10m, 10=6m, 11=FM Bcast, 12=108MHz, 13=VHF,
+       14=UHF, 15=15MHz
+
+000a - bits 0-3 - Display contrast: 3=1, 4=2, .., 15=13 (subtract 3 from the
+       	    memory value to get the contrast number) (menu 42)
+
+000b - bits 0-1 - Beep tone: 0=440Hz, 0=880Hz, 2=1760Hz (menu 13)
+       bit 2 - Clar Dial Set: 0=Main, 1=Sel (menu 21)
+
+000c - bit 4 - ARTS ID enable (menu 9)
+     - bit 5 - Dial step: 0=Fine, 1=Coarse (menu 35)
+     - bits 6-7 - ARTS Beep: 0=off, 1=Range, 2=All (menu 8)
+
+000d - bits 0-2 - CW Pitch: 0=400, 1=500, 2=600, 3=700, 4=800Hz (menu 27)
+
+000e - bits 0-4 - CW Weight: 0=1:2.5, 1=1:2.6, 2=1:2.7, 3=1:2.8, 4=1:2.9, 
+       	    5=1:3.0, 6=1:3.1, 7=1:3.2, 8=1:3.3, 9=1:3.4, 10=1:3.5, 11=1:3.60, 
+	    12=1:3.7, 13=1:3.8, 14=1:3.9, 15=1:4.0, 16=1:4.1, 17=1:4.2,
+	    18=1:4.3, 19=1:4.4, 20=1:4.5 (menu 31)
+     - bit 5 - 440 MHz ARS (menu 3)
+     - bit 6 - 144 MHz ARS (menu 2)
+
+000f - CW delay: 0=Full, 3-300 maps to 30-3000ms (menu 24)
+
+0010 - CW side tone: 0-100 (menu 29)
+
+0011 - bits 0-5 - CW Speed: 4-60wpm, value is wpm-4, so a 0 is 4wpm, 6 is 10wpm
+       	    35 is 39wpm, etc. (menu 30)
+
+0012 - bit 7 - AM&FM Dial: 0=disable, 1=enable (menu 4)
+
+0014 - bits 0-2 - APO time: 0=off, 1-6 hours (menu 7)
+       bits 5-7 - Digital mode: 0=RTTY-L, 1=RTTY=U, 2=PSK31-L, 3=PSK31-U
+       	    4=User-L, 5=User-U (menu 38)
+
+0015 - bits 6-7 - DCS Invert: 0=Tn-Rn, 1=Tn-Riv, 2=Tiv-Rn, 3=Tiv-Riv (menu 34)
+
+0017 - bits 0-6 - AM Mic Gain: 0-100 (menu 5)
+       bit 7 - CW Paddle: 0=EleKey, 1=MicKey (menu 26)
+
+0019 - Digital gain: 0-100 (menu 37)
+
+001c-001d - Digital Shift: value * 10 Hz, range -3000 to +3000, 2's complement
+	  (menu 39)
+
+001e-001f - Digital display: value * 10 Hz, range -3000 to +3000, 2's complement
+	  (menu 36)
+
+0020 - RX LSB Carrier Point (menu 15) - Value ranges +/-300Hz, it is 2's
+       	  compliment
+
+0021 - RX USB Carrier Point (menu 17) - see above
+
+0022 - TX LSB Carrier Point (menu 16) - see above
+
+0023 - TX USB Carrier Point (menu 18) - see above
+
+0024 - Current menu item
+
+0025 - MF setting: 0=a, 1-b, etc.
+
+0029 - bit 7 - Split mode
+
+002a - bits 2-3 - CAT/Linear/Tuner: 0=CAT, 1=Linear, 2=Tuner (menu 20)
+
+002b - Beep volume: 0-100 (menu 14)
+
+002c - Digital VOX: 0-100 (menu 40)
+
+002d - bit 7 - Extended Menu (menu 1)
+
+002e - bits 0-1 - CW BFO: 0=USB, 1=LSB, 2=Auto (menu 23)
+       bits 2-4 - CW QSK: 0=10, 1=15, 2=20, 3=25, 4=30ms (menu 28)
+     - bit 7 - CW Auto Mode enable (menu 22)
+
+0030 - bits 6-7 - CAT bit rate: 0=4800bps, 1=9600bps, 2=38400bps (menu 19)
+
+0032 - bits 0-3 - Display color selector: 0=ARTS, 1=Band, 2=Fix, 3=MemGrp,
+       	    4=Mode, 5=MTR, 6=VFO (menu 41, with next byte)
+
+0033 - Display bank setting.  All modes except Fix have 0=Bank1 and 1=Bank2.
+       	    Fix has setting 1-32, with the in-memory value being setting - 1.
+	    (menu 41)
+
+0042 - Beacon time: 0=off, 1-255 seconds (menu 12)
+
+0047 - RF power (5-100)
+
+0056 - 0215 - VFO A Band memories, each 28 bytes, for the following bands
+     in the following order:
+     180m, 80m, 60m, 40m, 30m, 20m, 17m, 15m, 12m, 10m, 6m,
+     FM Bcast, 108MHz, VHF, UHF, 15MHz
+
+0216 - 03d5 - VFO B Band memories, see above
 
 04ab-04c3 - Memory enables, byte 0 bit 0 is memory 1, byte 0 bit 1 is
 	  memory2, etc.
 
-04e1-1ac0 - Memories in 28-byte chunks.  Every 5 memories there is an
-	  extra 2 bytes added.
+04e1-1ac0 - Memories in 28-byte chunks.
+
+1bf5-1bfe - ARTS ID Write - in Yaesu string format (menu 10)
+
+1bff-12c6 - CW Beacon Text 1 - in Yaesu string format (menu 11)
