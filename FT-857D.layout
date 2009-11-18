@@ -42,29 +42,34 @@ DCS code
 A memory is a 28 byte field:
     byte 0 - bits 0-2 - Mode - 0=LSB, 1=USB, 2=CW, 3=CWR, 4=AM, 5=FM, 6=DIG
     	     	  7 = PKT
-    	   - bit 7 - Alphanumeric tag is enabled
+    	   - bit 7 - Alphanumeric tag is enabled (MFb-C)
 
-    byte 1 - bits 6-7 - Repeater mode: 0=off, 1=- 2=+, 3=split
+    byte 1 - bits 6-7 - Repeater mode: 0=off, 1=- 2=+, 3=split (MFd-A, except
+		for split which is set with a special procedure)
 
-    byte 3 - bits 3-5 - AM Step: 0=2.5kHz, 1=5kHz, 2=9kHz, 3=10kHz, 4=12.5kHz,
+    byte 3 - bits 0-2 - FM Step: 0=5kHz, 1=6.25kHz, 2=10kHz, 3=12.5kHz,
+		  4=15kHz, 5=20kHz, 6=25kHz, 7=50kHz (menu 52)
+	   - bits 3-5 - AM Step: 0=2.5kHz, 1=5kHz, 2=9kHz, 3=10kHz, 4=12.5kHz,
     	     	  5=25kHz (menu 6)
+	   - bits 6-7 - Select knob tuning steps on SSB: 0=1kHz, 1=2.5kHz,
+		  2=5kHz (menu 82)
 
-    byte 4 - bits 0-1 - receive tone mode: 0=off, 1=tone, 2=DCS
-    	   - bits 2-3 - transmit tone mode: 0=off, 1=tone, 2=DCS
+    byte 4 - bits 0-1 - receive tone mode: 0=off, 1=tone, 2=DCS (MFe-A)
+    	   - bits 2-3 - transmit tone mode: 0=off, 1=tone, 2=DCS (MFe-A)
     	   - bit 4 - Split tone mode (menu 79)
 
-    byte 6 - Transmit CTCSS tone
+    byte 6 - Transmit CTCSS tone (both when not split) (menu 83)
 
-    byte 7 - Receive CTCSS tone
+    byte 7 - Receive CTCSS tone (menu 83)
 
-    byte 8 - Transmit DCS code (menu 33)
+    byte 8 - Transmit DCS code (both when not split) (menu 33)
 
     byte 9 - Receive DCS code (menu 33)
 
     bytes 0c-0f - Frequency (Receive frequency when split)
 
     bytes 10-13 - Transmit frequency when split, offset freq when repeater mode
-    	  is + or -.
+    	  is + or -. (menu 76 for offset)
 
     bytes 14-1b - ASCII encoded name, null terminates if <8 bytes.
 	  if all 0xff then it is not valid.
@@ -79,15 +84,18 @@ A memory is a 28 byte field:
 
 000a - bits 0-3 - Display contrast: 3=1, 4=2, .., 15=13 (subtract 3 from the
        	    memory value to get the contrast number) (menu 42)
+       bits 6-7 - Display Mode: 0=Off, 1=Auto1, 2=Auto2, 3=On (menu 44)
 
 000b - bits 0-1 - Beep tone: 0=440Hz, 0=880Hz, 2=1760Hz (menu 13)
        bit 2 - Clar Dial Set: 0=Main, 1=Sel (menu 21)
 
-000c - bit 4 - ARTS ID enable (menu 9)
+000c - bit 2 - Packet Rate: 0=1200, 1=9600 (menu 73)
+     - bit 4 - ARTS ID enable (menu 9)
      - bit 5 - Dial step: 0=Fine, 1=Coarse (menu 35)
      - bits 6-7 - ARTS Beep: 0=off, 1=Range, 2=All (menu 8)
 
 000d - bits 0-2 - CW Pitch: 0=400, 1=500, 2=600, 3=700, 4=800Hz (menu 27)
+     - bits 4-6 = Lock mode: 0=Dial, 1=Freq, 2=Panel, 3=All (menu 54)
 
 000e - bits 0-4 - CW Weight: 0=1:2.5, 1=1:2.6, 2=1:2.7, 3=1:2.8, 4=1:2.9, 
        	    5=1:3.0, 6=1:3.1, 7=1:3.2, 8=1:3.3, 9=1:3.4, 10=1:3.5, 11=1:3.60, 
@@ -95,6 +103,7 @@ A memory is a 28 byte field:
 	    18=1:4.3, 19=1:4.4, 20=1:4.5 (menu 31)
      - bit 5 - 440 MHz ARS (menu 3)
      - bit 6 - 144 MHz ARS (menu 2)
+     - bit 7 - SQL/RF Knob function: 0=RF-Gain, 1=SQL
 
 000f - CW delay: 0=Full, 3-300 maps to 30-3000ms (menu 24)
 
@@ -104,17 +113,31 @@ A memory is a 28 byte field:
        	    35 is 39wpm, etc. (menu 30)
 
 0012 - bit 7 - AM&FM Dial: 0=disable, 1=enable (menu 4)
+     - bits 0-6 - VOX Gain: range 0-100 (menu 88)
+
+0013 - bit 5 - Alaska Emergency Channel enable (menu 50)
 
 0014 - bits 0-2 - APO time: 0=off, 1-6 hours (menu 7)
+       bit 4 - Memory grouping enable (menu 55)
        bits 5-7 - Digital mode: 0=RTTY-L, 1=RTTY=U, 2=PSK31-L, 3=PSK31-U
        	    4=User-L, 5=User-U (menu 38)
 
 0015 - bits 6-7 - DCS Invert: 0=Tn-Rn, 1=Tn-Riv, 2=Tiv-Rn, 3=Tiv-Riv (menu 34)
+     - bits 0-4 - Time out timer: 0=off, 1=20minutes (menu 84)
+
+0016 - bit 7 - Mic scan enable (menu 58)
+       bits 0-6 - SSB Mic Gain: range 0-100 (menu 81)
 
 0017 - bits 0-6 - AM Mic Gain: 0-100 (menu 5)
        bit 7 - CW Paddle: 0=EleKey, 1=MicKey (menu 26)
 
+0018 - FM Mic Gain - ranges 0-100 (menu 51)
+
 0019 - Digital gain: 0-100 (menu 37)
+
+001a - 1200bps Packet Audio Input Level: range 0-100 (menu 71)
+
+001b - 9600bps Packet Audio Input Level: range 0-100 (menu 72)
 
 001c-001d - Digital Shift: value * 10 Hz, range -3000 to +3000, 2's complement
 	  (menu 39)
@@ -133,34 +156,82 @@ A memory is a 28 byte field:
 
 0024 - Current menu item
 
-0025 - MF setting: 0=a, 1-b, etc.
+0025 - current MF menu: 0=a, 1-b, etc.
 
-0029 - bit 7 - Split mode
+0029 - bit 7 - Split mode (MFa-C)
 
 002a - bits 2-3 - CAT/Linear/Tuner: 0=CAT, 1=Linear, 2=Tuner (menu 20)
+       bits 4-5 - Mic Selection: 0=Norm, 1=RMT, 2=CAT (menu 59)
+       bit 6 - Meter Peak Hold (menu 62)
 
 002b - Beep volume: 0-100 (menu 14)
 
 002c - Digital VOX: 0-100 (menu 40)
 
-002d - bit 7 - Extended Menu (menu 1)
+002d - bits 0-3 - Scan Resume Time: range 1-10sec (menu 78)
+     - bits 4-5 - Scan Mode: 0=Time, 1=Busy, 2=Stop (menu 77)
+     - bit 6 - Home->VFO move enable (menu 53)
+     - bit 7 - Extended Menu (menu 1)
+
 
 002e - bits 0-1 - CW BFO: 0=USB, 1=LSB, 2=Auto (menu 23)
        bits 2-4 - CW QSK: 0=10, 1=15, 2=20, 3=25, 4=30ms (menu 28)
      - bit 7 - CW Auto Mode enable (menu 22)
 
+002f - bits 0-1 - DSP Mic Equalization: 0=off, 1=LPF, 2=HPF, 3=Both (menu 48)
+     - bits 2-3 - DSP BPF Width: 0=60Hz, 1=120Hz, 2=240Hz (menu 45)
+     - bits 4-7 - DSP Noise Reduction Level, 0=1, 1=2, ..., 15=16 (menu 49)
+
 0030 - bits 6-7 - CAT bit rate: 0=4800bps, 1=9600bps, 2=38400bps (menu 19)
+     - bits 0-4 - DSP LPF Cutoff: 0=1000, 1=1160, 2=1320, 3=1480, 4=1650,
+	 5=1800, 6=1970, 7=2130, 8=2290, 9=2450, 10=2610, 11=2770, 12=2940,
+	13=3100, 14=3260, 15=3420, 16=3580, 17=3740, 18=3900, 19=4060,
+	20=4230, 21=4550, 22=4710, 23=4780, 24=4870, 25=5030, 26=5190,
+	27=5390, 28=5520, 29=5680, 30=5840, 31=6000 (menu 47)
+
+0031 - bits 0-3 - DSP HPF Cutoff: 0=100, 1=160, 2=220, 3=280, 4=340, 5=400,
+	  6=460, 7=520, 8=580, 9=640, 10=700, 11=760, 12=820, 13=880,
+	 14=940, 15=1000 (menu 46)
+       bits 5-7 - Analog Meter TX selection: 0=PWR, 1=ALC, 2=MOD, 3=SWR,
+	    4=VLT, 5=N/A, 6=Off (menu 61, MFi-A,B)
 
 0032 - bits 0-3 - Display color selector: 0=ARTS, 1=Band, 2=Fix, 3=MemGrp,
        	    4=Mode, 5=MTR, 6=VFO (menu 41, with next byte)
+       bits 4-5 = Display brightness: ranges 1-3 (menu 43)
 
 0033 - Display bank setting.  All modes except Fix have 0=Bank1 and 1=Bank2.
        	    Fix has setting 1-32, with the in-memory value being setting - 1.
 	    (menu 41)
 
+0035 - Noise Blank Level: range 0-100 (menu 63)
+
+0036 - AF Speech Compression Level: range 0-100 (menu 74)
+
+0038 - bits 0-2 - MEM/VFO Dial Mode: 0=CW Sidetone, 1=CW Speed,
+	    2=MHz/Mem Grp, 3=Mic Gain, 4=NB Level, 5=RF Power, 6=Step
+     - bits 3-5 - Tuner/ATAS configuration: 0=Off, 1=ATAS(HF), 2=ATAS(HF&50),
+	    3=ATAS(ALL), 4=Tuner
+
+0039 - MFq A key function: 0-84 are menu items (FIXME: map these), 85=Moni
+	    86=Q.SPL, 87=TCALL, 88=ATC, 89=User (menu 65)
+
+003a - MFq B key function (menu 66)
+
+003b - MFq C key function (menu 67)
+
+003c - MH-59 ACC key function (menu 68)
+
+003d - MH-59 P1 key function (menu 69)
+
+003e - MH-59 P2 key function (menu 70)
+
+0041 - bits 0-3 - Analot Meter RX selection: 0=SIG, 1=CTR, 2=VLT, 3=N/A
+	    4=FS, 5=Off (menu 60)
+
 0042 - Beacon time: 0=off, 1-255 seconds (menu 12)
 
-0047 - RF power (5-100)
+0047 - RF power, range 5(2)-100 (menu 75) - FIXME - what does the top bit do?
+	    it changed from 0-1 when I went from 15 to 30 watts.
 
 0056 - 0215 - VFO A Band memories, each 28 bytes, for the following bands
      in the following order:
