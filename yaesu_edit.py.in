@@ -473,6 +473,13 @@ class RadioFileData:
     pass
 
 
+class HandlerTie:
+    def __init__(self, handler, widget):
+        self.handler = handler
+        self.widget = widget
+        return
+    pass
+
 class Handler:
     """This is an internal type that eases handling events for a type.
     The type objects do not own the data about the particular object
@@ -483,9 +490,26 @@ class Handler:
     def __init__(self, handler, data):
         self.handler = handler
         self.data = data
+
+        # The set of widgets/handlers we are tied to.  When the widget
+        # associated with this handler changes, we call everything in
+        # the tie list.  This is a list of HandlerTie object.
         self.tielist = []
         pass
 
+    def addTie(self, h, w):
+        self.tielist.append(HandlerTie(h, w))
+        return
+
+    # Called when the user modifies a value.  Not required for setValue
+    # because that does a full redisplay.  Causes any tied values to be
+    # redisplayed.
+    def modified(self):
+        for i in self.tielist:
+            i.widget.renumWidget(i.handler, i.handler.num)
+            pass
+        return
+    
     def set(self):
         self.handler(self)
         pass
@@ -509,7 +533,7 @@ class BuiltIn:
             return self
         return None
 
-    def getWidget(self, parent, t, num):
+    def getWidgetHandler(self, parent, t, num):
         h = Handler(None, None)
         h.widget = Tix.Label(parent)
         return h
@@ -526,14 +550,6 @@ class BuiltIn:
     def setValue(self, v, data, addr, num):
         pass
 
-    # Called when the user modifies a value.  Not required for setValue
-    # because that does a full redisplay.  Causes any tied values to be
-    # redisplayed.
-    def modified(self, h):
-        for i in h.tielist:
-            i[1].renumWidget(i[0], i[0].num)
-            pass
-        pass
     pass
 
 class BIString(BuiltIn):
@@ -584,11 +600,11 @@ class BIString(BuiltIn):
             data.set_byte(ord(p), addr, num, i)
             pass
         if (h):
-            self.modified(h)
+            h.modified()
             pass
         pass
 
-    def getWidget(self, parent, t, num):
+    def getWidgetHandler(self, parent, t, num):
         v = self.get_string(t.data, t.addr, num)
         h = Handler(self.set, t)
         h.v = v
@@ -698,7 +714,7 @@ class BIFixed(BuiltIn):
         b.setup(pre, suf, inc, units, snddec)
         return b
 
-    def getWidget(self, parent, t, num):
+    def getWidgetHandler(self, parent, t, num):
         v = t.data.get_bits(t.addr, num)
         h = Handler(self.set, t)
         w = Tix.Entry(parent)
@@ -754,7 +770,7 @@ class BIFixed(BuiltIn):
             w.insert(cursor, c)
             v = self.conv_from_str(w.get())
             t.data.set_bits(v, t.addr, h.num)
-            self.modified(h)
+            h.modified()
             s = self.conv_to_str(v)
             h.widget.delete(0, 'end')
             w.insert(0, s)
@@ -843,7 +859,7 @@ class BICheckBox(BuiltIn):
         BuiltIn.__init__(self, "CheckBox")
         pass
 
-    def getWidget(self, parent, t, num):
+    def getWidgetHandler(self, parent, t, num):
         v = t.data.get_bits(t.addr, num)
         h = Handler(self.set, t)
         w = Tix.Checkbutton(parent, command=h.set)
@@ -877,7 +893,7 @@ class BICheckBox(BuiltIn):
             h.v = 1
             pass
         t.data.set_bits(h.v, t.addr, h.num)
-        self.modified(h)
+        h.modified()
         pass
 
     def getSelect(self, data, addr, num):
@@ -948,11 +964,11 @@ class BIYaesuString(BuiltIn):
             data.set_byte(p, addr, num, i)
             pass
         if (h):
-            self.modified(h)
+            h.modified()
             pass
         pass
 
-    def getWidget(self, parent, t, num):
+    def getWidgetHandler(self, parent, t, num):
         v = self.get_yaesu_string(t.data, t.addr, num)
         h = Handler(self.set, t)
         h.v = v
@@ -1076,11 +1092,11 @@ class BIBCDFreq(BuiltIn):
                 pass
             pass
         if (h):
-            self.modified(h)
+            h.modified()
             pass
         pass
 
-    def getWidget(self, parent, t, num):
+    def getWidgetHandler(self, parent, t, num):
         v = self.get_bcd(t.data, t.addr, num)
         h = Handler(self.set, t)
         w = Tix.Entry(parent)
@@ -1224,11 +1240,11 @@ class BIHex(BuiltIn):
             i += 1
             pass
         if (h):
-            self.modified(h)
+            h.modified()
             pass
         pass
 
-    def getWidget(self, parent, t, num):
+    def getWidgetHandler(self, parent, t, num):
         v = self.get_hex(t.data, t.addr, num)
         h = Handler(self.set, t)
         h.numbytes = t.addr.entries[0][2] / 8
@@ -1337,7 +1353,7 @@ class Enum(BuiltIn):
         self.entries.append(EnumEntry(c.toNum(v[0]), v[1]))
         pass
 
-    def getWidget(self, parent, t, num):
+    def getWidgetHandler(self, parent, t, num):
         toph = Handler(None, None)
         toph.widget = MenuAndButton(parent)
         toph.data = t.data
@@ -1358,7 +1374,7 @@ class Enum(BuiltIn):
         e = h.data
         h.toph.widget.set_label(e.str)
         h.toph.data.set_bits(e.value, h.toph.addr, h.toph.num)
-        self.modified(h.toph)
+        h.toph.modified()
         pass
 
     def renumWidget(self, toph, num):
@@ -1395,7 +1411,7 @@ class Enum(BuiltIn):
 
 
 class TabEntry:
-    def __init__(self, name, pos, addr, type, data, tielist, cutpaste):
+    def __init__(self, name, pos, addr, type, data, tielist_str, cutpaste):
         self.name = name
         self.pos = pos
         nn = self.name.replace("\n", "")
@@ -1405,13 +1421,20 @@ class TabEntry:
         self.addr = addr
         self.type = type
         self.data = data
-        self.tielist = tielist
-        self.etielist = []
+
+        # The list of strings that we are tied to.  This is deleted when
+        # we are done with it.
+        self.tielist_str = tielist_str
+
+        # The list of widgets we are tied to, generated later frome
+        # the tielist_str.
+        self.tielist = []
+        
         self.cutpaste = cutpaste
         pass
 
-    def getWidget(self, parent, num):
-        return self.type.getWidget(parent, self, num)
+    def getWidgetHandler(self, parent, num):
+        return self.type.getWidgetHandler(parent, self, num)
 
     def renumWidget(self, h, num):
         self.type.renumWidget(h, num)
@@ -1446,30 +1469,21 @@ class TabBase:
     def __init__(self, name):
         self.name = name
         self.entries = []
-        pass
+        return
 
-    def addItem(self, c, name, addr, type, tielist, cutpaste):
+    def addItem(self, c, name, addr, type, tielist_str, cutpaste):
         type.checkAddrOk(c, addr)
         self.entries.append(TabEntry(name, len(self.entries), addr,
-                                     type, c.filedata, tielist, cutpaste))
-        pass
-
-class List(TabBase):
-    def __init__(self, name, length):
-        TabBase.__init__(self, name)
-        self.length = length
-        self.numlines = 0
-        self.firstline = 0
-        self.widgetlists = []
-        pass
-
+                                     type, c.filedata, tielist_str, cutpaste))
+        return
+    
     def finalize(self, c):
         for i in self.entries:
-            for t in i.tielist:
+            for t in i.tielist_str:
                 found = False
                 for j in self.entries:
                     if (j.name == t):
-                        i.etielist.append(j)
+                        i.tielist.append(j)
                         found = True
                         break
                     pass
@@ -1477,9 +1491,35 @@ class List(TabBase):
                     raise ParseException(c.filename, c.lineno,
                                          "tie entry for '" + t +"' not found")
                 pass
+            del i.tielist_str
             pass
-        pass
+        return
     
+    pass
+
+class List(TabBase):
+    """This is a list widget rework to make an HList that only has the
+    items being displayed as list entries.  If you add the entire lists and
+    scroll it and there are a thousand entries, a standard scrolled hlist
+    is too slow because of the tens of thousands of widgets created.  So
+    this class only creates widgets for the dislayed amount, then it
+    redoes what is in the widgets based upon the scroll position."""
+    def __init__(self, name, length):
+        TabBase.__init__(self, name)
+
+        # Total length of elements in the list
+        self.length = length
+
+        # Number of lines currently displayed
+        self.numdisplines = 0
+
+        # Number of the first displayed line
+        self.firstdispline = 0
+
+        # A list of handlers for each displayed row
+        self.handlerlists = []
+        pass
+
     def add(self, c, v):
         if (v[0] == "endlist"):
             self.finalize(c)
@@ -1488,7 +1528,7 @@ class List(TabBase):
         if (len(v) < 3):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for list entry")
-        tielist = []
+        ties = []
         cutpaste = True
         for i in v[3:]:
             s = i.split('=', 1)
@@ -1496,7 +1536,7 @@ class List(TabBase):
                 raise ParseException(c.filename, c.lineno,
                                      "Invalid option, no '=': " + i)
             if (s[0] == "tie"):
-                tielist.append(s[1])
+                ties.append(s[1])
             elif (s[0] == "cutpaste"):
                 if (s[1].lower() == "true"):
                     cutpaste = True
@@ -1510,7 +1550,7 @@ class List(TabBase):
                                      "Invalid option: " + i);
             pass
             
-        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), tielist,
+        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), ties,
                      cutpaste)
         pass
 
@@ -1557,7 +1597,7 @@ class List(TabBase):
         self.list.bind("<Button-2>", self.Button2)
         self.list.bind("<Button-3>", self.Button3)
 
-        self.list.bind("<Map>", self.map)
+        self.list.bind("<Map>", self.mapped)
 
         self.bindWidget(self.list)
         self.bindWidget(self.xscroll)
@@ -1574,7 +1614,7 @@ class List(TabBase):
         self.list.pack(side=Tix.LEFT, fill=Tix.BOTH, expand=1)
         pass
 
-    def map(self, event=None):
+    def mapped(self, event=None):
         self.list.focus_set()
         return
         
@@ -1601,23 +1641,23 @@ class List(TabBase):
         return s
 
     def redoSelection(self):
-        if ((self.last_select < self.firstline)
-            or (self.first_select >= self.firstline + self.numlines)):
+        if ((self.last_select < self.firstdispline)
+            or (self.first_select >= self.firstdispline + self.numdisplines)):
             # Nothing to see
             self.list.selection_clear()
             return
         
-        if (self.first_select <= self.firstline):
+        if (self.first_select <= self.firstdispline):
             pos1 = 0
         else:
-            pos1 = self.first_select - self.firstline
+            pos1 = self.first_select - self.firstdispline
             pass
         
-        end = self.firstline + self.numlines - 1
+        end = self.firstdispline + self.numdisplines - 1
         if (self.last_select >= end):
-            pos2 = self.numlines - 1
+            pos2 = self.numdisplines - 1
         else:
-            pos2 = self.last_select - self.firstline
+            pos2 = self.last_select - self.firstdispline
             pass
 
         self.list.selection_clear()
@@ -1628,8 +1668,8 @@ class List(TabBase):
     def Button1(self, event):
         self.list.focus_set()
         line = int(self.list.nearest(event.y))
-        self.first_select = self.firstline + line
-        self.last_select = self.firstline + line
+        self.first_select = self.firstdispline + line
+        self.last_select = self.firstdispline + line
         self.redoSelection()
         return "break"
     
@@ -1637,7 +1677,7 @@ class List(TabBase):
         if (self.first_select < 0):
             return self.Button1(event)
         line = int(self.list.nearest(event.y))
-        pos = line + self.firstline
+        pos = line + self.firstdispline
         if (pos < self.first_select):
             self.first_select = pos
         else:
@@ -1650,7 +1690,7 @@ class List(TabBase):
         return "break"
     
     def Button2(self, event):
-        linenum = int(self.list.nearest(event.y)) + self.firstline
+        linenum = int(self.list.nearest(event.y)) + self.firstdispline
         s = self.list.selection_get()
         lines = s.split("\n")
         for l in lines:
@@ -1695,13 +1735,14 @@ class List(TabBase):
     
     def y_scrolled(self, a, b):
         b = float(b)
-        if (self.numlines < self.length) and (b >= 1.0):
+        if (self.numdisplines < self.length) and (b >= 1.0):
             self.add_one_line()
-        elif (self.numlines > 0) and (b < (1.0 - (1.0 / float(self.numlines)))):
+        elif ((self.numdisplines > 0)
+              and (b < (1.0 - (1.0 / float(self.numdisplines))))):
             self.del_one_line()
         else:
-            pct = float(self.numlines) / float(self.length)
-            first = float(self.firstline) / float(self.length)
+            pct = float(self.numdisplines) / float(self.length)
+            first = float(self.firstdispline) / float(self.length)
             self.yscroll.set(first, first + pct)
             pass
         self.redoSelection()
@@ -1727,34 +1768,37 @@ class List(TabBase):
         if (a == "scroll"):
             if (c == "units"):
                 if (int(b) < 0):
-                    if (self.firstline > 0):
-                        self.firstline -= 1
+                    if (self.firstdispline > 0):
+                        self.firstdispline -= 1
                         self.redisplay()
                         pass
                     pass
                 else:
-                    if ((self.firstline + self.numlines) < self.length):
-                        self.firstline += 1
+                    if ((self.firstdispline + self.numdisplines)
+                        < self.length):
+                        self.firstdispline += 1
                         self.redisplay()
                         pass
                     pass
                 pass
             elif (c == "pages"):
                 if (int(b) < 0):
-                    if (self.firstline > (self.numlines - 1)):
-                        self.firstline -= self.numlines - 1
+                    if (self.firstdispline > (self.numdisplines - 1)):
+                        self.firstdispline -= self.numdisplines - 1
                         self.redisplay()
-                    elif (self.firstline > 0):
-                        self.firstline = 0
+                    elif (self.firstdispline > 0):
+                        self.firstdispline = 0
                         self.redisplay()
                         pass
                     pass
                 else:
-                    if (self.firstline + (2 * self.numlines) - 1 <= self.length):
-                        self.firstline += self.numlines - 1
+                    if (self.firstdispline + (2 * self.numdisplines) - 1
+                        <= self.length):
+                        self.firstdispline += self.numdisplines - 1
                         self.redisplay()
-                    elif (self.firstline + self.numlines <= self.length):
-                        self.firstline = self.length - self.numlines
+                    elif (self.firstdispline + self.numdisplines
+                          <= self.length):
+                        self.firstdispline = self.length - self.numdisplines
                         self.redisplay()
                         pass
                     pass
@@ -1762,10 +1806,10 @@ class List(TabBase):
         elif (a == "moveto"):
             pct = float(b)
             fl = int(pct * float(self.length))
-            if ((fl != self.firstline)
+            if ((fl != self.firstdispline)
                 and (fl >= 0)
-                and ((fl + self.numlines) <= self.length)):
-                self.firstline = fl
+                and ((fl + self.numdisplines) <= self.length)):
+                self.firstdispline = fl
                 self.redisplay()
                 pass
             pass
@@ -1773,42 +1817,43 @@ class List(TabBase):
 
     def redisplay(self):
         i = 0
-        for wl in self.widgetlists:
-            self.list.item_configure(i, 0, text=str(i + self.firstline + 1))
+        for wl in self.handlerlists:
+            self.list.item_configure(i, 0,
+                                     text=str(i + self.firstdispline + 1))
             for e in self.entries:
-                e.renumWidget(wl[e.pos], i + self.firstline)
+                e.renumWidget(wl[e.pos], i + self.firstdispline)
             i += 1
             pass
         pass
     
     def add_one_line(self):
-        widgets = []
-        pos = self.firstline + self.numlines
-        self.list.add(self.numlines, text=str(pos + 1))
+        handlers = []
+        pos = self.firstdispline + self.numdisplines
+        self.list.add(self.numdisplines, text=str(pos + 1))
         for e in self.entries:
-            h = e.getWidget(self.list, pos)
+            h = e.getWidgetHandler(self.list, pos)
             h.ename = e.name
             self.bindWidget(h.widget)
-            self.list.item_create(self.numlines, e.column,
+            self.list.item_create(self.numdisplines, e.column,
                                   itemtype=Tix.WINDOW,
                                   window=h.widget)
-            widgets.append(h)
+            handlers.append(h)
             pass
         for e in self.entries:
-            for i in e.etielist:
-                widgets[e.pos].tielist.append((widgets[i.pos], i))
+            for i in e.tielist:
+                handlers[e.pos].addTie(handlers[i.pos], i)
                 pass
             pass
-        self.widgetlists.append(widgets)
-        self.numlines += 1
+        self.handlerlists.append(handlers)
+        self.numdisplines += 1
         pass
         
     def del_one_line(self):
-        if (self.numlines < 0):
+        if (self.numdisplines < 0):
             return
-        self.numlines -= 1
-        del self.widgetlists[self.numlines]
-        self.list.delete_entry(self.numlines)
+        self.numdisplines -= 1
+        del self.handlerlists[self.numdisplines]
+        self.list.delete_entry(self.numdisplines)
         pass
     
     pass
@@ -1819,23 +1864,6 @@ class Tab(TabBase):
         self.entries = []
         pass
 
-    def finalize(self, c):
-        for i in self.entries:
-            for t in i.tielist:
-                found = False
-                for j in self.entries:
-                    if (j.name == t):
-                        i.etielist.append(j)
-                        found = True
-                        break
-                    pass
-                if (not found):
-                    raise ParseException(c.filename, c.lineno,
-                                         "tie entry for '" + t +"' not found")
-                pass
-            pass
-        pass
-    
     def add(self, c, v):
         if (v[0] == "endtab"):
             self.finalize(c)
@@ -1844,7 +1872,7 @@ class Tab(TabBase):
         if (len(v) < 3):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for tab entry");
-        tielist = []
+        ties = []
         cutpaste = True
         for i in v[3:]:
             s = i.split('=', 1)
@@ -1852,7 +1880,7 @@ class Tab(TabBase):
                 raise ParseException(c.filename, c.lineno,
                                      "Invalid option, no '=': " + i)
             if (s[0] == "tie"):
-                tielist.append(s[1])
+                ties.append(s[1])
             elif (s[0] == "cutpaste"):
                 if (s[1].lower() == "true"):
                     cutpaste = True
@@ -1866,7 +1894,7 @@ class Tab(TabBase):
                                      "Invalid option: " + i);
             pass
 
-        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), tielist,
+        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), ties,
                      cutpaste)
         pass
 
@@ -1917,20 +1945,20 @@ class Tab(TabBase):
         self.bindWidget(self.list.vsb)
 
         i = 0
-        widgets = []
+        handlers = []
         for e in self.entries:
             e.key = i
             self.list.hlist.add(i, text=e.name)
-            h = e.getWidget(self.list.hlist, i)
+            h = e.getWidgetHandler(self.list.hlist, i)
             self.list.hlist.item_create(i, 1, itemtype=Tix.WINDOW,
                                         window=h.widget)
             self.bindWidget(h.widget)
-            widgets.append(h)
+            handlers.append(h)
             i += 1
             pass
         for e in self.entries:
-            for i in e.etielist:
-                widgets[e.pos].tielist.append((widgets[i.pos], i))
+            for i in e.tielist:
+                handlers[e.pos].addTie(handlers[i.pos], i)
                 pass
             pass
 
