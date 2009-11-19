@@ -267,7 +267,8 @@ A memory is a 28 byte field:
      - bit 2-3 - DBF enable - 0=off, 3=on (MFp-C)
      - bit 5 - AGC enable (MFl-B)
 
-0045 - bits 2-3 - Scope Width - 0=+-10, 1=+-15, 2=+-63 channels
+0045 - bit 1 - SSB/AM Speech Processor enable
+     - bits 2-3 - Scope Width - 0=+-10, 1=+-15, 2=+-63 channels
 
 0047 - RF power, range 5(2)-100 (menu 75) - FIXME - what does the top bit do?
 	    it changed from 0-1 when I went from 15 to 30 watts.
@@ -278,6 +279,8 @@ A memory is a 28 byte field:
      FM Bcast, 108MHz, VHF, UHF, 15MHz
 
 0216 - 03d5 - VFO B Band memories, see above
+
+0446-0461 - QMB memory (MFc-A,B)
 
 04ab-04c3 - Memory enables, byte 0 bit 0 is memory 1, byte 0 bit 1 is
 	  memory2, etc.
