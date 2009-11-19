@@ -47,12 +47,17 @@ A memory is a 28 byte field:
     byte 1 - bits 6-7 - Repeater mode: 0=off, 1=- 2=+, 3=split (MFd-A, except
 		for split which is set with a special procedure)
 
+    byte 2 - bit 3 - Low deviation FM enable, 29MHz only (MFm-C)
+    	   - bit 4-5 - Intercept Point Operation/Front-End Attenuation:
+    	     	 0=Off, 1=Front-End-Att, 2=IPO (MFm-A, MFm-B)
+    	   - bit 7 - Memory scan skip (MFb-B)
+
     byte 3 - bits 0-2 - FM Step: 0=5kHz, 1=6.25kHz, 2=10kHz, 3=12.5kHz,
-		  4=15kHz, 5=20kHz, 6=25kHz, 7=50kHz (menu 52)
+		  4=15kHz, 5=20kHz, 6=25kHz, 7=50kHz (menu 52, MFg-C)
 	   - bits 3-5 - AM Step: 0=2.5kHz, 1=5kHz, 2=9kHz, 3=10kHz, 4=12.5kHz,
-    	     	  5=25kHz (menu 6)
+    	     	  5=25kHz (menu 6, MFg-C)
 	   - bits 6-7 - Select knob tuning steps on SSB: 0=1kHz, 1=2.5kHz,
-		  2=5kHz (menu 82)
+		  2=5kHz (menu 82, MFg-C)
 
     byte 4 - bits 0-1 - receive tone mode: 0=off, 1=tone, 2=DCS (MFe-A)
     	   - bits 2-3 - transmit tone mode: 0=off, 1=tone, 2=DCS (MFe-A)
@@ -74,13 +79,22 @@ A memory is a 28 byte field:
     bytes 14-1b - ASCII encoded name, null terminates if <8 bytes.
 	  if all 0xff then it is not valid.
 
-0004 - bits 5-7 - VFO/Memory mode: 2=Memory, 3=Home, 4=VFO
+0004 - bit 0 - VFO: 0=VFOa, 1=VFOb (MFa-A)
+     - bits 5-7 - VFO/Memory mode: 2=Memory, 3=Home, 4=VFO
+
+0006 - bits 0-1 - AGC mode: 0=Auto, 1=Fast, 2=Slow (MFl-C)
+     - bit 2 - Display size: 0=Small Chars, 1=Large Chars (MFi-C)
+     - bit 5 - Noise Blanker enable (MFl-A)
 
 0007 - bit 2 - CW key reverse: 0=Normal, 1=Reverse (menu 25)
+       bit 4 - CW Keyer enable (MFj-C)
+       bit 5 - CW Semi Break In enable (MFj-B)
+       bit 7 - VOX enable (MFd-C)
 
-0008 - bits 0-3 - Current band: 0=180m, 1=80m, 2=60m, 3=40m, 4=30m, 5=20m,
+0008 - bits 0-3 - Current VFOa band: 0=180m, 1=80m, 2=60m, 3=40m, 4=30m, 5=20m,
        6=17m, 7=15m, 8=12m, 9=10m, 10=6m, 11=FM Bcast, 12=108MHz, 13=VHF,
        14=UHF, 15=15MHz
+       bits 4-7 - Current VFOb band
 
 000a - bits 0-3 - Display contrast: 3=1, 4=2, .., 15=13 (subtract 3 from the
        	    memory value to get the contrast number) (menu 42)
@@ -116,6 +130,7 @@ A memory is a 28 byte field:
      - bits 0-6 - VOX Gain: range 0-100 (menu 88)
 
 0013 - bit 5 - Alaska Emergency Channel enable (menu 50)
+       bits 0-4 - VOX Delay: 1=100ms, 2=200ms, ... 30=3000ms (menu 87)
 
 0014 - bits 0-2 - APO time: 0=off, 1-6 hours (menu 7)
        bit 4 - Memory grouping enable (menu 55)
@@ -157,6 +172,10 @@ A memory is a 28 byte field:
 0024 - Current menu item
 
 0025 - current MF menu: 0=a, 1-b, etc.
+
+0028 - bits 3-4 - Priority Scan enable and Dual Watch: 1=off, 2=Priority Scan,
+       	    3=Dual Watch (MFg-B, MFg-C)
+     - bit 7 - ARTS enable (MFf-A)
 
 0029 - bit 7 - Split mode (MFa-C)
 
@@ -225,10 +244,30 @@ A memory is a 28 byte field:
 
 003e - MH-59 P2 key function (menu 70)
 
-0041 - bits 0-3 - Analot Meter RX selection: 0=SIG, 1=CTR, 2=VLT, 3=N/A
+003f - bit 0 - Op filter selection: 0=Filter1, 1=Filter2 (menu 64)
+       bits 3-4 - Transverter selection: 0=Off, 1=XVTR-A, 2=XVTR-B (menu 91)
+
+0040 - bits 0-1 - TX IF Filter: 0=CFIL, 1=Fitler1, 2=Fitler2 (menu 86)
+
+0041 - bits 0-2 - Analog Meter RX selection: 0=SIG, 1=CTR, 2=VLT, 3=N/A
 	    4=FS, 5=Off (menu 60)
+       bit 3 - See byte 1c7b
+       bit 4 - See byte 1c77
 
 0042 - Beacon time: 0=off, 1-255 seconds (menu 12)
+
+0043 - bit 0 - Filter 1 enable for SSB
+     - bit 2 - Filter 1 enable for CW (see bit 7)
+     - bit 4 - Filter 1 enable for Digital
+     - bit 7 - Filter 1 enable for CW (have to set bits 2 and 7)
+
+
+0044 - bit 0 - DNF enable (MFp-B)
+     - bit 1 - DNR enable (MFp-A)
+     - bit 2-3 - DBF enable - 0=off, 3=on (MFp-C)
+     - bit 5 - AGC enable (MFl-B)
+
+0045 - bits 2-3 - Scope Width - 0=+-10, 1=+-15, 2=+-63 channels
 
 0047 - RF power, range 5(2)-100 (menu 75) - FIXME - what does the top bit do?
 	    it changed from 0-1 when I went from 15 to 30 watts.
@@ -247,4 +286,22 @@ A memory is a 28 byte field:
 
 1bf5-1bfe - ARTS ID Write - in Yaesu string format (menu 10)
 
-1bff-12c6 - CW Beacon Text 1 - in Yaesu string format (menu 11)
+1bff-1c26 - CW Beacon Text 1 - in Yaesu string format (menu 11)
+
+1c27-1c4e - CW Beacon Text 2 - in Yaesu string format (menu 11)
+
+1c4f-1c77 - CW Beacon Text 3 - in Yaesu string format (menu 11)
+
+1c77-1c7a - Transverter A frequency, byte 41 bit 4 is set if this should
+	  be subtracted, otherwise it is added.  There is a limited
+	  range on subtraction, it only goes -100KHz, but there does
+	  not appear to be a positive limit. (menu 89)
+
+1c7b-1c7e - Transverter B frequency, byte 41 bit 4 is set if this should
+	  be subtracted, otherwise it is added.  There is a limited
+	  range on subtraction, it only goes -100KHz, but there does
+	  not appear to be a positive limit. (menu 90)
+
+1c7f-1882 - Op filter 1 name: Yaesu string (menu 64)
+
+1c83-1c86 - Op filter 2 name: Yaesu string (menu 64)
