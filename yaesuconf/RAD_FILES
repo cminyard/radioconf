@@ -192,12 +192,19 @@ each item of the same type.
 
 List entries may take options at the end.  Options are:
 
-tie=<name> - name is the name of another entry in the same
+tie[(<type>)]=<name> - name is the name of another entry in the same
   list.  If you modify that entry, any tied entry will be updated.  That
   way, if two entries represent the same data two different ways, it is
   possible for updating one to automatically redisplay the other.  Note
   that if you need quotes, the entire entry must be in quotes, including the
   "tie=" part.
+
+  Ties may have types, which give special meaning to the tie.  A tie
+  to BCDFreq understands three types: offset, basefreq, and freqoff.
+  offset is an enum with "smplx", "+", "-", "split", BCDFreq uses this
+  to do a proper offset from the basefreq, which must be another BCDFreq.
+  freqoff is a Fixed type that must end in MHz, kHz, or Hz and gives the
+  offset to add or subtract.
 
 cutpaste=[true|false] - If cutpaste is set to false, the particular item
   will not be cut or pasted.  Useful for items that represent the same

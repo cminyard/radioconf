@@ -487,9 +487,11 @@ class Handler:
     different objects.  Instead, when a widget is allocated to handle
     a particular type, one of these is allocated to hold that data and
     deliver it to the type object."""
-    def __init__(self, handler, data):
+    def __init__(self, handler, data, wtype):
         self.handler = handler
         self.data = data
+        self.type = wtype
+        self.widget = None # Will be filled in later by the type
 
         # The set of widgets/handlers we are tied to.  When the widget
         # associated with this handler changes, we call everything in
@@ -499,16 +501,26 @@ class Handler:
 
     def addTie(self, h, tie):
         self.tielist.append(HandlerTie(h, tie))
+
+        # Inform the widget we are tied to them, in case they care
+        h.newTie(self, tie)
         return
 
+    def newTie(self, fromh, tie):
+        self.type.newTie(self, fromh, tie)
+        return
+    
     # Called when the user modifies a value.  Not required for setValue
     # because that does a full redisplay.  Causes any tied values to be
     # redisplayed.
     def modified(self):
-        for i in self.tielist:
-            i.tie.renumWidget(i.handler, i.handler.num)
+        for ht in self.tielist:
+            ht.tie.redisplay(ht.handler)
             pass
         return
+
+    def getValue(self, num):
+        return self.type.getValue(self.data.data, self.data.addr, num)
     
     def set(self):
         self.handler(self)
@@ -534,22 +546,37 @@ class BuiltIn:
         return None
 
     def getWidgetHandler(self, parent, t, num):
-        h = Handler(None, None)
+        h = Handler(None, None, self)
         h.widget = Tix.Label(parent)
         return h
 
     def renumWidget(self, h, num):
         pass
 
+    def redisplay(self, h):
+        self.renumWidget(h, h.num)
+        return
+    
     def checkAddrOk(self, c, addr):
         return True
 
     def getSelect(self, data, addr, num):
         return ""
     
+    def getValue(self, data, addr, num):
+        # Most types are the same for select and value
+        return self.getSelect(data, addr, num)
+        return ""
+    
     def setValue(self, v, data, addr, num):
-        pass
+        return
 
+    def newTie(self, myh, fromh, tie):
+        if (tie.tietype != "normal"):
+            print ("Warning: Unknown type %s tie to %s"
+                   % (tie.tietype, tie.value))
+        return
+    
     pass
 
 class BIString(BuiltIn):
@@ -606,7 +633,7 @@ class BIString(BuiltIn):
 
     def getWidgetHandler(self, parent, t, num):
         v = self.get_string(t.data, t.addr, num)
-        h = Handler(self.set, t)
+        h = Handler(self.set, t, self)
         h.v = v
         h.num = num
         w = Tix.Entry(parent)
@@ -649,8 +676,8 @@ class BIString(BuiltIn):
 
 
 class BIFixed(BuiltIn):
-    def __init__(self):
-        self.name = "" # Name doesn't matter
+    def __init__(self, name="Fixed"):
+        self.name = name # Doesn't really matter
         pass
 
     def setup(self, pre, suf, inc, units, snddec):
@@ -710,13 +737,13 @@ class BIFixed(BuiltIn):
                                          "Invalid Fixed option: " + o[0])
                 pass
             pass
-        b = BIFixed()
+        b = BIFixed(name=string)
         b.setup(pre, suf, inc, units, snddec)
         return b
 
     def getWidgetHandler(self, parent, t, num):
         v = t.data.get_bits(t.addr, num)
-        h = Handler(self.set, t)
+        h = Handler(self.set, t, self)
         w = Tix.Entry(parent)
         h.widget = w
         h.num = num
@@ -861,7 +888,7 @@ class BICheckBox(BuiltIn):
 
     def getWidgetHandler(self, parent, t, num):
         v = t.data.get_bits(t.addr, num)
-        h = Handler(self.set, t)
+        h = Handler(self.set, t, self)
         w = Tix.Checkbutton(parent, command=h.set)
         h.num = num
         h.widget = w
@@ -970,7 +997,7 @@ class BIYaesuString(BuiltIn):
 
     def getWidgetHandler(self, parent, t, num):
         v = self.get_yaesu_string(t.data, t.addr, num)
-        h = Handler(self.set, t)
+        h = Handler(self.set, t, self)
         h.v = v
         h.num = num
         w = Tix.Entry(parent)
@@ -1098,23 +1125,129 @@ class BIBCDFreq(BuiltIn):
 
     def getWidgetHandler(self, parent, t, num):
         v = self.get_bcd(t.data, t.addr, num)
-        h = Handler(self.set, t)
-        w = Tix.Entry(parent)
+        h = Handler(self.set, t, self)
+        w = Tix.Entry(parent, readonlybackground="tan")
         h.widget = w
         h.num = num
+
+        # These are ties to me that change the way I behave.  We keep these
+        # as lists becaue there may be more than one tie to me, and only
+        # one of them is required to be valid, so we may have to scan them.
+        h.offtie = []
+        h.basefreqtie = []
+        h.offfreqtie = []
+        
         w.bind("<Key>", h.set_event)
         w.delete(0, 'end')
         w.insert(0, v)
         return h
 
     def renumWidget(self, h, num):
+        off = None
+        for m in h.offtie:
+            off = m.getValue(num)
+            if (off):
+                break
+            pass
+        if (off):
+            if (off == "split"):
+                h.widget["state"] = "normal"
+            else:
+                h.widget["state"] = "readonly"
+                # Allow us to write to the widget
+                freq = None
+                for m in h.basefreqtie:
+                    freq = m.getValue(num)
+                    if (freq):
+                        break
+                    pass
+                if (freq):
+                    freq = float(freq)
+                    if (off != 'smplx'):
+                        # It's a + or - offset, add/sub the offset frequency
+                        o = None
+                        for m in h.offfreqtie:
+                            o = m.getValue(num)
+                            if (o):
+                                break
+                            pass
+                        if (o):
+                            # Split out trailing MHz, Khz, Hz
+                            i = 0
+                            for c in o:
+                                if (not c.isdigit() and c != '.'):
+                                    break
+                                i += 1
+                                pass
+                            sfx = o[i:]
+                            o = o[0:i]
+                            offfreq = float(o)
+                            if (sfx == "kHz"):
+                                offfreq /= 1000.0
+                            elif (sfx == "Hz"):
+                                offfreq /= 1000000.0
+                                pass
+                            pass
+                        else:
+                            offfreq = 0.0
+                            pass
+                        if (off == '+'):
+                            freq += offfreq
+                        elif (off == '-'):
+                            freq -= offfreq
+                        else:
+                            print("Warning: unknown offset: " + off)
+                            pass
+                        pass
+                    v = str(freq)
+                    (pre, post) = v.split(".")
+                    if (len(pre) > 4):
+                        pre = 999
+                        post = 999
+                        pass
+                    if (len(post) > 4):
+                        post = post[0:3]
+                        pass
+                    while (len(pre) < 3):
+                        pre = "0" + pre
+                        pass
+                    while (len(post) < 3):
+                        post += "0"
+                        pass
+                    v = pre + "." + post
+                    h.widget["state"] = "normal"
+                    h.widget.delete(0, 'end')
+                    h.widget.insert(0, v)
+                    h.widget["state"] = "readonly"
+                    return
+                pass
+            pass
+        
         h.num = num
         t = h.data
         v = self.get_bcd(t.data, t.addr, num)
         h.widget.delete(0, 'end')
         h.widget.insert(0, v)
         pass
-        
+
+    def newTie(self, myh, fromh, tie):
+        if (tie.tietype == "offset"):
+            myh.offtie.append(fromh)
+        elif (tie.tietype == "basefreq"):
+            myh.basefreqtie.append(fromh)
+            pass
+        elif (tie.tietype == "freqoff"):
+            myh.offfreqtie.append(fromh)
+            pass
+        else:
+            BuiltIn.newTie(self, myh, fromh, tie)
+            pass
+        self.redisplay(myh)
+        return
+    
+    def getValue(self, data, addr, num):
+        return self.get_bcd(data, addr, num)
+
     def getSelect(self, data, addr, num):
         # Note that we pad it out to Hz for copy/paste, for compatability
         return self.get_bcd(data, addr, num) + ".000"
@@ -1154,6 +1287,7 @@ class BIBCDFreq(BuiltIn):
         if (s[cursor] != c):
             w.delete(cursor)
             w.insert(cursor, c)
+            t = h.data
             self.set_bcd(w.get(), t.data, t.addr, h.num, h)
             pass
         if (cursor == 2):
@@ -1246,7 +1380,7 @@ class BIHex(BuiltIn):
 
     def getWidgetHandler(self, parent, t, num):
         v = self.get_hex(t.data, t.addr, num)
-        h = Handler(self.set, t)
+        h = Handler(self.set, t, self)
         h.numbytes = t.addr.entries[0][2] / 8
         w = Tix.Entry(parent)
         h.widget = w
@@ -1354,14 +1488,12 @@ class Enum(BuiltIn):
         pass
 
     def getWidgetHandler(self, parent, t, num):
-        toph = Handler(None, None)
+        toph = Handler(None, t, self)
         toph.widget = MenuAndButton(parent)
-        toph.data = t.data
-        toph.addr = t.addr
         toph.num = num
         v = t.data.get_bits(t.addr, num)
         for e in self.entries:
-            h = Handler(self.set, e)
+            h = Handler(self.set, e, self)
             h.toph = toph
             toph.widget.add_command(e.str, h.set)
             if (v == e.value):
@@ -1373,13 +1505,15 @@ class Enum(BuiltIn):
     def set(self, h):
         e = h.data
         h.toph.widget.set_label(e.str)
-        h.toph.data.set_bits(e.value, h.toph.addr, h.toph.num)
+        t = h.toph.data
+        t.data.set_bits(e.value, t.addr, h.toph.num)
         h.toph.modified()
         pass
 
     def renumWidget(self, toph, num):
         toph.num = num
-        v = toph.data.get_bits(toph.addr, num)
+        t = toph.data
+        v = t.data.get_bits(t.addr, num)
         found = False
         for e in self.entries:
             if (v == e.value):
@@ -1420,8 +1554,8 @@ class Tie:
         self.widget = w
         return
 
-    def renumWidget(self, h, num):
-        self.widget.renumWidget(h, num)
+    def redisplay(self, h):
+        self.widget.redisplay(h)
         return
     
     pass
@@ -1450,6 +1584,10 @@ class TabEntry:
     def renumWidget(self, h, num):
         self.type.renumWidget(h, num)
         pass
+
+    def redisplay(self, h):
+        self.type.redisplay(h)
+        return
 
     def getSelect(self, num):
         v = self.type.getSelect(self.data, self.addr, num)
@@ -1550,6 +1688,12 @@ class List(TabBase):
                                      "Invalid option, no '=': " + i)
             if (s[0] == "tie"):
                 ties.append(Tie(s[1], "normal"))
+            elif s[0].startswith("tie("):
+                if not s[0].endswith(")"):
+                    raise ParseException(c.filename, c.lineno,
+                                         "tie type does not end with ')'")
+                tietype = s[0][4:len(s[0])-1]
+                ties.append(Tie(s[1], tietype))
             elif (s[0] == "cutpaste"):
                 if (s[1].lower() == "true"):
                     cutpaste = True
@@ -1835,6 +1979,7 @@ class List(TabBase):
                                      text=str(i + self.firstdispline + 1))
             for e in self.entries:
                 e.renumWidget(wl[e.pos], i + self.firstdispline)
+                pass
             i += 1
             pass
         pass
@@ -1853,8 +1998,8 @@ class List(TabBase):
             handlers.append(h)
             pass
         for e in self.entries:
-            for i in e.tielist:
-                handlers[e.pos].addTie(handlers[i.widget.pos], i)
+            for t in e.tielist:
+                handlers[e.pos].addTie(handlers[t.widget.pos], t)
                 pass
             pass
         self.handlerlists.append(handlers)
@@ -1971,8 +2116,8 @@ class Tab(TabBase):
             i += 1
             pass
         for e in self.entries:
-            for i in e.tielist:
-                handlers[e.pos].addTie(handlers[i.widget.pos], i)
+            for t in e.tielist:
+                handlers[e.pos].addTie(handlers[t.widget.pos], t)
                 pass
             pass
 
