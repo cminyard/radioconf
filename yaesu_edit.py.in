@@ -474,9 +474,9 @@ class RadioFileData:
 
 
 class HandlerTie:
-    def __init__(self, handler, widget):
+    def __init__(self, handler, tie):
         self.handler = handler
-        self.widget = widget
+        self.tie = tie
         return
     pass
 
@@ -497,8 +497,8 @@ class Handler:
         self.tielist = []
         pass
 
-    def addTie(self, h, w):
-        self.tielist.append(HandlerTie(h, w))
+    def addTie(self, h, tie):
+        self.tielist.append(HandlerTie(h, tie))
         return
 
     # Called when the user modifies a value.  Not required for setValue
@@ -506,7 +506,7 @@ class Handler:
     # redisplayed.
     def modified(self):
         for i in self.tielist:
-            i.widget.renumWidget(i.handler, i.handler.num)
+            i.tie.renumWidget(i.handler, i.handler.num)
             pass
         return
     
@@ -1409,6 +1409,22 @@ class Enum(BuiltIn):
     
     pass
 
+class Tie:
+    def __init__(self, value, tietype):
+        self.tietype = tietype
+        self.value = value
+        self.widget = None
+        return
+
+    def setWidget(self, w):
+        self.widget = w
+        return
+
+    def renumWidget(self, h, num):
+        self.widget.renumWidget(h, num)
+        return
+    
+    pass
 
 class TabEntry:
     def __init__(self, name, pos, addr, type, data, tielist_str, cutpaste):
@@ -1422,14 +1438,9 @@ class TabEntry:
         self.type = type
         self.data = data
 
-        # The list of strings that we are tied to.  This is deleted when
-        # we are done with it.
-        self.tielist_str = tielist_str
+        # The list of Tie items that we are tied to.
+        self.tielist = tielist_str
 
-        # The list of widgets we are tied to, generated later frome
-        # the tielist_str.
-        self.tielist = []
-        
         self.cutpaste = cutpaste
         pass
 
@@ -1468,6 +1479,8 @@ class TabEntry:
 class TabBase:
     def __init__(self, name):
         self.name = name
+
+        # A list of TabEntry objects
         self.entries = []
         return
 
@@ -1479,19 +1492,19 @@ class TabBase:
     
     def finalize(self, c):
         for i in self.entries:
-            for t in i.tielist_str:
+            for t in i.tielist:
                 found = False
                 for j in self.entries:
-                    if (j.name == t):
-                        i.tielist.append(j)
+                    if (j.name == t.value):
+                        t.setWidget(j)
                         found = True
                         break
                     pass
                 if (not found):
                     raise ParseException(c.filename, c.lineno,
-                                         "tie entry for '" + t +"' not found")
+                                         ("tie entry for '" + t.value
+                                          +"' not found"))
                 pass
-            del i.tielist_str
             pass
         return
     
@@ -1536,7 +1549,7 @@ class List(TabBase):
                 raise ParseException(c.filename, c.lineno,
                                      "Invalid option, no '=': " + i)
             if (s[0] == "tie"):
-                ties.append(s[1])
+                ties.append(Tie(s[1], "normal"))
             elif (s[0] == "cutpaste"):
                 if (s[1].lower() == "true"):
                     cutpaste = True
@@ -1841,7 +1854,7 @@ class List(TabBase):
             pass
         for e in self.entries:
             for i in e.tielist:
-                handlers[e.pos].addTie(handlers[i.pos], i)
+                handlers[e.pos].addTie(handlers[i.widget.pos], i)
                 pass
             pass
         self.handlerlists.append(handlers)
@@ -1852,6 +1865,8 @@ class List(TabBase):
         if (self.numdisplines < 0):
             return
         self.numdisplines -= 1
+        
+        # FIXME - does this break all the pointer cycles?
         del self.handlerlists[self.numdisplines]
         self.list.delete_entry(self.numdisplines)
         pass
@@ -1860,8 +1875,7 @@ class List(TabBase):
 
 class Tab(TabBase):
     def __init__(self, name):
-        self.name = name
-        self.entries = []
+        TabBase.__init__(self, name)
         pass
 
     def add(self, c, v):
@@ -1880,7 +1894,7 @@ class Tab(TabBase):
                 raise ParseException(c.filename, c.lineno,
                                      "Invalid option, no '=': " + i)
             if (s[0] == "tie"):
-                ties.append(s[1])
+                ties.append(Tie(s[1], "normal"))
             elif (s[0] == "cutpaste"):
                 if (s[1].lower() == "true"):
                     cutpaste = True
@@ -1958,7 +1972,7 @@ class Tab(TabBase):
             pass
         for e in self.entries:
             for i in e.tielist:
-                handlers[e.pos].addTie(handlers[i.pos], i)
+                handlers[e.pos].addTie(handlers[i.widget.pos], i)
                 pass
             pass
 
