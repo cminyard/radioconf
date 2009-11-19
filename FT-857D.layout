@@ -53,11 +53,11 @@ A memory is a 28 byte field:
     	   - bit 7 - Memory scan skip (MFb-B)
 
     byte 3 - bits 0-2 - FM Step: 0=5kHz, 1=6.25kHz, 2=10kHz, 3=12.5kHz,
-		  4=15kHz, 5=20kHz, 6=25kHz, 7=50kHz (menu 52, MFg-C)
+		  4=15kHz, 5=20kHz, 6=25kHz, 7=50kHz (menu 52, MFh-C)
 	   - bits 3-5 - AM Step: 0=2.5kHz, 1=5kHz, 2=9kHz, 3=10kHz, 4=12.5kHz,
-    	     	  5=25kHz (menu 6, MFg-C)
+    	     	  5=25kHz (menu 6, MFh-C)
 	   - bits 6-7 - Select knob tuning steps on SSB: 0=1kHz, 1=2.5kHz,
-		  2=5kHz (menu 82, MFg-C)
+		  2=5kHz (menu 82, MFh-C)
 
     byte 4 - bits 0-1 - receive tone mode: 0=off, 1=tone, 2=DCS (MFe-A)
     	   - bits 2-3 - transmit tone mode: 0=off, 1=tone, 2=DCS (MFe-A)
@@ -267,8 +267,8 @@ A memory is a 28 byte field:
      - bit 2-3 - DBF enable - 0=off, 3=on (MFp-C)
      - bit 5 - AGC enable (MFl-B)
 
-0045 - bit 1 - SSB/AM Speech Processor enable
-     - bits 2-3 - Scope Width - 0=+-10, 1=+-15, 2=+-63 channels
+0045 - bit 1 - SSB/AM Speech Processor enable (MFc-C)
+     - bits 2-3 - Scope Width - 0=+-10, 1=+-15, 2=+-63 channels (MFh-B)
 
 0047 - RF power, range 5(2)-100 (menu 75) - FIXME - what does the top bit do?
 	    it changed from 0-1 when I went from 15 to 30 watts.
