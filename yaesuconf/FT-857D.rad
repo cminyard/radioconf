@@ -51,10 +51,31 @@ enum CTCSS_e
 	0x31 "254.1"
 endenum
 
+enum ReceiveMode_e
+	0 "LSB"
+	1 "USB"
+	2 "CW"
+	3 "CWR"
+	4 "AM"
+	5 "FM"
+	6 "Dig"
+	7 "Pkt"
+endenum
+
+enum OffsetDir_e
+	0 "smplx"
+	2 "-"
+	3 "+"
+	4 "split"
+endenum
+
 list Memories 200
         "Enable"		(0x04ab,0,1,1)		CheckBox
 	"Label\nEnable"		(0x04e1,0,7,224)	CheckBox
 	"Label"			(0x04f5,0,64,224)	String
+	"Mode"			(0x04e1,0,3,224)	ReceiveMode_e
+	"Offset\nDirect"	(0x04e2,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq"
+	"Low Dev\nFM"		(0x04e3,3,1,224)	CheckBox
 	"Split\nTone"		(0x04e5,4,4,224)	CheckBox
 	"CTTS\nTone"		(0x04e7,0,8,224)	CTCSS_e
 	"Recv\nTone"		(0x04e8,0,8,224)	CTCSS_e

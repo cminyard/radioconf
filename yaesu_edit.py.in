@@ -648,7 +648,6 @@ class BIInt(BuiltIn):
 
     def getInt(self, data, addr, num):
         v = data.get_bits(addr, num)
-        print v
         if (not self.unsigned):
             n = addr.numbits()
             if ((1 << n) & v):
@@ -657,9 +656,7 @@ class BIInt(BuiltIn):
                 pass
             pass
         v += self.offset
-        print v
         v *= self.multi
-        print v
         return v
 
     def setInt(self, v, data, addr, num):
@@ -681,45 +678,60 @@ class BIInt(BuiltIn):
             pass
         pass
 
+    def isvalidnum(self, s):
+        try:
+            i = int(s)
+            if ((i < self.minval) or (i > self.maxval)):
+                return False
+            pass
+        except Exception, e:
+            return False
+        return True
+    
     def set(self, h, event):
-        if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
-            or (event.keysym == "Insert") or (event.keysym == "space")):
-            return "break" # Don't allow deletions
-        if (len(event.keysym) > 1):
-            return # Let other key editing through
-
-        # Now we have normal character keys.  Ignore everything but
-        # digits, don't go past the end or change the "."
+        c = event.keysym
+        if ((c == "Left") or (c == "Right")
+            or (c == "Up") or (c == "Down")):
+            # Let these through
+            return
+        if (c == "minus"):
+            c = '-'
+        elif ((c == "BackSpace") or (c == "Delete")):
+            pass
+        elif (len(c) > 1):
+            return "break" # Ignore other editing keys
+        if (c == '-' and self.unsigned):
+            return "break"
 
         w = h.widget
         cursor = w.index("insert")
-        if (cursor >= self.len):
-            return "break" # Past the end of the entry
-        if (cursor == self.pre) or (cursor == self.snddec):
-            w.icursor(cursor + 1) # Skip over the '.'
+        s = w.get()
+
+        if (c == "BackSpace"):
+            if (cursor == 0):
+                return "break"
+            s = s[0:cursor - 1] + s[cursor:]
+            cursor -= 2
+        elif (c == "Delete"):
+            if (cursor >= len(s)):
+                return "break"
+            s = s[0:cursor] + s[cursor + 1:]
+            cursor -= 1
+        elif (c not in decimal_digits) and (c != '-'):
+            return "break" # Ignore everything but numbers and '-'
+        else:
+            s = s[0:cursor] + c + s[cursor:]
+            pass
+        
+        if (not self.isvalidnum(s)):
             return "break"
 
-        c = event.keysym
-        if (c not in decimal_digits):
-            return "break" # Ignore everything but numbers
-
         t = h.data
-        s = w.get()
-        if (s[cursor] != c):
-            s = s[0:cursor-1] + c + s[cursor:]
-            w.delete(cursor)
-            w.insert(cursor, c)
-            v = self.conv_from_str(w.get())
-            t.data.set_bits(v, t.addr, h.num)
-            h.modified()
-            s = self.conv_to_str(v)
-            h.widget.delete(0, 'end')
-            w.insert(0, s)
-            pass
-        if (cursor == self.pre - 1) or (cursor == self.snddec - 1):
-            w.icursor(cursor + 2) # Skip over the '.'
-        else:
-            w.icursor(cursor + 1)
+        self.setInt(int(s), t.data, t.addr, h.num)
+
+        h.widget.delete(0, 'end')
+        w.insert(0, s)
+        w.icursor(cursor + 1)
         return "break"
 
     pass
@@ -913,11 +925,12 @@ class BIFixed(BuiltIn):
         pass
 
     def set(self, h, event):
-        if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
-            or (event.keysym == "Insert") or (event.keysym == "space")):
-            return "break" # Don't allow deletions
+        if ((event.keysym == "Left") or (event.keysym == "Right")
+            or (event.keysym == "Up") or (event.keysym == "Down")):
+            # Let these through
+            return
         if (len(event.keysym) > 1):
-            return # Let other key editing through
+            return "break" # Ignore other editing keys
 
         # Now we have normal character keys.  Ignore everything but
         # digits, don't go past the end or change the "."
