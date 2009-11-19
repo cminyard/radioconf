@@ -118,18 +118,18 @@ A memory is a 28 byte field:
 0013 - bit 5 - Alaska Emergency Channel enable (menu 50)
 
 0014 - bits 0-2 - APO time: 0=off, 1-6 hours (menu 7)
-       bit 4 - Memory grouping enable (menu 55)
-       bits 5-7 - Digital mode: 0=RTTY-L, 1=RTTY=U, 2=PSK31-L, 3=PSK31-U
+     - bit 4 - Memory grouping enable (menu 55)
+     - bits 5-7 - Digital mode: 0=RTTY-L, 1=RTTY=U, 2=PSK31-L, 3=PSK31-U
        	    4=User-L, 5=User-U (menu 38)
 
-0015 - bits 6-7 - DCS Invert: 0=Tn-Rn, 1=Tn-Riv, 2=Tiv-Rn, 3=Tiv-Riv (menu 34)
-     - bits 0-4 - Time out timer: 0=off, 1=20minutes (menu 84)
+0015 - bits 0-4 - Time out timer: 0=off, 1=20minutes (menu 84)
+     - bits 6-7 - DCS Invert: 0=Tn-Rn, 1=Tn-Riv, 2=Tiv-Rn, 3=Tiv-Riv (menu 34)
 
-0016 - bit 7 - Mic scan enable (menu 58)
-       bits 0-6 - SSB Mic Gain: range 0-100 (menu 81)
+0016 - bits 0-6 - SSB Mic Gain: range 0-100 (menu 81)
+     - bit 7 - Mic scan enable (menu 58)
 
 0017 - bits 0-6 - AM Mic Gain: 0-100 (menu 5)
-       bit 7 - CW Paddle: 0=EleKey, 1=MicKey (menu 26)
+     - bit 7 - CW Paddle: 0=EleKey, 1=MicKey (menu 26)
 
 0018 - FM Mic Gain - ranges 0-100 (menu 51)
 

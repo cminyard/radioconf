@@ -204,6 +204,15 @@ class Address:
             self.revbits = True
             pass
         v[pos] = c.toNum(s[start:i])
+        return
+
+    def numbits(self):
+        numbits = 0
+        for a in self.entries:
+            numbits += a[2]
+            pass
+        return numbits
+    
     pass
 
 
@@ -579,6 +588,142 @@ class BuiltIn:
     
     pass
 
+class BIInt(BuiltIn):
+    def __init__(self, name="Int"):
+        BuiltIn.__init__(self, name)
+        return
+
+    def setup(self, minval, maxval, offset, multi, units):
+        self.minval = minval
+        self.maxval = maxval
+        self.unsigned = minval >= 0
+        self.offset = offset
+        self.multi = multi
+        self.units = units
+        return
+    
+    def matchName(self, c, string):
+        if not string.startswith("Int("):
+            return None
+        if not string.endswith(")"):
+            raise ParseException(c.filename, c.lineno,
+                                 "Int does not end with ')'")
+        spec = string[4:len(string)-1].split(",")
+        if (len(spec) != 5):
+            raise ParseException(c.filename, c.lineno,
+                                 "Invalid Int specifier")
+        minval = c.toNum(spec[0])
+        maxval = c.toNum(spec[1])
+        if (minval >= maxval):
+            raise ParseException(c.filename, c.lineno,
+                                 "min must be < max value")
+        offset = c.toNum(spec[2])
+        multi = c.toNum(spec[3])
+        if (multi <= 0):
+            raise ParseException(c.filename, c.lineno,
+                                 "Multiplier must be > 0")
+        units = spec[4]
+        b = BIInt(name=string)
+        b.setup(minval, maxval, offset, multi, units)
+        return b
+
+    def getWidgetHandler(self, parent, t, num):
+        v = self.getInt(t.data, t.addr, num)
+        h = Handler(self.set, t, self)
+        w = Tix.Entry(parent)
+        h.widget = w
+        h.num = num
+        w.bind("<Key>", h.set_event)
+        w.delete(0, 'end')
+        w.insert(0, str(v))
+        return h
+
+    def renumWidget(self, h, num):
+        h.num = num
+        t = h.data
+        v = t.data.get_bits(t.addr, num)
+        h.widget.delete(0, 'end')
+        h.widget.insert(0, self.conv_to_str(v))
+        pass
+
+    def getInt(self, data, addr, num):
+        v = data.get_bits(addr, num)
+        print v
+        if (not self.unsigned):
+            n = addr.numbits()
+            if ((1 << n) & v):
+                # Negative value
+                v |= (-1 << n) | v
+                pass
+            pass
+        v += self.offset
+        print v
+        v *= self.multi
+        print v
+        return v
+
+    def setInt(self, v, data, addr, num):
+        v /= self.multi
+        v += self.offset
+        if (v < 0):
+            v &= (-1 << addr.numbits())
+            pass
+        data.set_bits(v, addr, num)
+        return
+        
+    def getSelect(self, data, addr, num):
+        return str(self.getInt(data, addr, num))
+
+    def setValue(self, v, data, addr, num):
+        try:
+            self.setInt(int(v), data, addr, num)
+        except Exception, e:
+            pass
+        pass
+
+    def set(self, h, event):
+        if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
+            or (event.keysym == "Insert") or (event.keysym == "space")):
+            return "break" # Don't allow deletions
+        if (len(event.keysym) > 1):
+            return # Let other key editing through
+
+        # Now we have normal character keys.  Ignore everything but
+        # digits, don't go past the end or change the "."
+
+        w = h.widget
+        cursor = w.index("insert")
+        if (cursor >= self.len):
+            return "break" # Past the end of the entry
+        if (cursor == self.pre) or (cursor == self.snddec):
+            w.icursor(cursor + 1) # Skip over the '.'
+            return "break"
+
+        c = event.keysym
+        if (c not in decimal_digits):
+            return "break" # Ignore everything but numbers
+
+        t = h.data
+        s = w.get()
+        if (s[cursor] != c):
+            s = s[0:cursor-1] + c + s[cursor:]
+            w.delete(cursor)
+            w.insert(cursor, c)
+            v = self.conv_from_str(w.get())
+            t.data.set_bits(v, t.addr, h.num)
+            h.modified()
+            s = self.conv_to_str(v)
+            h.widget.delete(0, 'end')
+            w.insert(0, s)
+            pass
+        if (cursor == self.pre - 1) or (cursor == self.snddec - 1):
+            w.icursor(cursor + 2) # Skip over the '.'
+        else:
+            w.icursor(cursor + 1)
+        return "break"
+
+    pass
+
 class BIString(BuiltIn):
     def __init__(self):
         BuiltIn.__init__(self, "String")
@@ -761,7 +906,7 @@ class BIFixed(BuiltIn):
         pass
         
     def getSelect(self, data, addr, num):
-        return self.conv_to_str(data.get_bits( addr, num))
+        return self.conv_to_str(data.get_bits(addr, num))
 
     def setValue(self, v, data, addr, num):
         data.set_bits(self.conv_from_str(v), addr, num)
@@ -2180,7 +2325,7 @@ class RadioConfig:
             self.types = [ BIBCDFreq(),
                            BICheckBox(), BIYaesuString(),
                            BIString(), BuiltIn("Empty"),
-                           BIHex(), BIFixed() ]
+                           BIHex(), BIInt(), BIFixed() ]
             self.infile = open(filename, "r")
             self.lineno = LineNum()
             pass

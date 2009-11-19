@@ -61,3 +61,9 @@ list Memories 200
 	"Rx\nFreq"		(0x04ed,0,32,224)	Fixed(3,5,1,MHz,sd=6)
 	"Tx\nFreq"		(0x04f1,0,32,224)	Fixed(3,5,1,MHz,sd=6)
 endlist
+
+tab Config
+	"SSB Mic Gain"		(0x0016,0,7)		Int(0,100,0,1,)
+	"AM Mic Gain"		(0x0017,0,7)		Int(0,100,0,1,)
+	"Digital Shift"		(0x001c,0,16)		Int(-3000,3000,0,10,)
+endtab
