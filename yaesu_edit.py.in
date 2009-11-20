@@ -588,6 +588,7 @@ class BuiltIn:
     
     pass
 
+# FIXME - The "units" is not yet supported
 class BIInt(BuiltIn):
     def __init__(self, name="Int"):
         BuiltIn.__init__(self, name)

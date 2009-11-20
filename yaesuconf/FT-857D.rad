@@ -51,6 +51,113 @@ enum CTCSS_e
 	0x31 "254.1"
 endenum
 
+enum DCSCode_e
+	0x00 "023"
+	0x01 "025"
+	0x02 "026"
+	0x03 "031"
+	0x04 "032"
+	0x05 "036"
+	0x06 "043"
+	0x07 "047"
+	0x08 "051"
+	0x09 "053"
+	0x0a "054"
+	0x0b "065"
+	0x0c "071"
+	0x0d "072"
+	0x0e "073"
+	0x0f "074"
+	0x10 "114"
+	0x11 "115"
+	0x12 "116"
+	0x13 "122"
+	0x14 "125"
+	0x15 "131"
+	0x16 "132"
+	0x17 "134"
+	0x18 "143"
+	0x19 "145"
+	0x1a "152"
+	0x1b "155"
+	0x1c "156"
+	0x1d "162"
+	0x1e "165"
+	0x1f "172"
+	0x20 "174"
+	0x21 "205"
+	0x22 "212"
+	0x23 "223"
+	0x24 "225"
+	0x25 "226"
+	0x26 "243"
+	0x27 "244"
+	0x28 "245"
+	0x29 "246"
+	0x2a "251"
+	0x2b "252"
+	0x2c "255"
+	0x2d "261"
+	0x2e "263"
+	0x2f "265"
+	0x30 "266"
+	0x31 "271"
+	0x32 "274"
+	0x33 "306"
+	0x34 "311"
+	0x35 "315"
+	0x36 "325"
+	0x37 "331"
+	0x38 "332"
+	0x39 "343"
+	0x3a "346"
+	0x3b "351"
+	0x3c "356"
+	0x3d "364"
+	0x3e "365"
+	0x3f "371"
+	0x40 "411"
+	0x41 "412"
+	0x42 "413"
+	0x43 "423"
+	0x44 "431"
+	0x45 "432"
+	0x46 "445"
+	0x47 "446"
+	0x48 "452"
+	0x49 "454"
+	0x4a "455"
+	0x4b "462"
+	0x4c "464"
+	0x4d "465"
+	0x4e "466"
+	0x4f "503"
+	0x50 "506"
+	0x51 "516"
+	0x52 "523"
+	0x53 "526"
+	0x54 "532"
+	0x55 "546"
+	0x56 "565"
+	0x57 "606"
+	0x58 "612"
+	0x59 "624"
+	0x5a "627"
+	0x5b "631"
+	0x5c "632"
+	0x5d "654"
+	0x5e "662"
+	0x5f "664"
+	0x60 "703"
+	0x61 "712"
+	0x62 "723"
+	0x63 "731"
+	0x64 "732"
+	0x65 "734"
+	0x66 "743"
+	0x67 "754"
+endenum
+
 enum ReceiveMode_e
 	0 "LSB"
 	1 "USB"
@@ -69,6 +176,44 @@ enum OffsetDir_e
 	4 "split"
 endenum
 
+enum IPOFEA_e
+	0 "Off"
+	1 "FEA"
+	2 "IPO"
+endenum
+
+enum FMStep_e
+	0 "5kHz"
+	1 "6.25kHz"
+	2 "10kHz"
+	3 "12.5kHz"
+	4 "15kHz"
+	5 "20kHz"
+	6 "25kHz"
+	7 "50kHz"
+endenum
+
+enum AMStep_e
+	0 "2.5kHz"
+	1 "5kHz"
+	2 "9kHz"
+	3 "10kHz"
+	4 "12.5kHz"
+	5 "25kHz"
+endenum
+
+enum SSBCWStep_e
+	0 "1kHz"
+	1 "2.5kHz"
+	2 "5kHz"
+endenum
+
+enum ToneMode_e
+	0 "Off"
+	1 "Tone"
+	2 "DCS"
+endenum
+
 list Memories 200
         "Enable"		(0x04ab,0,1,1)		CheckBox
 	"Label\nEnable"		(0x04e1,0,7,224)	CheckBox
@@ -76,15 +221,603 @@ list Memories 200
 	"Mode"			(0x04e1,0,3,224)	ReceiveMode_e
 	"Offset\nDirect"	(0x04e2,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq"
 	"Low Dev\nFM"		(0x04e3,3,1,224)	CheckBox
-	"Split\nTone"		(0x04e5,4,4,224)	CheckBox
-	"CTTS\nTone"		(0x04e7,0,8,224)	CTCSS_e
-	"Recv\nTone"		(0x04e8,0,8,224)	CTCSS_e
+	"Incpt Pt\nFrtEnd Attn"	(0x04e3,4,2,224)	IPOFEA_e
+	"Scan\nSkip"	  	(0x04e3,7,1,224)	CheckBox
+	"FM\nStep"		(0x04e4,0,3,224)	FMStep_e
+	"AM\nStep"		(0x04e4,3,3,224)	AMStep_e
+	"SSB/CW\nStep"		(0x04e4,6,2,224)	SSBCWStep_e
+	"Split\nTone"		(0x04e5,4,1,224)	CheckBox
+	"Rx Tone\nMode"		(0x04e5,0,2,224)	ToneMode_e "tie(basefreq)=Tx\nFreq"
+	"Tx Tone\nMode"		(0x04e5,2,2,224)	ToneMode_e
+	"Tx\nTone"		(0x04e7,0,8,224)	CTCSS_e
+	"Rx\nTone"		(0x04e8,0,8,224)	CTCSS_e
+	"Tx\nCode"		(0x04e9,0,8,224)	DCSCode_e
+	"Rx\nCode"		(0x04ea,0,8,224)	DCSCode_e
 	"Rx\nFreq"		(0x04ed,0,32,224)	Fixed(3,5,1,MHz,sd=6)
 	"Tx\nFreq"		(0x04f1,0,32,224)	Fixed(3,5,1,MHz,sd=6)
 endlist
 
+enum VFO_e
+	0 "VFOa"
+	1 "VFOb"
+endenum
+
+enum VFOMemMode_e
+	2 "Memory"
+	3 "Home"
+	4 "VFO"
+endenum
+
+enum AGCMode_e
+	0 "Auto"
+	1 "Fast"
+	2 "Slow"
+endenum
+
+enum Band_e
+	 0 "180m"
+	 1 "80m"
+	 2 "60m"
+	 3 "40m"
+	 4 "30m"
+	 5 "20m"
+	15 "15MHz"
+         6 "17m"
+	 7 "15m"
+	 8 "12m"
+	 9 "10m"
+	10 "6m"
+	11 "FM Bcast"
+	12 "118MHz"
+	13 "VHF"
+	14 "UHF"
+endenum
+
+enum DisplayMode_e
+	0 "Off"
+	1 "Auto1"
+	2 "Auto2"
+	3 "On"
+endenum
+
+enum BeepTone_e
+	0 "440Hz"
+	1 "880Hz"
+	2 "1760Hz"
+endenum
+
+enum ClarDialSet_e
+	0 "Main"
+	1 "Sel"
+endenum
+
+enum PacketSpeed_e
+	0 "1200bps"
+	1 "9600bps"
+endenum
+
+enum DialStep_e
+	0 "Fine"
+	1 "Course"
+endenum
+
+enum ARTSBeep_e
+	0 "Off"
+	1 "InRange"
+	2 "Always"
+endenum
+
+enum CWPitch_e
+	0 "400Hz"
+	1 "500Hz"
+	2 "600Hz"
+	3 "700Hz"
+	4 "800Hz"
+endenum
+
+enum LockType_e
+	0 "Dial"
+	1 "Freq"
+	2 "Panel"
+	3 "All"
+endenum
+
+enum CWWeight_e
+	0 "1:2.5"
+	1 "1:2.6"
+	2 "1:2.7"
+	3 "1:2.8"
+	4 "1:2.9"
+	5 "1:3.0"
+	6 "1:3.1"
+	7 "1:3.2"
+	8 "1:3.3"
+	9 "1:3.4"
+	10 "1:3.5"
+	11 "1:3.6"
+	12 "1:3.7"
+	13 "1:3.8"
+	14 "1:3.9"
+	15 "1:4.0"
+	16 "1:4.1"
+	17 "1:4.2"
+	18 "1:4.3"
+	19 "1:4.4"
+	20 "1:4.5"
+endenum
+
+enum SQLRF_e
+	0 "RF-Gain"
+	1 "Squelch"
+endenum
+
+enum AutoPowerOff_e
+	 0 "Off"
+	 1 "1 Hour"
+	 2 "2 Hours"
+	 3 "3 Hours"
+	 4 "4 Hours"
+	 5 "5 Hours"
+	 6 "6 Hours"
+endenum
+
+enum DigitalMode_e
+	0 "RTTY-L"
+	1 "RTTY-U"
+	2 "PSK31-L"
+	3 "PSK31-U"
+	4 "User-L"
+	5 "User-U"
+endenum
+
+enum TimeoutTimer_e
+	 0 "Off"
+	 1 "1 Min"
+	 2 "2 Min"
+	 3 "3 Min"
+	 4 "4 Min"
+	 5 "5 Min"
+	 6 "6 Min"
+	 7 "7 Min"
+	 8 "8 Min"
+	 9 "9 Min"
+	10 "10 Min"
+	11 "11 Min"
+	12 "12 Min"
+	13 "13 Min"
+	14 "14 Min"
+	15 "15 Min"
+	16 "16 Min"
+	17 "17 Min"
+	18 "18 Min"
+	19 "19 Min"
+	20 "20 Min"
+endenum
+
+enum DCSInvert_e
+	0 "Tn-Rn"
+	1 "Tn-Riv"
+	2 "Tiv-Rn"
+	3 "Tiv-Riv"
+endenum
+
+enum CWPaddle_e
+	0 "Key"
+	1 "MicBtns"
+endenum
+
+enum PSDW_e
+	1 "Off"
+	2 "Priority Scan"
+	3 "Dual Watch"
+endenum
+
+enum CatLinTun_e
+	0 "CAT"
+	1 "Linear"
+	2 "Tuner"
+endenum
+
+enum MicSel_e
+	0 "Norm"
+	1 "RMT"
+	2 "CAT"
+endenum 
+
+enum ScanResume_e
+	0 "Time"
+	1 "Busy"
+	2 "Stop"
+endenum
+
+enum CWBFO_e
+	0 "USB"
+	1 "LSB"
+	2 "Auto"
+endenum
+
+enum CWQSK_e
+	0 "10ms"
+	1 "15ms"
+	2 "20ms"
+	3 "25ms"
+	4 "30ms"
+endenum
+
+enum DSPMicEq_e
+	0 "Off"
+	1 "LPF"
+	2 "HPF"
+	3 "Both"
+endenum
+
+enum DSPBPFWid_e
+	0 "60Hz"
+	1 "120Hz"
+	2 "240Hz"
+endenum
+
+enum DSPLPFCutoff_e
+	 0 "1000"
+	 1 "1160"
+	 2 "1320"
+	 3 "1480"
+	 4 "1650"
+	 5 "1800"
+	 6 "1970"
+	 7 "2130"
+	 8 "2290"
+	 9 "2450"
+	 10 "2610"
+	 11 "2770"
+	 12 "2940"
+	 13 "3100"
+	 14 "3260"
+	 15 "3420"
+	 16 "3580"
+	 17 "3740"
+	 18 "3900"
+	 19 "4060"
+	 20 "4230"
+	 21 "4550"
+	 22 "4710"
+	 23 "4780"
+	 24 "4870"
+	 25 "5030"
+	 26 "5190"
+	 27 "5390"
+	 28 "5520"
+	 29 "5680"
+	 30 "5840"
+	 31 "6000"
+endenum
+
+enum CatBitRate_e
+	0 "4800bps"
+	1 "9600bps"
+	2 "38400bps"
+endenum
+
+enum DSPHPFCutoff_e
+	0 "100"
+	1 "160"
+	2 "220"
+	3 "280"
+	4 "340"
+	5 "400"
+	6 "460"
+	7 "520"
+	8 "580"
+	9 "640"
+	10 "700"
+	11 "760"
+	12 "820"
+	13 "880"
+	14 "940"
+	15 "1000"
+endenum
+
+enum AnMetTX_e
+	0 "PWR"
+	1 "ALC"
+	2 "MOD"
+	3 "SWR"
+	4 "VLT"
+	5 "N/A"
+	6 "Off"
+endenum
+
+enum DispSet_e
+	0x000 "ARTS-1"
+	0x001 "ARTS-2"
+	0x100 "Band-1"
+	0x101 "Band-2"
+	0x300 "MemGrp-1"
+	0x301 "Memgrp-2"
+	0x400 "Mode-1"
+	0x401 "Mode-2"
+	0x500 "MTR-1"
+	0x501 "MTR-2"
+	0x600 "VFO-1"
+	0x601 "VFO-2"
+	0x200 "Fix-1"
+	0x201 "Fix-2"
+	0x202 "Fix-3"
+	0x203 "Fix-4"
+	0x204 "Fix-5"
+	0x205 "Fix-6"
+	0x206 "Fix-7"
+	0x207 "Fix-8"
+	0x208 "Fix-9"
+	0x209 "Fix-10"
+	0x20a "Fix-11"
+	0x20b "Fix-12"
+	0x20c "Fix-13"
+	0x20d "Fix-14"
+	0x20e "Fix-15"
+	0x20f "Fix-16"
+	0x210 "Fix-17"
+	0x211 "Fix-18"
+	0x212 "Fix-19"
+	0x213 "Fix-20"
+	0x214 "Fix-21"
+	0x215 "Fix-22"
+	0x216 "Fix-23"
+	0x217 "Fix-24"
+	0x218 "Fix-25"
+	0x219 "Fix-26"
+	0x21a "Fix-27"
+	0x21b "Fix-28"
+	0x21c "Fix-29"
+	0x21d "Fix-30"
+	0x21e "Fix-31"
+	0x21f "Fix-32"
+endenum
+
+enum MemVFODialMode_e
+	0 "CW Sidetone"
+	1 "CW Speed"
+	2 "MHz/Mem Grp"
+	3 "Mic Gain"
+	4 "NB Level"
+	5 "RF Power"
+	6 "Step"
+endenum
+
+enum TunATASConf_e
+	0 "Off"
+	1 "ATAS(HF)"
+	2 "ATAS(HF&50)"
+	3 "ATAS(ALL)"
+	4 "Tuner"
+endenum
+
+enum PKeyAssign_e
+	 0 "A/B"
+	 1 "A=B"
+	 2 "SPL"
+	 3 "MW"
+	 4 "Skip/MCLR"
+	 5 "Tag"
+	 6 "Sto"
+	 7 "RCL"
+	 8 "PROC"
+	 9 "RPT"
+	10 "REV"
+	11 "VOX"
+	12 "TON/ENC"
+	13 "/DEC"
+	14 "TDCH"
+	15 "ARTS"
+	16 "SRCH"
+	17 "PMS"
+	18 "SCH"
+	19 "PRI"
+	20 "DW"
+	21 "SCOP"
+	22 "WID"
+	23 "STEP"
+	24 "MTR"
+	25 "PWR"
+	26 "DISP"
+	27 "SPOT"
+	28 "BK"
+	29 "KYR"
+	30 "TUNE"
+	31 "DOWN"
+	32 "UP"
+	33 "NB"
+	34 "AGC"
+	35 "AGC SEL"
+	36 "IPO"
+	37 "ATT"
+	38 "NAR"
+	39 "CFIL"
+	40 "FIL1"
+	41 "FIL2"
+	42 "PLY1"
+	43 "PLY2"
+	44 "PLY3"
+	45 "DNR"
+	46 "DNF"
+	47 "DBF"
+	48 "01:Ext Menu"
+	49 "02:144MHz ARS"
+	50 "03:430MHz ARS"
+	51 "04:AM&FM Dial"
+	52 "05:AM Mic Gain"
+	53 "06:AM Step"
+	54 "07:APO Time"
+	55 "08:ARTS Beep"
+	56 "09:ARTS ID"
+	57 "10:ARS IDW"
+	58 "11:Beacon Text"
+	59 "12:Beacon Time"
+	60 "13:Beep Tone"
+	61 "14:Beep Vol"
+	62 "15:CAR LSB R"
+	63 "16:CAR LSB T"
+	64 "17:CAR USB R"
+	65 "18:CAR USB T"
+	66 "19:CAT Rate"
+	67 "20:CAT/LIN/TUN"
+	68 "21:CLAR Dial Sel"
+	69 "22:CW Auto Mode"
+	70 "23:CW BFO"
+	71 "24:CW Delay"
+	72 "25:CW Key Rev"
+	73 "26:CW Paddle"
+	74 "27:CW Pitch"
+	75 "28:CW QSK"
+	76 "29:CW Side Tone"
+	77 "30:CW Speed"
+	78 "31:CW Training"
+	79 "32:CW Weight"
+	80 "33:DCS Code"
+	81 "34:DCS INV"
+	82 "35:Dial Step"
+	83 "36:Dig Disp"
+	84 "37:Dig Gain"
+	85 "38:Dig Mode"
+	86 "39:Dig Shift"
+	87 "40:Dig VOX"
+	88 "41:Disp Color"
+	89 "42:Disp Contrast"
+	90 "43:Disp Intensity"
+	91 "44:Disp Mode"
+	92 "45:DSP BPF Width"
+	93 "46:DSP HPF Cutoff"
+	94 "47:DSP LPF Cutoff"
+	95 "48:DSP Mic Eq"
+	96 "49:DSP NR Level"
+	97 "50:Emergency"
+	98 "51:FM Mic Gain"
+	99 "52:FM Step"
+	100 "53:Home->VFO"
+	101 "54:Lock Mode"
+	102 "55:Mem Group"
+	103 "56:Mem Tag"
+	104 "57:MEM/VFO Dial Mode"
+	105 "58:Mic Scan"
+	106 "59:Mic Sel"
+	107 "60:MTR ARX Sel"
+	108 "61:MTR ATX Sel"
+	109 "62:MTR Peak Hold"
+	110 "63:NB Level"
+	111 "64:Op Filter 1"
+	112 "71:PKT 1200"
+	113 "72:PKT 9600"
+	114 "73:PKT Rate"
+	115 "74:Proc Level"
+	116 "75:RF Power Set"
+	117 "76:RPT Shift"
+	118 "77:Scan Mode"
+	119 "78:Scan Resume"
+	120 "79:Split Tone"
+	121 "80:SQL/RF Gain"
+	122 "81:SSB Mic Gain"
+	123 "82:SSB Step"
+	124 "83:Tone Freq"
+	125 "84:TOT Time"
+	126 "85:Tuner/ATAS"
+	127 "86:TX IF Filter"
+	128 "87:VOX Delay"
+	129 "88:VOX Gain"
+	130 "89:XVTR A Freq"
+	131 "90:XVTR B Freq"
+	132 "91:XVTR Sel"
+	133 "MONI"
+	134 "Q.SPL"
+	135 "TCALL"
+	136 "ATC"
+	137 "User"
+endenum
+
 tab Config
+	"VFO"			(0x0004,0,1)		VFO_e
+	"VFO Memory Mode"	(0x0004,5,3)		VFOMemMode_e
+	"AGC Mode"  		(0x0006,0,2)		AGCMode_e
+	"Large Characters"	(0x0006,2,1)		CheckBox
+	"Noise Blanker"		(0x0006,5,1)		CheckBox
+	"CW Key Reverse"	(0x0007,2,1)		CheckBox
+	"CW Keyer"		(0x0007,4,1)		CheckBox
+	"CW Semi Break In"	(0x0007,5,1)		CheckBox
+	"VOX"	       		(0x0007,7,1)		CheckBox
+	"VFOa Band"		(0x0008,0,4)		Band_e
+	"VFOb Band"		(0x0008,4,4)		Band_e
+	"Display Contrast"	(0x000a,0,4)		Int(1,13,2,1,)
+	"Display Mode"		(0x000a,6,2)		DisplayMode_e
+	"Beep Tone"		(0x000b,0,2)		BeepTone_e
+	"Clar Dial Set"		(0x000b,2,1)		ClarDialSet_e
+	"Packet Speed"		(0x000c,2,1)		PacketSpeed_e
+	"ARTS ID"		(0x000c,4,1)		CheckBox
+	"Dial Step"		(0x000c,5,1)		DialStep_e
+	"ARTS Beep"		(0x000c,6,2)		ARTSBeep_e
+	"CW Pitch"		(0x000d,0,3)		CWPitch_e
+	"Lock Type"		(0x000d,4,2)		LockType_e
+	"CW Weight"		(0x000e,0,5)		CWWeight_e	
+	"440MHz ARS"		(0x000e,5,1)		CheckBox
+	"144MHZ ARS"		(0x000e,6,1)		CheckBox
+	"SQL/RF Knob Function"	(0x000e,7,1)		SQLRF_e
+# Note: values 1 and 2 are not valid in CW delay
+	"CW Delay (0=Full)"	(0x0010,7,1:0x000f,0,8)	Int(0,300,0,10,)
+	"CW Sidetone"		(0x0010,0,7)		Int(0,100,0,1,)
+	"CW Speed"		(0x0011,0,6)		Int(4,60,4,1,wpm)
+	"AM&FM Dial"		(0x0012,7,1)		CheckBox
+	"VOX Gain"		(0x0012,0,7)		Int(0,100,0,1,)
+	"Alaska Emer Chan"	(0x0015,5,1)		CheckBox
+	"VOX Delay"  		(0x0015,0,4)		Int(100,3000,0,100,ms)
+	"Auto Power Off"	(0x0014,0,3)		AutoPowerOff_e
+	"Memory Grouping"	(0x0014,4,1)		CheckBox
+	"Digital Mode"		(0x0014,5,3)		DigitalMode_e
+	"Timeout Timer"		(0x0015,0,5)		TimeoutTimer_e
+	"DCS Invert"		(0x0015,6,2)		DCSInvert_e
 	"SSB Mic Gain"		(0x0016,0,7)		Int(0,100,0,1,)
+	"Mic Scan"		(0x0016,7,1)		CheckBox
 	"AM Mic Gain"		(0x0017,0,7)		Int(0,100,0,1,)
-	"Digital Shift"		(0x001c,0,16)		Int(-3000,3000,0,10,)
+	"CW Paddle"		(0x0017,7,1)		CWPaddle_e
+	"FM Mic Gain"		(0x0018,0,7)		Int(0,100,0,1,)
+	"Digital Gain"		(0x0019,0,7)		Int(0,100,0,1,)
+	"1200bps Audio In Lvl"	(0x001a,0,7)		Int(0,100,0,1,)
+	"9600bps Audio In Lvl"	(0x001b,0,7)		Int(0,100,0,1,)
+	"Digital Shift"		(0x001c,0,16)		Int(-3000,3000,0,10,Hz)
+	"Digital Display"	(0x001e,0,16)		Int(-3000,3000,0,10,Hz)
+	"RX LSB Carrier Point"	(0x0020,0,8)		Int(-300,300,0,10,Hz)
+	"RX USB Carrier Point"	(0x0021,0,8)		Int(-300,300,0,10,Hz)
+	"TX LSB Carrier Point"	(0x0022,0,8)		Int(-300,300,0,10,Hz)
+	"TX USB Carrier Point"	(0x0023,0,8)		Int(-300,300,0,10,Hz)
+	"Prio Scan/Dual Watch"	(0x0028,3,2)		PSDW_e
+	"ARTS Enabled"		(0x0028,7,1)		CheckBox
+	"Split Mode"		(0x0029,7,1)		CheckBox
+	"CAT/Linear/Tuner"	(0x002a,2,2)		CatLinTun_e
+	"Mic Selection"		(0x002a,4,2)		MicSel_e
+	"Meter Peak Hold"	(0x002a,6,1)		CheckBox
+	"Beep Volume"		(0x002b,0,7)		Int(0,100,0,1,)
+	"Digital VOX"		(0x002c,0,7)		Int(0,100,0,1,)
+	"Scan Resume Time"	(0x002d,0,4)		Int(1,10,0,1,sec)
+	"Scan Resume"  		(0x002d,4,2)		ScanResume_e
+	"Allow Home->VFO move"	(0x002d,6,1)		CheckBox
+	"Extended Menu"	 	(0x002d,7,1)		CheckBox
+	"CW BFO"  		(0x002e,0,2)		CWBFO_e
+	"CW QSK"		(0x002e,2,2)		CWQSK_e
+	"CW Auto Mode"		(0x002e,7,1)		CheckBox
+	"DSP Mic Equalization"	(0x002f,0,2)		DSPMicEq_e
+	"DSP BPF Width"		(0x002f,2,2)		DSPBPFWid_e
+	"DSP Noise Red Level"	(0x002f,4,4)		Int(1,16,1,1,)
+	"DSP LPF Cutoff"	(0x0030,0,5)		DSPLPFCutoff_e
+	"CAT Bitrate"  		(0x0030,6,2)		CatBitRate_e
+	"DSP HPF Cutoff"	(0x0031,0,4)		DSPHPFCutoff_e
+	"Analog Meter TX Sel"	(0x0031,5,3)		AnMetTX_e
+	"Display Setting"	(0x0032,0,3:0x0034,0,8)	DispSet_e
+	"Display Brightness"	(0x0032,4,2)		Int(1,3,0,1,)
+	"Noise Blank Level"	(0x0035,0,7)		Int(0,100,0,1,)
+	"AF Speech Comp Level"	(0x0036,0,7)		Int(0,100,0,1,)
+	"MEM/VFO Dial Mode"	(0x0038,0,3)		MemVFODialMode_e
+	"Tuner/ATAS Config"	(0x0038,3,3)		TunATASConf_e
+	"MFq A Key Function"	(0x0039,0,8)		PKeyAssign_e
+	"MFq B Key Function"	(0x003a,0,8)		PKeyAssign_e
+	"MFq C Key Function"	(0x003b,0,8)		PKeyAssign_e
+	"MH-59 ACC Key Function" (0x003c,0,8)		PKeyAssign_e
+	"MH-59 P1 Key Function"	(0x003d,0,8)		PKeyAssign_e
+	"MH-59 P2 Key Function"	(0x003e,0,8)		PKeyAssign_e
 endtab
