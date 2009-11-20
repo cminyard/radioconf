@@ -119,6 +119,14 @@ Fixed(pre,suf,inc,units[,options]) - This is a fixed-point decimal number
 		decimal place.  So, for a 9-digit frequency display,
 		Fixed(3,6,1,MHz,sd=6) will display NNN.NNN.NNN.
 
+Int(min,max,offset,multiplier,label) - An integer with the given min/max
+	range.  offset is added to the value when read out of memory and
+	subtracted when written.  When reading from memory, after the
+	offset is applied, the value is multiplied by the multiplier before
+	being displayed.  When writing to memory, the opposite is done,
+	the value is divided by the multipler and the offset is subtracted.
+	The label is displayed after the value, and may be empty.
+
 Empty - Used as an empty placeholder in lists, to display a string
       in the heading with nothing under it.
 
@@ -199,12 +207,19 @@ tie[(<type>)]=<name> - name is the name of another entry in the same
   that if you need quotes, the entire entry must be in quotes, including the
   "tie=" part.
 
-  Ties may have types, which give special meaning to the tie.  A tie
-  to BCDFreq understands three types: offset, basefreq, and freqoff.
-  offset is an enum with "smplx", "+", "-", "split", BCDFreq uses this
-  to do a proper offset from the basefreq, which must be another BCDFreq.
-  freqoff is a Fixed type that must end in MHz, kHz, or Hz and gives the
-  offset to add or subtract.
+  Ties may have types, which give special meaning to the tie.  Several
+  are generic.  A tie type of "enable" means the value enables another
+  value if true.  A tie type of "enableoff" expects it is an offset
+  direction and "+" or "-" values enable, any other value disabled.
+
+  A tie to BCDFreq understands three types: offset, basefreq, and
+  freqoff.  A tie to FixedFreq understands offset and basefreq.
+  offset is an enum with "smplx", "+", "-", "split", BCDFreq and
+  FixedFreq uses this to do a proper offset from the basefreq, which
+  must be another BCDFreq.  freqoff is a Fixed type that must end in
+  MHz, kHz, or Hz and gives the offset to add or subtract.  FixedFreq
+  does not use freqoff because it uses its internal value as the
+  offset.
 
 cutpaste=[true|false] - If cutpaste is set to false, the particular item
   will not be cut or pasted.  Useful for items that represent the same

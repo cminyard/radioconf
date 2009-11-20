@@ -1,3 +1,7 @@
+#
+# Configuration for a Yaesu FT-857D
+#
+
 enum CTCSS_e
 	0x00 "67.0"
 	0x01 "69.3"
@@ -171,9 +175,21 @@ endenum
 
 enum OffsetDir_e
 	0 "smplx"
-	2 "-"
-	3 "+"
-	4 "split"
+	1 "-"
+	2 "+"
+	3 "split"
+endenum
+
+# This is a helper for convenient values, the real value is a fixed-point
+enum OffsetFreq_e
+	 10000 "100kHz"
+	 50000 "500kHz"
+	 60000 "600kHz"
+	100000 "1.00MHz"
+	160000 "1.60MHz"
+	300000 "3.00MHz"
+	500000 "5.00MHz"
+	760000 "7.60MHz"
 endenum
 
 enum IPOFEA_e
@@ -219,22 +235,83 @@ list Memories 200
 	"Label\nEnable"		(0x04e1,0,7,224)	CheckBox
 	"Label"			(0x04f5,0,64,224)	String
 	"Mode"			(0x04e1,0,3,224)	ReceiveMode_e
-	"Offset\nDirect"	(0x04e2,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq"
+	"Offset\nDirect"	(0x04e2,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab"
 	"Low Dev\nFM"		(0x04e3,3,1,224)	CheckBox
 	"Incpt Pt\nFrtEnd Attn"	(0x04e3,4,2,224)	IPOFEA_e
 	"Scan\nSkip"	  	(0x04e3,7,1,224)	CheckBox
 	"FM\nStep"		(0x04e4,0,3,224)	FMStep_e
 	"AM\nStep"		(0x04e4,3,3,224)	AMStep_e
 	"SSB/CW\nStep"		(0x04e4,6,2,224)	SSBCWStep_e
-	"Split\nTone"		(0x04e5,4,1,224)	CheckBox
-	"Rx Tone\nMode"		(0x04e5,0,2,224)	ToneMode_e "tie(basefreq)=Tx\nFreq"
+	"Split\nTone"		(0x04e5,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
+	"Rx Tone\nMode"		(0x04e5,0,2,224)	ToneMode_e
 	"Tx Tone\nMode"		(0x04e5,2,2,224)	ToneMode_e
-	"Tx\nTone"		(0x04e7,0,8,224)	CTCSS_e
+	"CTCSS\nTone"		(0x04e7,0,8,224)	CTCSS_e
 	"Rx\nTone"		(0x04e8,0,8,224)	CTCSS_e
-	"Tx\nCode"		(0x04e9,0,8,224)	DCSCode_e
+	"DCS\nCode"		(0x04e9,0,8,224)	DCSCode_e
 	"Rx\nCode"		(0x04ea,0,8,224)	DCSCode_e
-	"Rx\nFreq"		(0x04ed,0,32,224)	Fixed(3,5,1,MHz,sd=6)
-	"Tx\nFreq"		(0x04f1,0,32,224)	Fixed(3,5,1,MHz,sd=6)
+	"Rx\nFreq"		(0x04ed,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie(basefreq)=Tx\nFreq"
+	"Tx\nFreq"		(0x04f1,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x04f1,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
+endlist
+
+list VFOa 16 160m 80m 60m 40m 30m 20m 17m 15m 12m 10m 6m FM 118MHz VHF UHF 15MHz
+	"Mode"			(0x0056,0,3,224)	ReceiveMode_e
+	"Offset\nDirect"	(0x0057,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab"
+	"Low Dev\nFM"		(0x0058,3,1,224)	CheckBox
+	"Incpt Pt\nFrtEnd Attn"	(0x0058,4,2,224)	IPOFEA_e
+	"FM\nStep"		(0x0059,0,3,224)	FMStep_e
+	"AM\nStep"		(0x0059,3,3,224)	AMStep_e
+	"SSB/CW\nStep"		(0x0059,6,2,224)	SSBCWStep_e
+	"Split\nTone"		(0x005a,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
+	"Rx Tone\nMode"		(0x005a,0,2,224)	ToneMode_e
+	"Tx Tone\nMode"		(0x005a,2,2,224)	ToneMode_e
+	"Tx\nTone"		(0x005c,0,8,224)	CTCSS_e
+	"Rx\nTone"		(0x005d,0,8,224)	CTCSS_e
+	"Tx\nCode"		(0x005e,0,8,224)	DCSCode_e
+	"Rx\nCode"		(0x005f,0,8,224)	DCSCode_e
+	"Rx\nFreq"		(0x0062,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie(basefreq)=Tx\nFreq"
+	"Tx\nFreq"		(0x0066,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x0066,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
+endlist
+
+list VFOb 16
+	"Mode"			(0x0216,0,3,224)	ReceiveMode_e
+	"Offset\nDirect"	(0x0217,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab"
+	"Low Dev\nFM"		(0x0218,3,1,224)	CheckBox
+	"Incpt Pt\nFrtEnd Attn"	(0x0218,4,2,224)	IPOFEA_e
+	"FM\nStep"		(0x0219,0,3,224)	FMStep_e
+	"AM\nStep"		(0x0219,3,3,224)	AMStep_e
+	"SSB/CW\nStep"		(0x0219,6,2,224)	SSBCWStep_e
+	"Split\nTone"		(0x021a,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
+	"Rx Tone\nMode"		(0x021a,0,2,224)	ToneMode_e
+	"Tx Tone\nMode"		(0x021a,2,2,224)	ToneMode_e
+	"Tx\nTone"		(0x021c,0,8,224)	CTCSS_e
+	"Rx\nTone"		(0x021d,0,8,224)	CTCSS_e
+	"Tx\nCode"		(0x021e,0,8,224)	DCSCode_e
+	"Rx\nCode"		(0x021f,0,8,224)	DCSCode_e
+	"Rx\nFreq"		(0x0222,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie(basefreq)=Tx\nFreq"
+	"Tx\nFreq"		(0x0226,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x0226,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
+endlist
+
+list Home 1
+	"Mode"			(0x0446,0,3,224)	ReceiveMode_e
+	"Offset\nDirect"	(0x0447,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab"
+	"Low Dev\nFM"		(0x0448,3,1,224)	CheckBox
+	"Incpt Pt\nFrtEnd Attn"	(0x0448,4,2,224)	IPOFEA_e
+	"FM\nStep"		(0x0449,0,3,224)	FMStep_e
+	"AM\nStep"		(0x0449,3,3,224)	AMStep_e
+	"SSB/CW\nStep"		(0x0449,6,2,224)	SSBCWStep_e
+	"Split\nTone"		(0x044a,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
+	"Rx Tone\nMode"		(0x044a,0,2,224)	ToneMode_e
+	"Tx Tone\nMode"		(0x044a,2,2,224)	ToneMode_e
+	"Tx\nTone"		(0x044c,0,8,224)	CTCSS_e
+	"Rx\nTone"		(0x044d,0,8,224)	CTCSS_e
+	"Tx\nCode"		(0x044e,0,8,224)	DCSCode_e
+	"Rx\nCode"		(0x044f,0,8,224)	DCSCode_e
+	"Rx\nFreq"		(0x0452,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie(basefreq)=Tx\nFreq"
+	"Tx\nFreq"		(0x0456,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x0456,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
 endlist
 
 enum VFO_e
@@ -527,6 +604,15 @@ enum AnMetTX_e
 	6 "Off"
 endenum
 
+enum AnMetRX_e
+	0 "SIG"
+	1 "CTR"
+	2 "VLT"
+	3 "N/A"
+	4 "FS"
+	5 "Off"
+endenum
+
 enum DispSet_e
 	0x000 "ARTS-1"
 	0x001 "ARTS-2"
@@ -592,7 +678,7 @@ enum TunATASConf_e
 	4 "Tuner"
 endenum
 
-enum PKeyAssign_e
+slist PKeyAssign_e
 	 0 "A/B"
 	 1 "A=B"
 	 2 "SPL"
@@ -731,93 +817,172 @@ enum PKeyAssign_e
 	135 "TCALL"
 	136 "ATC"
 	137 "User"
+endslist
+
+enum OpFiltSel_e
+	0 "Filter1"
+	1 "Filter2"
+endenum
+
+enum XVTRSel_e
+	0 "Off"
+	1 "XVTR-A"
+	2 "XVTR-B"
+endenum
+
+enum TXIFFilt_e
+	0 "CFIL"
+	1 "Filter1"
+	2 "Filter2"
+endenum
+
+enum Enable_e
+	0 "Off"
+	1 "On"
+endenum
+
+enum DEnable_e
+	0 "Off"
+	3 "On"
+endenum
+
+enum ScopeWidth_e
+	0 "+/-10"
+	1 "+/-15"
+	2 "+/-63"
 endenum
 
 tab Config
+# Note: No transverter stuff is here, it's messy
+	"___VFO Setup____"	(0,0,0)			Empty
 	"VFO"			(0x0004,0,1)		VFO_e
-	"VFO Memory Mode"	(0x0004,5,3)		VFOMemMode_e
-	"AGC Mode"  		(0x0006,0,2)		AGCMode_e
-	"Large Characters"	(0x0006,2,1)		CheckBox
-	"Noise Blanker"		(0x0006,5,1)		CheckBox
-	"CW Key Reverse"	(0x0007,2,1)		CheckBox
-	"CW Keyer"		(0x0007,4,1)		CheckBox
-	"CW Semi Break In"	(0x0007,5,1)		CheckBox
-	"VOX"	       		(0x0007,7,1)		CheckBox
 	"VFOa Band"		(0x0008,0,4)		Band_e
 	"VFOb Band"		(0x0008,4,4)		Band_e
+	"VFO Memory Mode"	(0x0004,5,3)		VFOMemMode_e
+
+	""			(0,0,0)			Empty
+	"___User Interface____"	(0,0,0)			Empty
+	"Extended Menu"	 	(0x002d,7,1)		CheckBox
+	"Large Characters"	(0x0006,2,1)		CheckBox
 	"Display Contrast"	(0x000a,0,4)		Int(1,13,2,1,)
 	"Display Mode"		(0x000a,6,2)		DisplayMode_e
-	"Beep Tone"		(0x000b,0,2)		BeepTone_e
-	"Clar Dial Set"		(0x000b,2,1)		ClarDialSet_e
-	"Packet Speed"		(0x000c,2,1)		PacketSpeed_e
-	"ARTS ID"		(0x000c,4,1)		CheckBox
-	"Dial Step"		(0x000c,5,1)		DialStep_e
-	"ARTS Beep"		(0x000c,6,2)		ARTSBeep_e
-	"CW Pitch"		(0x000d,0,3)		CWPitch_e
-	"Lock Type"		(0x000d,4,2)		LockType_e
-	"CW Weight"		(0x000e,0,5)		CWWeight_e	
-	"440MHz ARS"		(0x000e,5,1)		CheckBox
-	"144MHZ ARS"		(0x000e,6,1)		CheckBox
-	"SQL/RF Knob Function"	(0x000e,7,1)		SQLRF_e
-# Note: values 1 and 2 are not valid in CW delay
-	"CW Delay (0=Full)"	(0x0010,7,1:0x000f,0,8)	Int(0,300,0,10,)
-	"CW Sidetone"		(0x0010,0,7)		Int(0,100,0,1,)
-	"CW Speed"		(0x0011,0,6)		Int(4,60,4,1,wpm)
-	"AM&FM Dial"		(0x0012,7,1)		CheckBox
-	"VOX Gain"		(0x0012,0,7)		Int(0,100,0,1,)
-	"Alaska Emer Chan"	(0x0015,5,1)		CheckBox
-	"VOX Delay"  		(0x0015,0,4)		Int(100,3000,0,100,ms)
-	"Auto Power Off"	(0x0014,0,3)		AutoPowerOff_e
-	"Memory Grouping"	(0x0014,4,1)		CheckBox
-	"Digital Mode"		(0x0014,5,3)		DigitalMode_e
-	"Timeout Timer"		(0x0015,0,5)		TimeoutTimer_e
-	"DCS Invert"		(0x0015,6,2)		DCSInvert_e
-	"SSB Mic Gain"		(0x0016,0,7)		Int(0,100,0,1,)
-	"Mic Scan"		(0x0016,7,1)		CheckBox
-	"AM Mic Gain"		(0x0017,0,7)		Int(0,100,0,1,)
-	"CW Paddle"		(0x0017,7,1)		CWPaddle_e
-	"FM Mic Gain"		(0x0018,0,7)		Int(0,100,0,1,)
-	"Digital Gain"		(0x0019,0,7)		Int(0,100,0,1,)
-	"1200bps Audio In Lvl"	(0x001a,0,7)		Int(0,100,0,1,)
-	"9600bps Audio In Lvl"	(0x001b,0,7)		Int(0,100,0,1,)
-	"Digital Shift"		(0x001c,0,16)		Int(-3000,3000,0,10,Hz)
-	"Digital Display"	(0x001e,0,16)		Int(-3000,3000,0,10,Hz)
-	"RX LSB Carrier Point"	(0x0020,0,8)		Int(-300,300,0,10,Hz)
-	"RX USB Carrier Point"	(0x0021,0,8)		Int(-300,300,0,10,Hz)
-	"TX LSB Carrier Point"	(0x0022,0,8)		Int(-300,300,0,10,Hz)
-	"TX USB Carrier Point"	(0x0023,0,8)		Int(-300,300,0,10,Hz)
-	"Prio Scan/Dual Watch"	(0x0028,3,2)		PSDW_e
-	"ARTS Enabled"		(0x0028,7,1)		CheckBox
-	"Split Mode"		(0x0029,7,1)		CheckBox
-	"CAT/Linear/Tuner"	(0x002a,2,2)		CatLinTun_e
-	"Mic Selection"		(0x002a,4,2)		MicSel_e
-	"Meter Peak Hold"	(0x002a,6,1)		CheckBox
-	"Beep Volume"		(0x002b,0,7)		Int(0,100,0,1,)
-	"Digital VOX"		(0x002c,0,7)		Int(0,100,0,1,)
-	"Scan Resume Time"	(0x002d,0,4)		Int(1,10,0,1,sec)
-	"Scan Resume"  		(0x002d,4,2)		ScanResume_e
-	"Allow Home->VFO move"	(0x002d,6,1)		CheckBox
-	"Extended Menu"	 	(0x002d,7,1)		CheckBox
-	"CW BFO"  		(0x002e,0,2)		CWBFO_e
-	"CW QSK"		(0x002e,2,2)		CWQSK_e
-	"CW Auto Mode"		(0x002e,7,1)		CheckBox
-	"DSP Mic Equalization"	(0x002f,0,2)		DSPMicEq_e
-	"DSP BPF Width"		(0x002f,2,2)		DSPBPFWid_e
-	"DSP Noise Red Level"	(0x002f,4,4)		Int(1,16,1,1,)
-	"DSP LPF Cutoff"	(0x0030,0,5)		DSPLPFCutoff_e
-	"CAT Bitrate"  		(0x0030,6,2)		CatBitRate_e
-	"DSP HPF Cutoff"	(0x0031,0,4)		DSPHPFCutoff_e
-	"Analog Meter TX Sel"	(0x0031,5,3)		AnMetTX_e
 	"Display Setting"	(0x0032,0,3:0x0034,0,8)	DispSet_e
 	"Display Brightness"	(0x0032,4,2)		Int(1,3,0,1,)
-	"Noise Blank Level"	(0x0035,0,7)		Int(0,100,0,1,)
-	"AF Speech Comp Level"	(0x0036,0,7)		Int(0,100,0,1,)
+	"Lock Type"		(0x000d,4,2)		LockType_e
+	"Beep Tone"		(0x000b,0,2)		BeepTone_e
+	"Clar Dial Set"		(0x000b,2,1)		ClarDialSet_e
+	"Dial Step"		(0x000c,5,1)		DialStep_e
+	"SQL/RF Knob Function"	(0x000e,7,1)		SQLRF_e
+	"AM&FM Dial"		(0x0012,7,1)		CheckBox
+	"Allow Home->VFO move"	(0x002d,6,1)		CheckBox
+	"Meter Peak Hold"	(0x002a,6,1)		CheckBox
+	"Analog Meter TX Sel"	(0x0031,5,3)		AnMetTX_e
+	"Analog Meter RX Sel"	(0x0041,0,3)		AnMetRX_e
+	"Beep Volume"		(0x002b,0,7)		Int(0,100,0,1,)
+	"Scan Resume Time"	(0x002d,0,4)		Int(1,10,0,1,sec)
+	"Scan Resume"  		(0x002d,4,2)		ScanResume_e
+	"Auto Power Off"	(0x0014,0,3)		AutoPowerOff_e
+	"Timeout Timer"		(0x0015,0,5)		TimeoutTimer_e
+	"Mic Scan"		(0x0016,7,1)		CheckBox
+	"Mic Selection"		(0x002a,4,2)		MicSel_e
 	"MEM/VFO Dial Mode"	(0x0038,0,3)		MemVFODialMode_e
-	"Tuner/ATAS Config"	(0x0038,3,3)		TunATASConf_e
 	"MFq A Key Function"	(0x0039,0,8)		PKeyAssign_e
 	"MFq B Key Function"	(0x003a,0,8)		PKeyAssign_e
 	"MFq C Key Function"	(0x003b,0,8)		PKeyAssign_e
 	"MH-59 ACC Key Function" (0x003c,0,8)		PKeyAssign_e
 	"MH-59 P1 Key Function"	(0x003d,0,8)		PKeyAssign_e
 	"MH-59 P2 Key Function"	(0x003e,0,8)		PKeyAssign_e
+	"Tuner/ATAS Config"	(0x0038,3,3)		TunATASConf_e
+	"CAT/Linear/Tuner"	(0x002a,2,2)		CatLinTun_e
+	"CAT Bitrate"  		(0x0030,6,2)		CatBitRate_e
+
+	""			(0,0,0)			Empty
+	"___CW Settings____"	(0,0,0)			Empty
+	"CW Key Reverse"	(0x0007,2,1)		CheckBox
+	"CW Keyer"		(0x0007,4,1)		CheckBox
+	"CW Semi Break In"	(0x0007,5,1)		CheckBox
+	"CW Beacon Text 1"	(0x1bff,0,320)		YaesuString
+	"CW Beacon Text 2"	(0x1c27,0,320)		YaesuString
+	"CW Beacon Text 3"	(0x1c4f,0,320)		YaesuString
+	"CW Pitch"		(0x000d,0,3)		CWPitch_e
+	"CW Weight"		(0x000e,0,5)		CWWeight_e	
+# Note: values 1(10) and 2(20) are not valid in CW delay
+	"CW Delay (0=Full)"	(0x0010,7,1:0x000f,0,8)	Int(0,3000,0,10,ms)
+	"CW Sidetone"		(0x0010,0,7)		Int(0,100,0,1,)
+	"CW Speed"		(0x0011,0,6)		Int(4,60,4,1,wpm)
+	"CW Paddle"		(0x0017,7,1)		CWPaddle_e
+	"CW BFO"  		(0x002e,0,2)		CWBFO_e
+	"CW QSK"		(0x002e,2,2)		CWQSK_e
+	"CW Auto Mode"		(0x002e,7,1)		CheckBox
+	"Beacon Time (0=off)"	(0x0042,0,8)		Int(0,255,0,1,)
+
+	""			(0,0,0)			Empty
+	"___ARTS Settings____"	(0,0,0)			Empty
+	"ARTS Enabled"		(0x0028,7,1)		CheckBox
+	"ARTS ID"		(0x000c,4,1)		CheckBox
+	"ARTS Beep"		(0x000c,6,2)		ARTSBeep_e
+	"ARTS ID Value"		(0x1bf5,0,80)		YaesuString
+
+	""			(0,0,0)			Empty
+	"___Digital Settings____" (0,0,0)		Empty
+	"Digital Gain"		(0x0019,0,7)		Int(0,100,0,1,)
+	"Packet Speed"		(0x000c,2,1)		PacketSpeed_e
+	"1200bps Audio In Lvl"	(0x001a,0,7)		Int(0,100,0,1,)
+	"9600bps Audio In Lvl"	(0x001b,0,7)		Int(0,100,0,1,)
+	"Digital Shift"		(0x001c,0,16)		Int(-3000,3000,0,10,Hz)
+	"Digital Display"	(0x001e,0,16)		Int(-3000,3000,0,10,Hz)
+	"Digital VOX"		(0x002c,0,7)		Int(0,100,0,1,)
+	"Digital Mode"		(0x0014,5,3)		DigitalMode_e
+
+	""			(0,0,0)			Empty
+	"___Misc Settings____"	(0,0,0)			Empty
+	"440MHz Auto Rpt Shift"	(0x000e,5,1)		CheckBox
+	"144MHZ Auto Rpt Shift"	(0x000e,6,1)		CheckBox
+	"DCS Invert"		(0x0015,6,2)		DCSInvert_e
+	"Alaska Emer Chan"	(0x0015,5,1)		CheckBox
+	"Scope Width"		(0x0045,2,2)		ScopeWidth_e
+	"RF Power"		(0x0046,0,7)		Int(2,100,0,1,)
+
+	""			(0,0,0)			Empty
+	"___Speech Settings____" (0,0,0)		Empty
+	"VOX"	       		(0x0007,7,1)		CheckBox
+	"VOX Gain"		(0x0012,0,7)		Int(0,100,0,1,)
+	"VOX Delay"  		(0x0015,0,4)		Int(100,3000,0,100,ms)
+	"Memory Grouping"	(0x0014,4,1)		CheckBox
+	"SSB Mic Gain"		(0x0016,0,7)		Int(0,100,0,1,)
+	"AM Mic Gain"		(0x0017,0,7)		Int(0,100,0,1,)
+	"FM Mic Gain"		(0x0018,0,7)		Int(0,100,0,1,)
+	"AF Speech Comp Level"	(0x0036,0,7)		Int(0,100,0,1,)
+	"SSB/AM Speech Proc"	(0x0045,1,1)		CheckBox
+
+	""			(0,0,0)			Empty
+	"___DSP Settings____"	(0,0,0)			Empty
+	"RX LSB Carrier Point"	(0x0020,0,8)		Int(-300,300,0,10,Hz)
+	"RX USB Carrier Point"	(0x0021,0,8)		Int(-300,300,0,10,Hz)
+	"TX LSB Carrier Point"	(0x0022,0,8)		Int(-300,300,0,10,Hz)
+	"TX USB Carrier Point"	(0x0023,0,8)		Int(-300,300,0,10,Hz)
+	"Prio Scan/Dual Watch"	(0x0028,3,2)		PSDW_e
+	"Split Mode"		(0x0029,7,1)		CheckBox
+	"DNF"			(0x0044,0,1)		Enable_e
+	"DNR"			(0x0044,1,1)		Enable_e
+	"DBF"			(0x0044,2,2)		DEnable_e
+	"AGC"			(0x0044,5,1)		Enable_e
+	"AGC Mode"  		(0x0006,0,2)		AGCMode_e
+	"Noise Blanker"		(0x0006,5,1)		CheckBox
+	"DSP Mic Equalization"	(0x002f,0,2)		DSPMicEq_e
+	"DSP BPF Width"		(0x002f,2,2)		DSPBPFWid_e
+	"DSP Noise Red Level"	(0x002f,4,4)		Int(1,16,1,1,)
+	"DSP LPF Cutoff"	(0x0030,0,5)		DSPLPFCutoff_e
+	"DSP HPF Cutoff"	(0x0031,0,4)		DSPHPFCutoff_e
+	"Noise Blank Level"	(0x0035,0,7)		Int(0,100,0,1,)
+
+	""			(0,0,0)			Empty
+	"___Filter Settings____" (0,0,0)		Empty
+	"TX IF Filter"		(0x0040,0,2)		TXIFFilt_e
+	"Op Filter Selection"	(0x003f,0,1)		OpFiltSel_e
+	"Filter 1 for SSB"	(0x0043,0,1)		Enable_e
+	"Filter 1 for CS"	(0x0043,2,1:0043,7,1)	DEnable_e
+	"Filter 1 for Digital"	(0x0043,4,1)		Enable_e
+	"Op Filter 1 Name"	(0x1c7f,0,32)		YaesuString
+	"Op Filter 2 Name"	(0x1c8e,0,32)		YaesuString
 endtab

@@ -44,7 +44,7 @@ A memory is a 28 byte field:
     	     	  7 = PKT
     	   - bit 7 - Alphanumeric tag is enabled (MFb-C)
 
-    byte 1 - bits 6-7 - Repeater mode: 0=off, 1=- 2=+, 3=split (MFd-A, except
+    byte 1 - bits 6-7 - Repeater mode: 0=off, 1=-, 2=+, 3=split (MFd-A, except
 		for split which is set with a special procedure)
 
     byte 2 - bit 3 - Low deviation FM enable, 29MHz only (MFm-C)
@@ -274,12 +274,12 @@ A memory is a 28 byte field:
 0047 - RF power, range 5(2)-100 (menu 75) - FIXME - what does the top bit do?
 	    it changed from 0-1 when I went from 15 to 30 watts.
 
-0056 - 0215 - VFO A Band memories, each 28 bytes, for the following bands
+0056-0215 - VFO A Band memories, each 28 bytes, for the following bands
      in the following order:
-     180m, 80m, 60m, 40m, 30m, 20m, 17m, 15m, 12m, 10m, 6m,
-     FM Bcast, 108MHz, VHF, UHF, 15MHz
+     160m, 80m, 60m, 40m, 30m, 20m, 17m, 15m, 12m, 10m, 6m,
+     FM Bcast, 118MHz, VHF, UHF, 15MHz
 
-0216 - 03d5 - VFO B Band memories, see above
+0216-03d5 - VFO B Band memories, see above
 
 0446-0461 - QMB memory (MFc-A,B)
 

@@ -21,6 +21,7 @@
 import sys
 import traceback
 import Tix
+import Dialog
 
 radiodir = "@YAESU_CONFIGDIR@"
 
@@ -506,6 +507,9 @@ class Handler:
         # associated with this handler changes, we call everything in
         # the tie list.  This is a list of HandlerTie object.
         self.tielist = []
+
+        self.enabletie = None
+        self.enableoffsettie = None
         pass
 
     def addTie(self, h, tie):
@@ -517,9 +521,10 @@ class Handler:
 
     def newTie(self, fromh, tie):
         self.type.newTie(self, fromh, tie)
+        fromh.modified()
         return
     
-    # Called when the user modifies a value.  Not required for setValue
+    # Called when the user modifies a value.  Not required for setSelect
     # because that does a full redisplay.  Causes any tied values to be
     # redisplayed.
     def modified(self):
@@ -540,6 +545,21 @@ class Handler:
 
     pass
 
+def rewriteEntry(w, v):
+    """Rewrite the value in an entry widget, setting the state to normal so
+    it is writable, the setting the value, then setting the state back"""
+
+    oldstate = w["state"]
+    if (oldstate != "normal"):
+        w["state"] = "normal"
+        pass
+    w.delete(0, 'end')
+    w.insert(0, v)
+    if (oldstate != "normal"):
+        w["state"] = oldstate
+        pass
+    return
+
 class BuiltIn:
     def __init__(self, name):
         self.name = name
@@ -556,10 +576,26 @@ class BuiltIn:
 
     def getWidgetHandler(self, parent, t, num):
         h = Handler(None, None, self)
-        h.widget = Tix.Label(parent)
+        h.widget = None
         return h
 
     def renumWidget(self, h, num):
+        if h.enabletie:
+            v = int(h.enabletie.getValue(num))
+            if v:
+                h.widget["state"] = "normal"
+            else:
+                h.widget["state"] = "disabled"
+                pass
+            pass
+        elif h.enableoffsettie:
+            v = h.enableoffsettie.getValue(num)
+            if (v == "+" or v == "-"):
+                h.widget["state"] = "normal"
+            else:
+                h.widget["state"] = "disabled"
+                pass
+            pass
         pass
 
     def redisplay(self, h):
@@ -575,16 +611,36 @@ class BuiltIn:
     def getValue(self, data, addr, num):
         # Most types are the same for select and value
         return self.getSelect(data, addr, num)
-        return ""
     
-    def setValue(self, v, data, addr, num):
+    def setSelect(self, v, data, addr, num):
         return
 
     def newTie(self, myh, fromh, tie):
-        if (tie.tietype != "normal"):
+        if (tie.tietype == "enable"):
+            myh.enabletie = fromh
+        elif (tie.tietype == "enableoff"):
+            myh.enableoffsettie = fromh
+        elif (tie.tietype != "normal"):
             print ("Warning: Unknown type %s tie to %s"
                    % (tie.tietype, tie.value))
+            pass
         return
+    
+    pass
+
+class BIDummy(BuiltIn):
+    def __init__(self, name="Dummy"):
+        BuiltIn.__init__(self, name)
+        pass
+
+    def getWidgetHandler(self, parent, t, num):
+        h = Handler(None, t, self)
+        # This is not actually displayed.
+        h.widget = None
+        return h
+
+    def getSelect(self, data, addr, num):
+        return str(data.get_bits(addr, num))
     
     pass
 
@@ -601,6 +657,7 @@ class BIInt(BuiltIn):
         self.offset = offset
         self.multi = multi
         self.units = units
+        self.unitslen = len(units)
         return
     
     def matchName(self, c, string):
@@ -631,20 +688,20 @@ class BIInt(BuiltIn):
     def getWidgetHandler(self, parent, t, num):
         v = self.getInt(t.data, t.addr, num)
         h = Handler(self.set, t, self)
-        w = Tix.Entry(parent)
+        w = Tix.Entry(parent, readonlybackground="tan")
         h.widget = w
         h.num = num
         w.bind("<Key>", h.set_event)
         w.delete(0, 'end')
-        w.insert(0, str(v))
+        w.insert(0, str(v)+self.units)
         return h
 
     def renumWidget(self, h, num):
+        BuiltIn.renumWidget(self, h, num)
         h.num = num
         t = h.data
         v = t.data.get_bits(t.addr, num)
-        h.widget.delete(0, 'end')
-        h.widget.insert(0, self.conv_to_str(v))
+        rewriteEntry(h.widget, str(v)+self.units)
         pass
 
     def getInt(self, data, addr, num):
@@ -662,7 +719,7 @@ class BIInt(BuiltIn):
 
     def setInt(self, v, data, addr, num):
         v /= self.multi
-        v += self.offset
+        v -= self.offset
         if (v < 0):
             v &= (-1 << addr.numbits())
             pass
@@ -672,7 +729,7 @@ class BIInt(BuiltIn):
     def getSelect(self, data, addr, num):
         return str(self.getInt(data, addr, num))
 
-    def setValue(self, v, data, addr, num):
+    def setSelect(self, v, data, addr, num):
         try:
             self.setInt(int(v), data, addr, num)
         except Exception, e:
@@ -683,10 +740,11 @@ class BIInt(BuiltIn):
         try:
             i = int(s)
             if ((i < self.minval) or (i > self.maxval)):
-                return False
+                return None
             pass
         except Exception, e:
-            return False
+            return None
+        
         return True
     
     def set(self, h, event):
@@ -706,6 +764,11 @@ class BIInt(BuiltIn):
 
         w = h.widget
         cursor = w.index("insert")
+        end = w.index("end")
+        if (cursor > (end - self.unitslen)):
+            # Don't mess with the units.
+            return "break"
+        
         s = w.get()
 
         if (c == "BackSpace"):
@@ -723,12 +786,13 @@ class BIInt(BuiltIn):
         else:
             s = s[0:cursor] + c + s[cursor:]
             pass
-        
-        if (not self.isvalidnum(s)):
+
+        intstr = s[0:len(s)-self.unitslen]
+        if (not self.isvalidnum(intstr)):
             return "break"
 
         t = h.data
-        self.setInt(int(s), t.data, t.addr, h.num)
+        self.setInt(int(intstr), t.data, t.addr, h.num)
 
         h.widget.delete(0, 'end')
         w.insert(0, s)
@@ -794,7 +858,7 @@ class BIString(BuiltIn):
         h = Handler(self.set, t, self)
         h.v = v
         h.num = num
-        w = Tix.Entry(parent)
+        w = Tix.Entry(parent, readonlybackground="tan")
         h.widget = w
         w.bind("<KeyRelease>", h.set_event)
         w.delete(0, 'end')
@@ -802,17 +866,16 @@ class BIString(BuiltIn):
         return h
 
     def renumWidget(self, h, num):
+        BuiltIn.renumWidget(self, h, num)
         h.num = num
         t = h.data
-        v = self.get_string(t.data, t.addr, num)
-        h.widget.delete(0, 'end')
-        h.widget.insert(0, v)
+        rewriteEntry(h.widget, self.get_string(t.data, t.addr, num));
         pass
         
     def getSelect(self, data, addr, num):
         return self.get_string(data, addr, num)
 
-    def setValue(self, v, data, addr, num):
+    def setSelect(self, v, data, addr, num):
         self.set_string(v, data, addr, num, None)
         pass
 
@@ -879,21 +942,8 @@ class BIFixed(BuiltIn):
             opts = spec[4].split(":")
             for opt in opts:
                 o = opt.split("=", 1)
-                if (o[0] == "sd"):
-                    if (len(o) != 2):
-                        raise ParseException(c.filename, c.lineno,
-                                             "sd option requires value")
-                    snddec = c.toNum(o[1])
-                    if (snddec <= pre or snddec > (pre + suf)):
-                        raise ParseException(c.filename, c.lineno,
-                                             "sd option must be after pre"
-                                             + " and before the end of the"
-                                             + " number")
-                    pass
-                else:
-                    raise ParseException(c.filename, c.lineno,
-                                         "Invalid Fixed option: " + o[0])
-                pass
+                raise ParseException(c.filename, c.lineno,
+                                     "Invalid Fixed option: " + o[0])
             pass
         b = BIFixed(name=string)
         b.setup(pre, suf, inc, units, snddec)
@@ -902,7 +952,7 @@ class BIFixed(BuiltIn):
     def getWidgetHandler(self, parent, t, num):
         v = t.data.get_bits(t.addr, num)
         h = Handler(self.set, t, self)
-        w = Tix.Entry(parent)
+        w = Tix.Entry(parent, readonlybackground="tan")
         h.widget = w
         h.num = num
         w.bind("<Key>", h.set_event)
@@ -910,18 +960,29 @@ class BIFixed(BuiltIn):
         w.insert(0, self.conv_to_str(v))
         return h
 
-    def renumWidget(self, h, num):
-        h.num = num
+    def getBits(self, h):
         t = h.data
-        v = t.data.get_bits(t.addr, num)
-        h.widget.delete(0, 'end')
-        h.widget.insert(0, self.conv_to_str(v))
+        return t.data.get_bits(t.addr, h.num)
+    
+    def setBits(self, v, h):
+        t = h.data
+        t.data.set_bits(v, t.addr, h.num)
+        return
+    
+    def renumWidget(self, h, num):
+        BuiltIn.renumWidget(self, h, num)
+        h.num = num
+        v = self.getBits(h)
+        rewriteEntry(h.widget, self.conv_to_str(v))
         pass
         
     def getSelect(self, data, addr, num):
         return self.conv_to_str(data.get_bits(addr, num))
 
-    def setValue(self, v, data, addr, num):
+    def getValue(self, data, addr, num):
+        return str(data.get_bits(addr, num))
+
+    def setSelect(self, v, data, addr, num):
         data.set_bits(self.conv_from_str(v), addr, num)
         pass
 
@@ -955,7 +1016,7 @@ class BIFixed(BuiltIn):
             w.delete(cursor)
             w.insert(cursor, c)
             v = self.conv_from_str(w.get())
-            t.data.set_bits(v, t.addr, h.num)
+            self.setBits(v, h)
             h.modified()
             s = self.conv_to_str(v)
             h.widget.delete(0, 'end')
@@ -1040,6 +1101,169 @@ class BIFixed(BuiltIn):
         return s
     pass
 
+class BIFixedFreq(BIFixed):
+    def getWidgetHandler(self, parent, t, num):
+        h = BIFixed.getWidgetHandler(self, parent, t, num)
+
+        # These are ties to me that change the way I behave.  We keep these
+        # as lists becaue there may be more than one tie to me, and only
+        # one of them is required to be valid, so we may have to scan them.
+        h.offtie = []
+        h.basefreqtie = []
+        
+        return h
+    
+    def newTie(self, myh, fromh, tie):
+        if (tie.tietype == "offset"):
+            myh.offtie.append(fromh)
+        elif (tie.tietype == "basefreq"):
+            myh.basefreqtie.append(fromh)
+            pass
+        elif (tie.tietype == "freqoff"):
+            myh.offfreqtie.append(fromh)
+            pass
+        else:
+            BuiltIn.newTie(self, myh, fromh, tie)
+            pass
+        self.redisplay(myh)
+        return
+
+    def getBits(self, h):
+        t = h.data
+        freq = t.data.get_bits(t.addr, h.num)
+
+        off = None
+        for m in h.offtie:
+            off = m.getValue(h.num)
+            if (off):
+                break
+            pass
+        if (not off or off == "split"):
+            return freq
+        
+        bfreq = None
+        for m in h.basefreqtie:
+            bfreq = m.getValue(h.num)
+            if (bfreq):
+                break
+            pass
+        if (bfreq):
+            bfreq = int(bfreq)
+            pass
+            
+        if (off == "smplx"):
+            if bfreq:
+                return bfreq
+            return freq
+
+        if not bfreq:
+            return freq
+
+        if (off == "+"):
+            return bfreq + freq
+        elif (off == "-"):
+            return bfreq - freq
+        else:
+            print("Warning: unknown offset: " + off)
+
+        return freq
+    
+    def setBits(self, v, h):
+        t = h.data
+        off = None
+        for m in h.offtie:
+            off = m.getValue(h.num)
+            if (off):
+                break
+            pass
+        if (not off or off == "split"):
+            t.data.set_bits(v, t.addr, h.num)
+            return
+        if (off == "smplx"):
+            # Ignore in simplex mode
+            return
+        
+        bfreq = None
+        for m in h.basefreqtie:
+            bfreq = m.getValue(h.num)
+            if (bfreq):
+                break
+            pass
+        if (bfreq):
+            bfreq = int(bfreq)
+            pass
+            
+        if not bfreq:
+            pass
+        elif (off == "+"):
+            v = v - bfreq
+        elif (off == "-"):
+            v = bfreq - v
+        else:
+            print("Warning: unknown offset: " + off)
+            pass
+        t.data.set_bits(v, t.addr, h.num)
+        return
+
+    def renumWidget(self, h, num):
+        off = None
+        for m in h.offtie:
+            off = m.getValue(num)
+            if (off):
+                break
+            pass
+        if (off):
+            if (off == "smplx"):
+                h.widget["state"] = "readonly"
+            else:
+                h.widget["state"] = "normal"
+                pass
+            pass
+        BIFixed.renumWidget(self, h, num)
+        return
+        
+    def matchName(self, c, string):
+        if not string.startswith("FixedFreq("):
+            return None
+        if not string.endswith(")"):
+            raise ParseException(c.filename, c.lineno,
+                                 "FixedFreq does not end with ')'")
+        spec = string[10:len(string)-1].split(",")
+        if (len(spec) < 4) or (len(spec) > 5):
+            raise ParseException(c.filename, c.lineno,
+                                 "Invalid FixedFreq specifier")
+        pre = c.toNum(spec[0])
+        suf = c.toNum(spec[1])
+        inc = c.toNum(spec[2])
+        units = spec[3]
+        snddec = -1
+        if (len(spec) >= 5):
+            opts = spec[4].split(":")
+            for opt in opts:
+                o = opt.split("=", 1)
+                if (o[0] == "sd"):
+                    if (len(o) != 2):
+                        raise ParseException(c.filename, c.lineno,
+                                             "sd option requires value")
+                    snddec = c.toNum(o[1])
+                    if (snddec <= pre or snddec > (pre + suf)):
+                        raise ParseException(c.filename, c.lineno,
+                                             "sd option must be after pre"
+                                             + " and before the end of the"
+                                             + " number")
+                    pass
+                else:
+                    raise ParseException(c.filename, c.lineno,
+                                         "Invalid Fixed option: " + o[0])
+                pass
+            pass
+        b = BIFixedFreq(name=string)
+        b.setup(pre, suf, inc, units, snddec)
+        return b
+
+    pass
+    
+
 class BICheckBox(BuiltIn):
     def __init__(self):
         BuiltIn.__init__(self, "CheckBox")
@@ -1060,13 +1284,21 @@ class BICheckBox(BuiltIn):
         return h
 
     def renumWidget(self, h, num):
+        BuiltIn.renumWidget(self, h, num)
         h.num = num
         t = h.data
         v = t.data.get_bits(t.addr, num)
+        oldstate = h.widget["state"]
+        if (oldstate != "normal"):
+            h.widget["state"] = "normal"
+            pass
         if (v):
             h.widget.select()
         else:
             h.widget.deselect()
+            pass
+        if (oldstate != "normal"):
+            h.widget["state"] = oldstate
             pass
         pass
         
@@ -1089,7 +1321,7 @@ class BICheckBox(BuiltIn):
         else:
             return '0'
     
-    def setValue(self, v, data, addr, num):
+    def setSelect(self, v, data, addr, num):
         if (v == "0"):
             data.set_bits(0, addr, num)
         elif (v == "1"):
@@ -1159,7 +1391,7 @@ class BIYaesuString(BuiltIn):
         h = Handler(self.set, t, self)
         h.v = v
         h.num = num
-        w = Tix.Entry(parent)
+        w = Tix.Entry(parent, readonlybackground="tan")
         h.widget = w
         w.bind("<KeyRelease>", h.set_event)
         w.delete(0, 'end')
@@ -1167,17 +1399,16 @@ class BIYaesuString(BuiltIn):
         return h
 
     def renumWidget(self, h, num):
+        BuiltIn.renumWidget(self, h, num)
         h.num = num
         t = h.data
-        v = self.get_yaesu_string(t.data, t.addr, num)
-        h.widget.delete(0, 'end')
-        h.widget.insert(0, v)
+        rewriteEntry(h.widget, self.get_yaesu_string(t.data, t.addr, num))
         pass
         
     def getSelect(self, data, addr, num):
         return self.get_yaesu_string(data, addr, num)
 
-    def setValue(self, v, data, addr, num):
+    def setSelect(self, v, data, addr, num):
         self.set_yaesu_string(v, data, addr, num, None)
         pass
 
@@ -1302,6 +1533,7 @@ class BIBCDFreq(BuiltIn):
         return h
 
     def renumWidget(self, h, num):
+        BuiltIn.renumWidget(self, h, num)
         off = None
         for m in h.offtie:
             off = m.getValue(num)
@@ -1313,7 +1545,6 @@ class BIBCDFreq(BuiltIn):
                 h.widget["state"] = "normal"
             else:
                 h.widget["state"] = "readonly"
-                # Allow us to write to the widget
                 freq = None
                 for m in h.basefreqtie:
                     freq = m.getValue(num)
@@ -1374,10 +1605,8 @@ class BIBCDFreq(BuiltIn):
                         post += "0"
                         pass
                     v = pre + "." + post
-                    h.widget["state"] = "normal"
-                    h.widget.delete(0, 'end')
-                    h.widget.insert(0, v)
-                    h.widget["state"] = "readonly"
+
+                    rewriteEntry(h.widget, v)
                     return
                 pass
             pass
@@ -1385,8 +1614,7 @@ class BIBCDFreq(BuiltIn):
         h.num = num
         t = h.data
         v = self.get_bcd(t.data, t.addr, num)
-        h.widget.delete(0, 'end')
-        h.widget.insert(0, v)
+        rewriteEntry(h.widget, v)
         pass
 
     def newTie(self, myh, fromh, tie):
@@ -1455,7 +1683,7 @@ class BIBCDFreq(BuiltIn):
             w.icursor(cursor + 1)
         return "break"
 
-    def setValue(self, v, data, addr, num):
+    def setSelect(self, v, data, addr, num):
         firstc = False
         c2 = [ ]
         for c in v:
@@ -1541,7 +1769,7 @@ class BIHex(BuiltIn):
         v = self.get_hex(t.data, t.addr, num)
         h = Handler(self.set, t, self)
         h.numbytes = t.addr.entries[0][2] / 8
-        w = Tix.Entry(parent)
+        w = Tix.Entry(parent, readonlybackground="tan")
         h.widget = w
         h.num = num
         w.bind("<Key>", h.set_event)
@@ -1550,11 +1778,11 @@ class BIHex(BuiltIn):
         return h
 
     def renumWidget(self, h, num):
+        BuiltIn.renumWidget(self, h, num)
         h.num = num
         t = h.data
         v = self.get_hex(t.data, t.addr, num)
-        h.widget.delete(0, 'end')
-        h.widget.insert(0, v)
+        rewriteEntry(h.widget, v)
         pass
         
     def getSelect(self, data, addr, num):
@@ -1591,7 +1819,7 @@ class BIHex(BuiltIn):
         w.icursor(cursor + 1)
         return "break"
 
-    def setValue(self, v, data, addr, num):
+    def setSelect(self, v, data, addr, num):
         for c in v:
             if (c not in decimal_digits):
                 return
@@ -1636,14 +1864,24 @@ class Enum(BuiltIn):
         elif (v[0] == "altname"):
             if (len(v) < 2):
                 raise ParseException(c.filename, c.lineno,
-                                     "No alternate name given");
+                                     "No alternate name given")
             self.altnames.append(v[1])
             return
         
         if (len(v) != 2):
             raise ParseException(c.filename, c.lineno,
-                                 "Invalid number of elements for enum");
-        self.entries.append(EnumEntry(c.toNum(v[0]), v[1]))
+                                 "Invalid number of elements for enum")
+
+        n = c.toNum(v[0])
+        for e in self.entries:
+            if (e.value == n):
+                raise ParseException(c.filename, c.lineno,
+                                     "Enum value already used")
+            if (e.str == v[1]):
+                raise ParseException(c.filename, c.lineno,
+                                     "Enum string already used")
+            pass
+        self.entries.append(EnumEntry(n, v[1]))
         pass
 
     def getWidgetHandler(self, parent, t, num):
@@ -1651,6 +1889,7 @@ class Enum(BuiltIn):
         toph.widget = MenuAndButton(parent)
         toph.num = num
         v = t.data.get_bits(t.addr, num)
+        toph.widget.set_label("---")
         for e in self.entries:
             h = Handler(self.set, e, self)
             h.toph = toph
@@ -1670,10 +1909,15 @@ class Enum(BuiltIn):
         pass
 
     def renumWidget(self, toph, num):
+        BuiltIn.renumWidget(self, toph, num)
         toph.num = num
         t = toph.data
         v = t.data.get_bits(t.addr, num)
         found = False
+        oldstate = toph.widget["state"]
+        if (oldstate != "normal"):
+            toph.widget["state"] = "normal"
+            pass
         for e in self.entries:
             if (v == e.value):
                 found = True
@@ -1681,7 +1925,11 @@ class Enum(BuiltIn):
                 break
             pass
         if (not found):
-            toph.widget.set_label("")
+            toph.widget.set_label("---")
+            pass
+        if (oldstate != "normal"):
+            toph.widget["state"] = oldstate
+            pass
         pass
 
     def getSelect(self, data, addr, num):
@@ -1692,7 +1940,118 @@ class Enum(BuiltIn):
             pass
         pass
 
-    def setValue(self, v, data, addr, num):
+    def setSelect(self, v, data, addr, num):
+        for e in self.entries:
+            if (v == e.str.replace(" ", "")):
+                data.set_bits(e.value, addr, num)
+                return
+            pass
+        pass
+    
+    pass
+
+class SListEntry:
+    def __init__(self, value, str, pos):
+        self.value = value
+        self.str = str
+        self.pos = pos
+        return
+    pass
+
+class SList(BuiltIn):
+    def __init__(self, name):
+        BuiltIn.__init__(self, name)
+        self.entries = []
+        pass
+
+    def add(self, c, v):
+        if (v[0] == "endslist"):
+            c.addEnum(self)
+            return
+        elif (v[0] == "altname"):
+            if (len(v) < 2):
+                raise ParseException(c.filename, c.lineno,
+                                     "No alternate name given")
+            self.altnames.append(v[1])
+            return
+        
+        if (len(v) != 2):
+            raise ParseException(c.filename, c.lineno,
+                                 "Invalid number of elements for enum")
+
+        n = c.toNum(v[0])
+        i = 0
+        for e in self.entries:
+            if (e.value == n):
+                raise ParseException(c.filename, c.lineno,
+                                     "List value already used")
+            if (e.str == v[1]):
+                raise ParseException(c.filename, c.lineno,
+                                     "List string already used")
+            i += 1
+            pass
+        self.entries.append(SListEntry(n, v[1], i))
+        pass
+
+    def getWidgetHandler(self, parent, t, num):
+        h = Handler(self.set, t, self)
+        h.widget = Tix.ScrolledListBox(parent, scrollbar='auto')
+        h.widget.listbox['selectmode'] = "single"
+        h.widget.listbox['activestyle'] = "dotbox"
+        # If we export the selection, then the listbox loses
+        # selection whenever something else gets it.
+        h.widget.listbox['exportselection'] = "false"
+        h.widget.listbox.bind("<<ListboxSelect>>", h.set_event)
+        h.num = num
+        v = t.data.get_bits(t.addr, num)
+        for e in self.entries:
+            h.widget.listbox.insert(Tix.END, e.str)
+            if (e.value == v):
+                h.widget.listbox.selection_set(e.pos)
+                h.widget.listbox.see(e.pos)
+                pass
+            pass
+        return h
+
+    def set(self, h, event):
+        t = h.data
+        pos = h.widget.listbox.curselection()
+        if (len(pos) < 1):
+            return
+        pos = int(pos[0])
+        e = self.entries[pos]
+        t.data.set_bits(e.value, t.addr, h.num)
+        pass
+
+    def renumWidget(self, h, num):
+        BuiltIn.renumWidget(self, h, num)
+        h.num = num
+        t = h.data
+        v = t.data.get_bits(t.addr, num)
+        found = False
+        oldstate = h.widget["state"]
+        if (oldstate != "normal"):
+            h.widget["state"] = "normal"
+            pass
+        for e in self.entries:
+            if (v == e.value):
+                h.widget.listbox.selection_set(e.pos)
+                break
+            pass
+        if (oldstate != "normal"):
+            h.widget["state"] = oldstate
+            pass
+        pass
+
+    def getSelect(self, data, addr, num):
+        v = data.get_bits(addr, num)
+        for e in self.entries:
+            if (v == e.value):
+                return e.str.replace(" ", "")
+            pass
+        pass
+
+    def setSelect(self, v, data, addr, num):
         for e in self.entries:
             if (v == e.str.replace(" ", "")):
                 data.set_bits(e.value, addr, num)
@@ -1758,14 +2117,14 @@ class TabEntry:
         if (self.nsname in vhash):
             v = vhash[self.nsname]
             del vhash[self.nsname]
-            self.type.setValue(v, self.data, self.addr, num)
+            self.type.setSelect(v, self.data, self.addr, num)
             pass
         else:
             for n in self.type.altnames:
                 if (n in vhash):
                     v = vhash[n]
                     del vhash[n]
-                    self.type.setValue(v, self.data, self.addr, num)
+                    self.type.setSelect(v, self.data, self.addr, num)
                     return
                 pass
             pass
@@ -1814,12 +2173,16 @@ class List(TabBase):
     is too slow because of the tens of thousands of widgets created.  So
     this class only creates widgets for the dislayed amount, then it
     redoes what is in the widgets based upon the scroll position."""
-    def __init__(self, name, length):
+    def __init__(self, name, length, labels):
         TabBase.__init__(self, name)
 
         # Total length of elements in the list
         self.length = length
 
+        # If supplied, these will be applied to as many list entries
+        # as possible
+        self.labels = labels
+        
         # Number of lines currently displayed
         self.numdisplines = 0
 
@@ -2134,8 +2497,13 @@ class List(TabBase):
     def redisplay(self):
         i = 0
         for wl in self.handlerlists:
-            self.list.item_configure(i, 0,
-                                     text=str(i + self.firstdispline + 1))
+            pos = i + self.firstdispline
+            if (pos < len(self.labels)):
+                text = self.labels[pos]
+            else:
+                text = str(pos + 1)
+            pass
+            self.list.item_configure(i, 0, text=text)
             for e in self.entries:
                 e.renumWidget(wl[e.pos], i + self.firstdispline)
                 pass
@@ -2146,14 +2514,21 @@ class List(TabBase):
     def add_one_line(self):
         handlers = []
         pos = self.firstdispline + self.numdisplines
-        self.list.add(self.numdisplines, text=str(pos + 1))
+        if (pos < len(self.labels)):
+            text = self.labels[pos]
+        else:
+            text = str(pos + 1)
+            pass
+        self.list.add(self.numdisplines, text=text)
         for e in self.entries:
             h = e.getWidgetHandler(self.list, pos)
             h.ename = e.name
-            self.bindWidget(h.widget)
-            self.list.item_create(self.numdisplines, e.column,
-                                  itemtype=Tix.WINDOW,
-                                  window=h.widget)
+            if (h.widget):
+                self.bindWidget(h.widget)
+                self.list.item_create(self.numdisplines, e.column,
+                                      itemtype=Tix.WINDOW,
+                                      window=h.widget)
+                pass
             handlers.append(h)
             pass
         for e in self.entries:
@@ -2268,9 +2643,11 @@ class Tab(TabBase):
             e.key = i
             self.list.hlist.add(i, text=e.name)
             h = e.getWidgetHandler(self.list.hlist, i)
-            self.list.hlist.item_create(i, 1, itemtype=Tix.WINDOW,
-                                        window=h.widget)
-            self.bindWidget(h.widget)
+            if (h.widget):
+                self.list.hlist.item_create(i, 1, itemtype=Tix.WINDOW,
+                                            window=h.widget)
+                self.bindWidget(h.widget)
+                pass
             handlers.append(h)
             i += 1
             pass
@@ -2339,7 +2716,8 @@ class RadioConfig:
             self.types = [ BIBCDFreq(),
                            BICheckBox(), BIYaesuString(),
                            BIString(), BuiltIn("Empty"),
-                           BIHex(), BIInt(), BIFixed() ]
+                           BIHex(), BIInt(), BIFixed(),
+                           BIFixedFreq(), BIDummy() ]
             self.infile = open(filename, "r")
             self.lineno = LineNum()
             pass
@@ -2382,7 +2760,7 @@ class RadioConfig:
         l = len(s)
         if (l == 0):
             raise ParseException(self.filename, self.lineno,
-                                 "Invalid number")
+                                 "Invalid number: " + s)
         while ((i < l) and (s[i] == '0')):
             i += 1
             pass
@@ -2395,10 +2773,10 @@ class RadioConfig:
             v = int(s[i:], 0)
         except TypeError, e:
             raise ParseException(self.filename, self.lineno,
-                                 "Invalid number")
+                                 "Invalid number: " + s)
         except ValueError, e:
             raise ParseException(self.filename, self.lineno,
-                                 "Invalid number")
+                                 "Invalid number: " + s)
         return v
 
     def splitup_line(self, l):
@@ -2452,6 +2830,11 @@ class RadioConfig:
                     raise ParseException(self.filename, self.lineno,
                                          "Enum has no name")
                 self.curr = Enum(s[1])
+            elif (s[0] == "slist"):
+                if (len(s) < 2):
+                    raise ParseException(self.filename, self.lineno,
+                                         "Slist has no name")
+                self.curr = SList(s[1])
             elif (s[0] == "list"):
                 if (len(s) < 2):
                     raise ParseException(self.filename, self.lineno,
@@ -2460,7 +2843,7 @@ class RadioConfig:
                     raise ParseException(self.filename, self.lineno,
                                          "List has no length")
                 length = self.toNum(s[2])
-                self.curr = List(s[1], length)
+                self.curr = List(s[1], length, s[3:])
             elif (s[0] == "tab"):
                 if (len(s) < 2):
                     raise ParseException(self.filename, self.lineno,
@@ -2534,33 +2917,19 @@ class RadioSel:
         return
     pass
 
-class IsOk(Tix.DialogShell):
-    def __init__(self, text, command):
-        Tix.DialogShell.__init__(self, name="quit OK?")
-        w = Tix.Label(self, text=text)
-        w.pack(side=Tix.TOP, fill=Tix.BOTH, expand=1, )
-        self.ok = Tix.Button(self, text='Ok', command=self.ok);
-        self.ok.pack(side=Tix.LEFT, expand=1, padx=10, pady=8)
-        self.cancel = Tix.Button(self, text='Cancel', command=self.cancel);
-        self.cancel.pack(side=Tix.LEFT, expand=1, padx=10, pady=8)
-        self.popup()
-        self.command = command
-        return
-
-    def ok(self):
-        self.popdown()
-        self.command(True)
-        return
-
-    def cancel(self):
-        self.destroy()
-        self.command(False)
+class MyTop(Tix.Tk):
+    """We have our own top-level widget so we can catch destroy calls
+    and do a dialog if the data has changed"""
+    def destroy(self):
+        self.destroyhandler()
         return
 
     pass
 
 class GUI(Tix.Frame):
-    def __init__(self, filename=None, master=None):
+    def __init__(self, filename, master):
+        master.destroyhandler = self.quitcmd
+        
         Tix.Frame.__init__(self, master)
         self.top = master
         self.pack(fill=Tix.BOTH, expand=1);
@@ -2582,6 +2951,15 @@ class GUI(Tix.Frame):
         try:
             self.fd = RadioFileData(filename)
             self.radioname = find_radio(self.fd.data)
+            if (not self.radioname):
+                d = Dialog.Dialog(self, title="Error Finding Radio",
+                                  text=("Unable to find a radio that matches"
+                                        + " the file, it is likely not a"
+                                        + " radio save file."),
+                                  bitmap="error",
+                                  default = 0,
+                                  strings=("Ok",))
+                return
             self.radio = RadioConfig(radiodir + "/" + self.radioname + ".rad",
                                      self.fd)
         except Exception, e:
@@ -2599,15 +2977,16 @@ class GUI(Tix.Frame):
         if (not self.fd or not self.fd.changed):
             self.quit()
             return
-        IsOk("Unchanged data has not been written, do you"
-             + " really want to quit?", self.quitok)
-        pass
-
-    def quitok(self, val):
-        if (val):
-            self.quit();
+        d = Dialog.Dialog(self, title="Ok to quit?",
+                          text=("Unchanged data has not been written, do you"
+                                + " really want to quit?"),
+                          bitmap="error",
+                          default = 1,
+                          strings=("Yes","No"))
+        if (d.num == 0):
+            self.quit()
             pass
-        return
+        pass
 
     def opencmd(self, event=None):
         self.filedialog.popup()
@@ -2619,8 +2998,7 @@ class GUI(Tix.Frame):
         if (not self.fd):
             self.openfile(filename)
         else:
-            root = Tix.Tk()
-            GUI(filename, root)
+            GUI(filename, MyTop())
             pass
         return
     
@@ -2671,21 +3049,16 @@ class GUI(Tix.Frame):
         self.filemenu.add_command(label="Exit", underline=1,
                                   accelerator="Ctrl+Q",
                                   command = lambda self=self: self.quitcmd() )
+        self.top.bind_all("<Control-O>", self.opencmd)
+        self.top.bind_all("<Control-o>", self.opencmd)
         self.top.bind_all("<Control-Q>", self.quitcmd)
         self.top.bind_all("<Control-q>", self.quitcmd)
         self.top.bind_all("<Control-S>", self.savecmd)
         self.top.bind_all("<Control-s>", self.savecmd)
         self.filebutton.pack(side=Tix.LEFT)
-
-#         self.editbutton = Tix.Menubutton(self.buttons, text="Edit",
-#                                          underline=0, takefocus=0)
-#         self.editmenu = Tix.Menu(self.editbutton, tearoff=0)
-#         self.editbutton["menu"] = self.editmenu
-#         self.editmenu.add_command(label="Preferences", underline=1,
-#                                   command = lambda self=self: self.opencmd() )
-#         self.editbutton.pack(side=Tix.LEFT)
-
-        pass
+        return
+    
+    pass
 
 progname = sys.argv[0]
 
@@ -2717,7 +3090,6 @@ else:
 
 read_radios()
 
-root = Tix.Tk();
-gui = GUI(filename, root);
+gui = GUI(filename, MyTop());
 gui.mainloop();
 sys.exit(0)

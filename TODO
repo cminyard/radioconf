@@ -1,14 +1,11 @@
-Add scrolled type for large lists, like PKeyAssign_e in FT-857D
-
-Add a FixedFreq type based upon Fixed
-
-Add offset ties for FixedFreq
-
-Add enable ties and apply it to split tone in FT-857 (and perhaps others)
 
 Decode a few things on the FT-60R:
        Weather channel
        Current band
        others?
 
-Finish FT-857D Radio, start at 003f
+Auto repeater offsets
+
+I have no filter 2 for the FT-857, don't know how to set it, see byte 0043
+
+Memory group settings for the FT-857 are not done
