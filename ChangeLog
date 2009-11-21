@@ -1,5 +1,12 @@
 2009-11-22  Corey Minyard <minyard@acm.org>
 
+	* yaesu_edit.py.in: Fix pasting of frequencies to write to offsets
+	if they are present, and clean up the whole cut/paste thing to use
+	handlers so ties work properly.
+
+	* yaesuconf/FT-60R.rad, yaesuconf/FT-7800R.rad: Add cutpaste=False
+	to all the offset tabs.
+
 	* yaesu_edit.py.in: Fix a problem with large selections
 
 2009-11-20  Corey Minyard <minyard@acm.org>

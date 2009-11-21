@@ -508,6 +508,13 @@ class Handler:
         # the tie list.  This is a list of HandlerTie object.
         self.tielist = []
 
+        # These are ties to me that change the way I behave.  We keep these
+        # as lists becaue there may be more than one tie to me, and only
+        # one of them is required to be valid, so we may have to scan them.
+        self.offtie = []
+        self.basefreqtie = []
+        self.offfreqtie = []
+        
         self.enabletie = None
         self.enableoffsettie = None
         pass
@@ -521,7 +528,8 @@ class Handler:
 
     def newTie(self, fromh, tie):
         self.type.newTie(self, fromh, tie)
-        fromh.modified()
+        if (fromh.widget):
+            fromh.modified()
         return
     
     # Called when the user modifies a value.  Not required for setSelect
@@ -534,10 +542,13 @@ class Handler:
         return
 
     def getValue(self, num):
-        return self.type.getValue(self.data.data, self.data.addr, num)
+        return self.type.getValue(self, num)
     
     def getSelect(self, num):
-        return self.type.getSelect(self.data.data, self.data.addr, num)
+        return self.type.getSelect(self, num)
+    
+    def setSelect(self, v, num):
+        return self.type.setSelect(v, self, num)
     
     def set(self):
         self.handler(self)
@@ -566,10 +577,6 @@ def rewriteEntry(w, v):
 class BuiltIn:
     def __init__(self, name):
         self.name = name
-
-        # A set of alternate names for this type, where selection might
-        # occur from
-        self.altnames = []
         pass
 
     def matchName(self, c, string):
@@ -608,14 +615,14 @@ class BuiltIn:
     def checkAddrOk(self, c, addr):
         return True
 
-    def getSelect(self, data, addr, num):
+    def getSelect(self, h, num):
         return ""
     
-    def getValue(self, data, addr, num):
+    def getValue(self, h, num):
         # Most types are the same for select and value
-        return self.getSelect(data, addr, num)
+        return self.getSelect(h, num)
     
-    def setSelect(self, v, data, addr, num):
+    def setSelect(self, v, h, num):
         return
 
     def newTie(self, myh, fromh, tie):
@@ -642,8 +649,9 @@ class BIDummy(BuiltIn):
         h.widget = None
         return h
 
-    def getSelect(self, data, addr, num):
-        return str(data.get_bits(addr, num))
+    def getSelect(self, h, num):
+        t = h.data
+        return str(t.data.get_bits(t.addr, num))
     
     pass
 
@@ -729,12 +737,14 @@ class BIInt(BuiltIn):
         data.set_bits(v, addr, num)
         return
         
-    def getSelect(self, data, addr, num):
-        return str(self.getInt(data, addr, num))
+    def getSelect(self, h, num):
+        t = h.data
+        return str(self.getInt(t.data, t.addr, num))
 
-    def setSelect(self, v, data, addr, num):
+    def setSelect(self, v, g, num):
+        t = h.data
         try:
-            self.setInt(int(v), data, addr, num)
+            self.setInt(int(v), t.data, t.addr, num)
         except Exception, e:
             pass
         pass
@@ -892,11 +902,13 @@ class BIString(BuiltIn):
         rewriteEntry(h.widget, self.get_string(t.data, t.addr, num));
         pass
         
-    def getSelect(self, data, addr, num):
-        return self.get_string(data, addr, num)
+    def getSelect(self, h, num):
+        t = h.data
+        return self.get_string(t.data, t.addr, num)
 
-    def setSelect(self, v, data, addr, num):
-        self.set_string(v, data, addr, num, None)
+    def setSelect(self, v, h, num):
+        t = h.data
+        self.set_string(v, t.data, t.addr, num, None)
         pass
 
     def set(self, h, event):
@@ -989,30 +1001,31 @@ class BIFixed(BuiltIn):
         w.insert(0, self.conv_to_str(v))
         return h
 
-    def getBits(self, h):
+    def getBits(self, h, num):
         t = h.data
-        return t.data.get_bits(t.addr, h.num)
+        return t.data.get_bits(t.addr, num)
     
-    def setBits(self, v, h):
+    def setBits(self, v, h, num):
         t = h.data
-        t.data.set_bits(v, t.addr, h.num)
+        t.data.set_bits(v, t.addr, num)
         return
     
     def renumWidget(self, h, num):
         BuiltIn.renumWidget(self, h, num)
         h.num = num
-        v = self.getBits(h)
+        v = self.getBits(h, num)
         rewriteEntry(h.widget, self.conv_to_str(v))
         pass
         
-    def getSelect(self, data, addr, num):
-        return self.conv_to_str(data.get_bits(addr, num))
+    def getSelect(self, h, num):
+        return self.conv_to_str(self.getBits(h, num))
 
-    def getValue(self, data, addr, num):
-        return str(data.get_bits(addr, num))
+    def getValue(self, h, num):
+        t = h.data
+        return str(t.data.get_bits(t.addr, num))
 
-    def setSelect(self, v, data, addr, num):
-        data.set_bits(self.conv_from_str(v), addr, num)
+    def setSelect(self, v, h, num):
+        self.setBits(self.conv_from_str(v), h, num)
         pass
 
     def set(self, h, event):
@@ -1045,7 +1058,7 @@ class BIFixed(BuiltIn):
             w.delete(cursor)
             w.insert(cursor, c)
             v = self.conv_from_str(w.get())
-            self.setBits(v, h)
+            self.setBits(v, h, h.num)
             h.modified()
             s = self.conv_to_str(v)
             h.widget.delete(0, 'end')
@@ -1133,13 +1146,6 @@ class BIFixed(BuiltIn):
 class BIFixedFreq(BIFixed):
     def getWidgetHandler(self, parent, t, num):
         h = BIFixed.getWidgetHandler(self, parent, t, num)
-
-        # These are ties to me that change the way I behave.  We keep these
-        # as lists becaue there may be more than one tie to me, and only
-        # one of them is required to be valid, so we may have to scan them.
-        h.offtie = []
-        h.basefreqtie = []
-        
         return h
     
     def newTie(self, myh, fromh, tie):
@@ -1154,16 +1160,17 @@ class BIFixedFreq(BIFixed):
         else:
             BuiltIn.newTie(self, myh, fromh, tie)
             pass
-        self.redisplay(myh)
+        if (myh.widget):
+            self.redisplay(myh)
         return
 
-    def getBits(self, h):
+    def getBits(self, h, num):
         t = h.data
-        freq = t.data.get_bits(t.addr, h.num)
+        freq = t.data.get_bits(t.addr, num)
 
         off = None
         for m in h.offtie:
-            off = m.getValue(h.num)
+            off = m.getValue(num)
             if (off):
                 break
             pass
@@ -1172,7 +1179,7 @@ class BIFixedFreq(BIFixed):
         
         bfreq = None
         for m in h.basefreqtie:
-            bfreq = m.getValue(h.num)
+            bfreq = m.getValue(num)
             if (bfreq):
                 break
             pass
@@ -1197,16 +1204,16 @@ class BIFixedFreq(BIFixed):
 
         return freq
     
-    def setBits(self, v, h):
+    def setBits(self, v, h, num):
         t = h.data
         off = None
         for m in h.offtie:
-            off = m.getValue(h.num)
+            off = m.getValue(num)
             if (off):
                 break
             pass
         if (not off or off == "split"):
-            t.data.set_bits(v, t.addr, h.num)
+            t.data.set_bits(v, t.addr, num)
             return
         if (off == "smplx"):
             # Ignore in simplex mode
@@ -1214,7 +1221,7 @@ class BIFixedFreq(BIFixed):
         
         bfreq = None
         for m in h.basefreqtie:
-            bfreq = m.getValue(h.num)
+            bfreq = m.getValue(num)
             if (bfreq):
                 break
             pass
@@ -1231,7 +1238,7 @@ class BIFixedFreq(BIFixed):
         else:
             print("Warning: unknown offset: " + off)
             pass
-        t.data.set_bits(v, t.addr, h.num)
+        t.data.set_bits(v, t.addr, num)
         return
 
     def renumWidget(self, h, num):
@@ -1349,18 +1356,20 @@ class BICheckBox(BuiltIn):
         h.modified()
         pass
 
-    def getSelect(self, data, addr, num):
-        v = data.get_bits(addr, num)
+    def getSelect(self, h, num):
+        t = h.data
+        v = t.data.get_bits(t.addr, num)
         if (v):
             return '1'
         else:
             return '0'
     
-    def setSelect(self, v, data, addr, num):
+    def setSelect(self, v, h, num):
+        t = h.data
         if (v == "0"):
-            data.set_bits(0, addr, num)
+            t.data.set_bits(0, t.addr, num)
         elif (v == "1"):
-            data.set_bits(1, addr, num)
+            t.data.set_bits(1, t.addr, num)
             pass
         pass
     
@@ -1457,11 +1466,13 @@ class BIYaesuString(BuiltIn):
         rewriteEntry(h.widget, self.get_yaesu_string(t.data, t.addr, num))
         pass
         
-    def getSelect(self, data, addr, num):
-        return self.get_yaesu_string(data, addr, num)
+    def getSelect(self, h, num):
+        t = h.data
+        return self.get_yaesu_string(t.data, t.addr, num)
 
-    def setSelect(self, v, data, addr, num):
-        self.set_yaesu_string(v, data, addr, num, None)
+    def setSelect(self, v, h, num):
+        t = h.data
+        self.set_yaesu_string(v, t.data, t.addr, num, None)
         pass
 
     def set(self, h, event):
@@ -1573,20 +1584,12 @@ class BIBCDFreq(BuiltIn):
         h.widget = w
         h.num = num
 
-        # These are ties to me that change the way I behave.  We keep these
-        # as lists becaue there may be more than one tie to me, and only
-        # one of them is required to be valid, so we may have to scan them.
-        h.offtie = []
-        h.basefreqtie = []
-        h.offfreqtie = []
-        
         w.bind("<Key>", h.set_event)
         w.delete(0, 'end')
         w.insert(0, v)
         return h
 
-    def renumWidget(self, h, num):
-        BuiltIn.renumWidget(self, h, num)
+    def getStr(self, h, num):
         off = None
         for m in h.offtie:
             off = m.getValue(num)
@@ -1595,9 +1598,8 @@ class BIBCDFreq(BuiltIn):
             pass
         if (off):
             if (off == "split"):
-                h.widget["state"] = "normal"
+                pass
             else:
-                h.widget["state"] = "readonly"
                 freq = None
                 for m in h.basefreqtie:
                     freq = m.getValue(num)
@@ -1661,14 +1663,29 @@ class BIBCDFreq(BuiltIn):
                         pass
                     v = pre + "." + post
 
-                    rewriteEntry(h.widget, v)
-                    return
+                    return v;
                 pass
             pass
-        
-        h.num = num
         t = h.data
-        v = self.get_bcd(t.data, t.addr, num)
+        return self.get_bcd(t.data, t.addr, num)
+
+    def renumWidget(self, h, num):
+        BuiltIn.renumWidget(self, h, num)
+        off = None
+        for m in h.offtie:
+            off = m.getValue(num)
+            if (off):
+                break
+            pass
+        if (off):
+            if (off == "split"):
+                h.widget["state"] = "normal"
+            else:
+                h.widget["state"] = "readonly"
+                pass
+            pass
+        h.num = num
+        v = self.getStr(h, num)
         rewriteEntry(h.widget, v)
         pass
 
@@ -1684,15 +1701,18 @@ class BIBCDFreq(BuiltIn):
         else:
             BuiltIn.newTie(self, myh, fromh, tie)
             pass
-        self.redisplay(myh)
+        if myh.widget:
+            self.redisplay(myh)
         return
     
-    def getValue(self, data, addr, num):
-        return self.get_bcd(data, addr, num)
+    def getValue(self, h, num):
+        t = h.data
+        return self.get_bcd(t.data, t.addr, num)
 
-    def getSelect(self, data, addr, num):
+    def getSelect(self, h, num):
+        t = h.data
         # Note that we pad it out to Hz for copy/paste, for compatability
-        return self.get_bcd(data, addr, num) + ".000"
+        return self.getStr(h, num) + ".000"
 
     def set(self, h, event):
         if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
@@ -1738,7 +1758,7 @@ class BIBCDFreq(BuiltIn):
             w.icursor(cursor + 1)
         return "break"
 
-    def setSelect(self, v, data, addr, num):
+    def setSelect(self, v, h, num):
         firstc = False
         c2 = [ ]
         for c in v:
@@ -1753,7 +1773,53 @@ class BIBCDFreq(BuiltIn):
             pass
 
         v = "".join(c2)
-        self.set_bcd(v, data, addr, num, None)
+
+        off = None
+        for m in h.offtie:
+            off = m.getValue(num)
+            if (off):
+                break
+            pass
+        if (off):
+            if (off == "split"):
+                pass
+            else:
+                bfreq = None
+                for m in h.basefreqtie:
+                    bfreq = m.getValue(num)
+                    if (bfreq):
+                        break
+                    pass
+                if (bfreq):
+                    bfreq = float(bfreq)
+                    if (off != 'smplx'):
+                        # It's a + or - offset, add/sub the offset frequency
+                        o = None
+                        for m in h.offfreqtie:
+                            if (m.data.cutpaste):
+                                o = m
+                                pass
+                            pass
+
+                        if (o):
+                            freq = float(v)
+                            if (off == '+'):
+                                offfreq = freq - bfreq
+                            elif (off == '-'):
+                                offfreq = bfreq - freq
+                            else:
+                                print("Warning: unknown offset: " + off)
+                                return
+
+                            o.setSelect(str(offfreq) + "MHz", num)
+                            return
+                        pass
+                    pass
+                pass
+            pass
+
+        t = h.data
+        self.set_bcd(v, t.data, t.addr, num, None)
         pass
     pass
 
@@ -1840,8 +1906,9 @@ class BIHex(BuiltIn):
         rewriteEntry(h.widget, v)
         pass
         
-    def getSelect(self, data, addr, num):
-        return self.get_hex(data, addr, num)
+    def getSelect(self, h, num):
+        t = h.data
+        return self.get_hex(t.data, t.addr, num)
 
     def set(self, h, event):
         if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
@@ -1874,13 +1941,14 @@ class BIHex(BuiltIn):
         w.icursor(cursor + 1)
         return "break"
 
-    def setSelect(self, v, data, addr, num):
+    def setSelect(self, v, h, num):
         for c in v:
             if (c not in decimal_digits):
                 return
             pass
 
-        self.set_hex(v, data, addr, num, None)
+        t = h.data
+        self.set_hex(v, t.data, t.addr, num, None)
         pass
     pass
 
@@ -1915,12 +1983,6 @@ class Enum(BuiltIn):
     def add(self, c, v):
         if (v[0] == "endenum"):
             c.addEnum(self)
-            return
-        elif (v[0] == "altname"):
-            if (len(v) < 2):
-                raise ParseException(c.filename, c.lineno,
-                                     "No alternate name given")
-            self.altnames.append(v[1])
             return
         
         if (len(v) != 2):
@@ -1987,18 +2049,20 @@ class Enum(BuiltIn):
             pass
         pass
 
-    def getSelect(self, data, addr, num):
-        v = data.get_bits(addr, num)
+    def getSelect(self, h, num):
+        t = h.data
+        v = t.data.get_bits(t.addr, num)
         for e in self.entries:
             if (v == e.value):
                 return e.str.replace(" ", "")
             pass
         pass
 
-    def setSelect(self, v, data, addr, num):
+    def setSelect(self, v, h, num):
+        t = h.data
         for e in self.entries:
             if (v == e.str.replace(" ", "")):
-                data.set_bits(e.value, addr, num)
+                t.data.set_bits(e.value, t.addr, num)
                 return
             pass
         pass
@@ -2022,12 +2086,6 @@ class SList(BuiltIn):
     def add(self, c, v):
         if (v[0] == "endslist"):
             c.addEnum(self)
-            return
-        elif (v[0] == "altname"):
-            if (len(v) < 2):
-                raise ParseException(c.filename, c.lineno,
-                                     "No alternate name given")
-            self.altnames.append(v[1])
             return
         
         if (len(v) != 2):
@@ -2098,18 +2156,20 @@ class SList(BuiltIn):
             pass
         pass
 
-    def getSelect(self, data, addr, num):
-        v = data.get_bits(addr, num)
+    def getSelect(self, h, num):
+        t = h.data
+        v = t.data.get_bits(t.addr, num)
         for e in self.entries:
             if (v == e.value):
                 return e.str.replace(" ", "")
             pass
         pass
 
-    def setSelect(self, v, data, addr, num):
+    def setSelect(self, v, h, num):
+        t = h.data
         for e in self.entries:
             if (v == e.str.replace(" ", "")):
-                data.set_bits(e.value, addr, num)
+                t.data.set_bits(e.value, t.addr, num)
                 return
             pass
         pass
@@ -2162,28 +2222,19 @@ class TabEntry:
         self.type.redisplay(h)
         return
 
-    def getSelect(self, num):
-        v = self.type.getSelect(self.data, self.addr, num)
+    def getSelect(self, h, num):
+        v = self.type.getSelect(h, num)
         if (v is None):
             v = ""
         return (self.nsname + "=" + v)
 
-    def setSelect(self, num, vhash):
+    def setSelect(self, h, num, vhash):
         if (self.nsname in vhash):
             v = vhash[self.nsname]
             del vhash[self.nsname]
-            self.type.setSelect(v, self.data, self.addr, num)
+            self.type.setSelect(v, h, num)
             pass
-        else:
-            for n in self.type.altnames:
-                if (n in vhash):
-                    v = vhash[n]
-                    del vhash[n]
-                    self.type.setSelect(v, self.data, self.addr, num)
-                    return
-                pass
-            pass
-        pass
+        return
     
     pass
 
@@ -2361,6 +2412,16 @@ class List(TabBase):
         length = int(length)
         if (offset == 0):
             s = ""
+            # Set up handlers, enough so the ties work for cutting/pasting
+            handlers = []
+            for e in self.entries:
+                handlers.append(Handler(None, e, e.type))
+                pass
+            for e in self.entries:
+                for t in e.tielist:
+                    handlers[e.pos].addTie(handlers[t.widget.pos], t)
+                    pass
+                pass
             for i in range(self.first_select, self.last_select + 1):
                 if (s):
                     s += "\n"
@@ -2374,7 +2435,7 @@ class List(TabBase):
                     else:
                         first = False
                         pass
-                    s += e.getSelect(i)
+                    s += e.getSelect(handlers[e.pos], i)
                     pass
                 pass
             self.last_selection = s
@@ -2454,9 +2515,19 @@ class List(TabBase):
                     continue
                 vhash[v[0]] = v[1]
                 pass
+            # Set up handlers, enough so the ties work for cutting/pasting
+            handlers = []
+            for e in self.entries:
+                handlers.append(Handler(None, e, e.type))
+                pass
+            for e in self.entries:
+                for t in e.tielist:
+                    handlers[e.pos].addTie(handlers[t.widget.pos], t)
+                    pass
+                pass
             for e in self.entries:
                 if (e.cutpaste):
-                    e.setSelect(linenum, vhash)
+                    e.setSelect(handlers[e.pos], linenum, vhash)
                     pass
                 pass
             linenum += 1
