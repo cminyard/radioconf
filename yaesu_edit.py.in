@@ -2569,6 +2569,8 @@ class List(TabBase):
     def add_one_line(self):
         handlers = []
         pos = self.firstdispline + self.numdisplines
+        if (pos >= self.length):
+            return
         if (pos < len(self.labels)):
             text = self.labels[pos]
         else:
