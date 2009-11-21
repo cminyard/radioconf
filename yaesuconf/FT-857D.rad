@@ -233,15 +233,12 @@ endenum
 list Memories 200
         "Enable"		(0x04ab,0,1,1)		CheckBox
 	"Label\nEnable"		(0x04e1,0,7,224)	CheckBox
-	"Label"			(0x04f5,0,64,224)	String
+	"Label"			(0x04f5,0,64,224)	String(10)
 	"Mode"			(0x04e1,0,3,224)	ReceiveMode_e
+	"Rx\nFreq"		(0x04ed,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(0x04e2,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab"
-	"Low Dev\nFM"		(0x04e3,3,1,224)	CheckBox
-	"Incpt Pt\nFrtEnd Attn"	(0x04e3,4,2,224)	IPOFEA_e
-	"Scan\nSkip"	  	(0x04e3,7,1,224)	CheckBox
-	"FM\nStep"		(0x04e4,0,3,224)	FMStep_e
-	"AM\nStep"		(0x04e4,3,3,224)	AMStep_e
-	"SSB/CW\nStep"		(0x04e4,6,2,224)	SSBCWStep_e
+	"Tx\nFreq"		(0x04f1,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x04f1,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
 	"Split\nTone"		(0x04e5,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
 	"Rx Tone\nMode"		(0x04e5,0,2,224)	ToneMode_e
 	"Tx Tone\nMode"		(0x04e5,2,2,224)	ToneMode_e
@@ -249,19 +246,20 @@ list Memories 200
 	"Rx\nTone"		(0x04e8,0,8,224)	CTCSS_e
 	"DCS\nCode"		(0x04e9,0,8,224)	DCSCode_e
 	"Rx\nCode"		(0x04ea,0,8,224)	DCSCode_e
-	"Rx\nFreq"		(0x04ed,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie(basefreq)=Tx\nFreq"
-	"Tx\nFreq"		(0x04f1,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie=Offset\nFTab"
-	"Offset\nFTab"		(0x04f1,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
+	"Low Dev\nFM"		(0x04e3,3,1,224)	CheckBox
+	"Incpt Pt\nFrtEnd Attn"	(0x04e3,4,2,224)	IPOFEA_e
+	"Scan\nSkip"	  	(0x04e3,7,1,224)	CheckBox
+	"FM\nStep"		(0x04e4,0,3,224)	FMStep_e
+	"AM\nStep"		(0x04e4,3,3,224)	AMStep_e
+	"SSB/CW\nStep"		(0x04e4,6,2,224)	SSBCWStep_e
 endlist
 
 list VFOa 16 160m 80m 60m 40m 30m 20m 17m 15m 12m 10m 6m FM 118MHz VHF UHF 15MHz
 	"Mode"			(0x0056,0,3,224)	ReceiveMode_e
+	"Rx\nFreq"		(0x0062,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(0x0057,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab"
-	"Low Dev\nFM"		(0x0058,3,1,224)	CheckBox
-	"Incpt Pt\nFrtEnd Attn"	(0x0058,4,2,224)	IPOFEA_e
-	"FM\nStep"		(0x0059,0,3,224)	FMStep_e
-	"AM\nStep"		(0x0059,3,3,224)	AMStep_e
-	"SSB/CW\nStep"		(0x0059,6,2,224)	SSBCWStep_e
+	"Tx\nFreq"		(0x0066,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x0066,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
 	"Split\nTone"		(0x005a,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
 	"Rx Tone\nMode"		(0x005a,0,2,224)	ToneMode_e
 	"Tx Tone\nMode"		(0x005a,2,2,224)	ToneMode_e
@@ -269,19 +267,19 @@ list VFOa 16 160m 80m 60m 40m 30m 20m 17m 15m 12m 10m 6m FM 118MHz VHF UHF 15MHz
 	"Rx\nTone"		(0x005d,0,8,224)	CTCSS_e
 	"Tx\nCode"		(0x005e,0,8,224)	DCSCode_e
 	"Rx\nCode"		(0x005f,0,8,224)	DCSCode_e
-	"Rx\nFreq"		(0x0062,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie(basefreq)=Tx\nFreq"
-	"Tx\nFreq"		(0x0066,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie=Offset\nFTab"
-	"Offset\nFTab"		(0x0066,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
+	"Low Dev\nFM"		(0x0058,3,1,224)	CheckBox
+	"Incpt Pt\nFrtEnd Attn"	(0x0058,4,2,224)	IPOFEA_e
+	"FM\nStep"		(0x0059,0,3,224)	FMStep_e
+	"AM\nStep"		(0x0059,3,3,224)	AMStep_e
+	"SSB/CW\nStep"		(0x0059,6,2,224)	SSBCWStep_e
 endlist
 
 list VFOb 16
 	"Mode"			(0x0216,0,3,224)	ReceiveMode_e
+	"Rx\nFreq"		(0x0222,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(0x0217,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab"
-	"Low Dev\nFM"		(0x0218,3,1,224)	CheckBox
-	"Incpt Pt\nFrtEnd Attn"	(0x0218,4,2,224)	IPOFEA_e
-	"FM\nStep"		(0x0219,0,3,224)	FMStep_e
-	"AM\nStep"		(0x0219,3,3,224)	AMStep_e
-	"SSB/CW\nStep"		(0x0219,6,2,224)	SSBCWStep_e
+	"Tx\nFreq"		(0x0226,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x0226,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
 	"Split\nTone"		(0x021a,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
 	"Rx Tone\nMode"		(0x021a,0,2,224)	ToneMode_e
 	"Tx Tone\nMode"		(0x021a,2,2,224)	ToneMode_e
@@ -289,19 +287,19 @@ list VFOb 16
 	"Rx\nTone"		(0x021d,0,8,224)	CTCSS_e
 	"Tx\nCode"		(0x021e,0,8,224)	DCSCode_e
 	"Rx\nCode"		(0x021f,0,8,224)	DCSCode_e
-	"Rx\nFreq"		(0x0222,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie(basefreq)=Tx\nFreq"
-	"Tx\nFreq"		(0x0226,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie=Offset\nFTab"
-	"Offset\nFTab"		(0x0226,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
+	"Low Dev\nFM"		(0x0218,3,1,224)	CheckBox
+	"Incpt Pt\nFrtEnd Attn"	(0x0218,4,2,224)	IPOFEA_e
+	"FM\nStep"		(0x0219,0,3,224)	FMStep_e
+	"AM\nStep"		(0x0219,3,3,224)	AMStep_e
+	"SSB/CW\nStep"		(0x0219,6,2,224)	SSBCWStep_e
 endlist
 
 list Home 1
 	"Mode"			(0x0446,0,3,224)	ReceiveMode_e
+	"Rx\nFreq"		(0x0452,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(0x0447,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab"
-	"Low Dev\nFM"		(0x0448,3,1,224)	CheckBox
-	"Incpt Pt\nFrtEnd Attn"	(0x0448,4,2,224)	IPOFEA_e
-	"FM\nStep"		(0x0449,0,3,224)	FMStep_e
-	"AM\nStep"		(0x0449,3,3,224)	AMStep_e
-	"SSB/CW\nStep"		(0x0449,6,2,224)	SSBCWStep_e
+	"Tx\nFreq"		(0x0456,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie=Offset\nFTab"
+	"Offset\nFTab"		(0x0456,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
 	"Split\nTone"		(0x044a,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
 	"Rx Tone\nMode"		(0x044a,0,2,224)	ToneMode_e
 	"Tx Tone\nMode"		(0x044a,2,2,224)	ToneMode_e
@@ -309,9 +307,11 @@ list Home 1
 	"Rx\nTone"		(0x044d,0,8,224)	CTCSS_e
 	"Tx\nCode"		(0x044e,0,8,224)	DCSCode_e
 	"Rx\nCode"		(0x044f,0,8,224)	DCSCode_e
-	"Rx\nFreq"		(0x0452,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie(basefreq)=Tx\nFreq"
-	"Tx\nFreq"		(0x0456,0,32,224)	FixedFreq(3,5,1,MHz,sd=6) "tie=Offset\nFTab"
-	"Offset\nFTab"		(0x0456,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
+	"Low Dev\nFM"		(0x0448,3,1,224)	CheckBox
+	"Incpt Pt\nFrtEnd Attn"	(0x0448,4,2,224)	IPOFEA_e
+	"FM\nStep"		(0x0449,0,3,224)	FMStep_e
+	"AM\nStep"		(0x0449,3,3,224)	AMStep_e
+	"SSB/CW\nStep"		(0x0449,6,2,224)	SSBCWStep_e
 endlist
 
 enum VFO_e

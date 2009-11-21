@@ -536,6 +536,9 @@ class Handler:
     def getValue(self, num):
         return self.type.getValue(self.data.data, self.data.addr, num)
     
+    def getSelect(self, num):
+        return self.type.getSelect(self.data.data, self.data.addr, num)
+    
     def set(self):
         self.handler(self)
         pass
@@ -802,9 +805,25 @@ class BIInt(BuiltIn):
     pass
 
 class BIString(BuiltIn):
-    def __init__(self):
-        BuiltIn.__init__(self, "String")
+    def __init__(self, name="String", width=10):
+        BuiltIn.__init__(self, name)
+        self.width = width
         pass
+
+    def matchName(self, c, string):
+        if (self.name == string):
+            return self
+        elif string.startswith("String("):
+            if not string.endswith(")"):
+                raise ParseException(c.filename, c.lineno,
+                                     "String does not end with ')'")
+            spec = string[7:len(string)-1].split(",")
+            if (len(spec) != 1):
+                raise ParseException(c.filename, c.lineno,
+                                     "Invalid String specifier")
+            width = c.toNum(spec[0])
+            return BIString(name=string, width=width)
+        return None
 
     def checkAddrOk(self, c, addr):
         if (len(addr.entries) != 1):
@@ -859,6 +878,7 @@ class BIString(BuiltIn):
         h.v = v
         h.num = num
         w = Tix.Entry(parent, readonlybackground="tan")
+        w["width"] = self.width
         h.widget = w
         w.bind("<KeyRelease>", h.set_event)
         w.delete(0, 'end')
@@ -897,8 +917,9 @@ class BIString(BuiltIn):
 
 
 class BIFixed(BuiltIn):
-    def __init__(self, name="Fixed"):
+    def __init__(self, name="Fixed", width=10):
         self.name = name # Doesn't really matter
+        self.width = width
         pass
 
     def setup(self, pre, suf, inc, units, snddec):
@@ -938,14 +959,21 @@ class BIFixed(BuiltIn):
         inc = c.toNum(spec[2])
         units = spec[3]
         snddec = -1
+        width = self.width
         if (len(spec) >= 5):
             opts = spec[4].split(":")
             for opt in opts:
                 o = opt.split("=", 1)
-                raise ParseException(c.filename, c.lineno,
-                                     "Invalid Fixed option: " + o[0])
+                if (o[0] == "w"):
+                    if (len(o) != 2):
+                        raise ParseException(c.filename, c.lineno,
+                                             "w option requires value")
+                    width = c.toNum(o[1])
+                else:
+                    raise ParseException(c.filename, c.lineno,
+                                         "Invalid Fixed option: " + o[0])
             pass
-        b = BIFixed(name=string)
+        b = BIFixed(name=string, width=width)
         b.setup(pre, suf, inc, units, snddec)
         return b
 
@@ -953,6 +981,7 @@ class BIFixed(BuiltIn):
         v = t.data.get_bits(t.addr, num)
         h = Handler(self.set, t, self)
         w = Tix.Entry(parent, readonlybackground="tan")
+        w["width"] = self.width
         h.widget = w
         h.num = num
         w.bind("<Key>", h.set_event)
@@ -1237,6 +1266,7 @@ class BIFixedFreq(BIFixed):
         inc = c.toNum(spec[2])
         units = spec[3]
         snddec = -1
+        width = self.width
         if (len(spec) >= 5):
             opts = spec[4].split(":")
             for opt in opts:
@@ -1252,12 +1282,17 @@ class BIFixedFreq(BIFixed):
                                              + " and before the end of the"
                                              + " number")
                     pass
+                elif (o[0] == "w"):
+                    if (len(o) != 2):
+                        raise ParseException(c.filename, c.lineno,
+                                             "w option requires value")
+                    width = c.toNum(o[1])
                 else:
                     raise ParseException(c.filename, c.lineno,
                                          "Invalid Fixed option: " + o[0])
                 pass
             pass
-        b = BIFixedFreq(name=string)
+        b = BIFixedFreq(name=string, width=width)
         b.setup(pre, suf, inc, units, snddec)
         return b
 
@@ -1332,9 +1367,25 @@ class BICheckBox(BuiltIn):
     pass
 
 class BIYaesuString(BuiltIn):
-    def __init__(self):
-        BuiltIn.__init__(self, "YaesuString")
+    def __init__(self, name="YaesuString", width=10):
+        BuiltIn.__init__(self, name)
+        self.width = width
         pass
+
+    def matchName(self, c, string):
+        if (self.name == string):
+            return self
+        elif string.startswith("YaesuString("):
+            if not string.endswith(")"):
+                raise ParseException(c.filename, c.lineno,
+                                     "YaesuString does not end with ')'")
+            spec = string[12:len(string)-1].split(",")
+            if (len(spec) != 1):
+                raise ParseException(c.filename, c.lineno,
+                                     "Invalid YaesuString specifier")
+            width = c.toNum(spec[0])
+            return BIYaesuString(string, width=width)
+        return None
 
     def checkAddrOk(self, c, addr):
         if (len(addr.entries) != 1):
@@ -1392,6 +1443,7 @@ class BIYaesuString(BuiltIn):
         h.v = v
         h.num = num
         w = Tix.Entry(parent, readonlybackground="tan")
+        w["width"] = self.width
         h.widget = w
         w.bind("<KeyRelease>", h.set_event)
         w.delete(0, 'end')
@@ -1517,6 +1569,7 @@ class BIBCDFreq(BuiltIn):
         v = self.get_bcd(t.data, t.addr, num)
         h = Handler(self.set, t, self)
         w = Tix.Entry(parent, readonlybackground="tan")
+        w['width'] = 8
         h.widget = w
         h.num = num
 
@@ -1557,7 +1610,9 @@ class BIBCDFreq(BuiltIn):
                         # It's a + or - offset, add/sub the offset frequency
                         o = None
                         for m in h.offfreqtie:
-                            o = m.getValue(num)
+                            # Use getSelect, not getValue, because getSelect
+                            # carries Mhz, kHz, etc.
+                            o = m.getSelect(num)
                             if (o):
                                 break
                             pass

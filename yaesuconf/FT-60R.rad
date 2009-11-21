@@ -557,20 +557,21 @@ list Memories 1000
 	"Enable"		(0x248,7,1,128)		CheckBox
 	"Label\nEnable"		(0x470e,7,1,64)		CheckBox
 	"Label\nValid"		(0x470f,7,1,64)		CheckBox
-	"Label"			(0x4708,0,48,64)	YaesuString	
+	"Label"			(0x4708,0,48,64)	YaesuString(8)
+	"Rx\nFreq"		(0x249,0,24,128)	BCDFreq "tie(basefreq)=Tx\nFreq"
+	"Offset\nDirect"	(0x248,0,3,128)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
+	"Tx\nFreq"		(0x24d,0,24,128)	BCDFreq
+	"Offset\nFreq"		(0x253,0,16,128)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFTab"		(0x253,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq"
+
+	"Tone\nMode"		(0x24c,0,4,128)		ToneMode_e
+	"CTCSS\nTone"		(0x250,0,6,128)		CTCSS_e
+	"DCS\nCode"		(0x251,0,8,128)		DCSCode_e
+	"Xmit\nPower"		(0x250,6,2,128)		XmitPower_e
 	"Pager\nEnable"		(0x248,6,1,128)		CheckBox
 	"Tx\nNarrow"		(0x248,5,1,128)		CheckBox
-	"Offset\nDirect"	(0x248,0,3,128)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
-	"Rx\nFreq"		(0x249,0,24,128)	BCDFreq "tie(basefreq)=Tx\nFreq"
-	"Tone\nMode"		(0x24c,0,4,128)		ToneMode_e
 	"Step"			(0x24c,4,4,128)		Step_e
 	"Clock\nShift"		(0x24c,7,1,128)		CheckBox
-	"Tx\nFreq"		(0x24d,0,24,128)	BCDFreq
-	"CTCSS\nTone"		(0x250,0,6,128)		CTCSS_e
-	"Xmit\nPower"		(0x250,6,2,128)		XmitPower_e
-	"DCS\nCode"		(0x251,0,8,128)		DCSCode_e
-	"Offset\nFreq"		(0x253,0,16,128)	Fixed(2,2,5,MHz) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
-	"Offset\nFTab"		(0x253,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq"
 	"Mode"			(0x248,4,1,128)		ReceiveMode_e
 	"Skip"			(0x6ec8,0,2,2)		Skip_e
 	"Bank"			(0x69c8,0,1,1)		Empty
@@ -588,19 +589,20 @@ endlist
 
 list VFOs 5
 #	Name			Address			type
+	"Rx\nFreq"		(0x49,0,24,128)		BCDFreq "tie(basefreq)=Tx\nFreq"
+	"Offset\nDirect"	(0x48,0,3,128)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
+	"Tx\nFreq"		(0x4d,0,24,128)		BCDFreq
+	"Offset\nFreq"		(0x53,0,16,128)		Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFTab"		(0x53,0,16,128)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq"
+
+	"Tone\nMode"		(0x4c,0,3,128)		ToneMode_e
+	"CTCSS\nTone"		(0x50,0,6,128)		CTCSS_e
+	"DCS\nCode"		(0x51,0,8,128)		DCSCode_e
+	"Xmit\nPower"		(0x50,6,2,128)		XmitPower_e
 	"Pager\nEnable"		(0x48,6,1,128)		CheckBox
 	"Tx\nNarrow"		(0x48,5,1,128)		CheckBox
-	"Offset\nDirect"	(0x48,0,3,128)		OffsetDir_e
-	"Rx\nFreq"		(0x49,0,24,128)		BCDFreq
-	"Tone\nMode"		(0x4c,0,3,128)		ToneMode_e
 	"Step"			(0x4c,4,3,128)		Step_e
 	"Clock\nShift"		(0x4c,7,1,128)		CheckBox
-	"Tx\nFreq"		(0x4d,0,24,128)		BCDFreq
-	"CTCSS\nTone"		(0x50,0,6,128)		CTCSS_e
-	"Xmit\nPower"		(0x50,6,2,128)		XmitPower_e
-	"DCS\nCode"		(0x51,0,8,128)		DCSCode_e
-	"Offset\nFreq"		(0x53,0,16,128)		Fixed(2,2,5,MHz) "tie=Offset\nFTab"
-	"Offset\nFTab"		(0x53,0,16,128)		OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
 endlist
 
 list Lower_Limit 50
@@ -608,20 +610,21 @@ list Lower_Limit 50
 	"Enable"		(0x40c8,7,1,256)	CheckBox
 	"Label\nEnable"		(0x664e,7,1,128)	CheckBox
 	"Label\nValid"		(0x664f,7,1,128)	CheckBox
-	"Label"			(0x6648,0,48,128)	YaesuString	
+	"Label"			(0x6648,0,48,128)	YaesuString(8)
+	"Rx\nFreq"		(0x40c9,0,24,256)	BCDFreq "tie(basefreq)=Tx\nFreq"
+	"Offset\nDirect"	(0x40c8,0,3,256)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
+	"Tx\nFreq"		(0x40cd,0,24,256)	BCDFreq
+	"Offset\nFreq"		(0x40d3,0,16,256)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFTab"		(0x40d3,0,16,256)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq"
+
+	"Tone\nMode"		(0x40cc,0,3,256)	ToneMode_e
+	"CTCSS\nTone"		(0x40d0,0,6,256)	CTCSS_e
+	"DCS\nCode"		(0x40d1,0,8,256)	DCSCode_e
+	"Xmit\nPower"		(0x40d0,6,2,256)	XmitPower_e
 	"Pager\nEnable"		(0x40c8,6,1,256)	CheckBox
 	"Tx\nNarrow"		(0x40c8,5,1,256)	CheckBox
-	"Offset\nDirect"	(0x40c8,0,3,256)	OffsetDir_e
-	"Rx\nFreq"		(0x40c9,0,24,256)	BCDFreq
-	"Tone\nMode"		(0x40cc,0,3,256)	ToneMode_e
 	"Step"			(0x40cc,4,3,256)	Step_e
 	"Clock\nShift"		(0x40cc,7,1,256)	CheckBox
-	"Tx\nFreq"		(0x40cd,0,24,256)	BCDFreq
-	"CTCSS\nTone"		(0x40d0,0,6,256)	CTCSS_e
-	"Xmit\nPower"		(0x40d0,6,2,256)	XmitPower_e
-	"DCS\nCode"		(0x40d1,0,8,256)	DCSCode_e
-	"Offset\nFreq"		(0x40d3,0,16,256)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
-	"Offset\nFTab"		(0x40d3,0,16,256)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
 endlist
 
 list Upper_Limit 50
@@ -629,38 +632,43 @@ list Upper_Limit 50
 	"Enable"		(0x40d8,7,1,256)	CheckBox
 	"Label\nEnable"		(0x6656,7,1,128)	CheckBox
 	"Label\nValid"		(0x6657,7,1,128)	CheckBox
-	"Label"			(0x6650,0,48,128)	YaesuString	
+	"Label"			(0x6650,0,48,128)	YaesuString(8)
+	"Rx\nFreq"		(0x40d9,0,24,256)	BCDFreq "tie(basefreq)=Tx\nFreq"
+	"Offset\nDirect"	(0x40d8,0,3,256)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
+	"Tx\nFreq"		(0x40dd,0,24,256)	BCDFreq
+	"Offset\nFreq"		(0x40e3,0,16,256)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFTab"		(0x40e3,0,16,256)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq"
+
+	"Tone\nMode"		(0x40dc,0,3,256)	ToneMode_e
+	"CTCSS\nTone"		(0x40e0,0,6,256)	CTCSS_e
+	"DCS\nCode"		(0x40e1,0,8,256)	DCSCode_e
+	"Xmit\nPower"		(0x40e0,6,2,256)	XmitPower_e
 	"Pager\nEnable"		(0x40d8,6,1,256)	CheckBox
 	"Tx\nNarrow"		(0x40d8,5,1,256)	CheckBox
-	"Offset\nDirect"	(0x40d8,0,3,256)	OffsetDir_e
-	"Rx\nFreq"		(0x40d9,0,24,256)	BCDFreq
-	"Tone\nMode"		(0x40dc,0,3,256)	ToneMode_e
 	"Step"			(0x40dc,4,3,256)	Step_e
 	"Clock\nShift"		(0x40dc,7,1,256)	CheckBox
-	"Tx\nFreq"		(0x40dd,0,24,256)	BCDFreq
-	"CTCSS\nTone"		(0x40e0,0,6,256)	CTCSS_e
-	"Xmit\nPower"		(0x40e0,6,2,256)	XmitPower_e
-	"DCS\nCode"		(0x40e1,0,8,256)	DCSCode_e
-	"Offset\nFreq"		(0x40e3,0,16,256)	Fixed(2,2,5,MHz) "tie=Offset\nFTab"
-	"Offset\nFTab"		(0x40e3,0,16,256)	OffsetFreq_e "tie=Offset\nFreq" cutpaste=False
+endlist
+
+list Current 1
+	"Rx\nFreq"		(0x9,0,24)		BCDFreq "tie(basefreq)=Tx\nFreq"
+	"Offset\nDirect"	(0x8,0,3)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
+	"Tx\nFreq"		(0xd,0,24)		BCDFreq
+	"Offset\nFreq"		(0x13,0,16)		Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFTab"		(0x13,0,16)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq"
+
+	"Tone\nMode"		(0xc,0,3)		ToneMode_e
+	"CTCSS\nTone"		(0x10,0,6)		CTCSS_e
+	"DCS\nCode"		(0x11,0,8)		DCSCode_e
+	"Xmit\nPower"		(0x10,6,2)		XmitPower_e
+	"Pager\nEnable"		(0x8,6,1)		CheckBox
+	"Tx\nNarrow"		(0x0012,7,1:0x0008,5,1)	WideNarrow_e
+	"Step"			(0x0038,0,1:0x000c,4,3)	StepAuto_e
+	"Clock\nShift"		(0xc,7,1)		CheckBox
+	"AM Rcv\nMode"		(0x0038,1,1:0x0008,4,1)	ReceiveMode_e
 endlist
 
 tab Config
 #	Name			Address			type
-	"Pager Enable"		(0x8,6,1)		CheckBox
-	"Wide/Narrow"		(0x0012,7,1:0x0008,5,1)	WideNarrow_e
-	"Offset Direct"		(0x8,0,3)		OffsetDir_e
-	"AM Receive Mode"	(0x0038,1,1:0x0008,4,1)	ReceiveMode_e
-	"Rx Freq"		(0x9,0,24)		BCDFreq
-	"Tone Mode"		(0xc,0,3)		ToneMode_e
-	"Step"			(0x0038,0,1:0x000c,4,3)	StepAuto_e
-	"Clock Shift"		(0xc,7,1)		CheckBox
-	"Tx Freq"		(0xd,0,24)		BCDFreq
-	"CTCSS Tone"		(0x10,0,6)		CTCSS_e
-	"Xmit Power"		(0x10,6,2)		XmitPower_e
-	"DCS Code"		(0x11,0,8)		DCSCode_e
-	"Offset Freq"		(0x13,0,16)		Fixed(2,2,5,MHz) "tie=Offset FTab"
-	"Offset FTab"		(0x13,0,16)		OffsetFreq_e "tie=Offset Freq" cutpaste=False
 	"Selected DTMF"		(0x001a,0,4)		SelectedDTMF_e
 	"Auto Power Off"	(0x0024,0,5)		AutoPowerOff_e
 	"Timeout Timer"		(0x0025,0,8)		TimeoutTimer_e
