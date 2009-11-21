@@ -1,3 +1,8 @@
+Check pasting to slist
+
+Do nicer labels for VFOs on FT-60R and FT-7800R
+
+Set up altname properly and make it useful.
 
 Decode a few things on the FT-60R:
        Weather channel
@@ -9,3 +14,5 @@ Auto repeater offsets
 I have no filter 2 for the FT-857, don't know how to set it, see byte 0043
 
 Memory group settings for the FT-857 are not done
+
+CSV export

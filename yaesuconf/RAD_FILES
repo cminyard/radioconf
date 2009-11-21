@@ -128,7 +128,10 @@ Int(min,max,offset,multiplier,label) - An integer with the given min/max
 	The label is displayed after the value, and may be empty.
 
 Empty - Used as an empty placeholder in lists, to display a string
-      in the heading with nothing under it.
+      in the heading with nothing under it/beside it.
+
+Dummy - This will not be displayed, but it can be used to pull bits or
+	parts of bits from another field for use in ties.
 
 
 User defined types
@@ -162,6 +165,19 @@ The name can then be used as a type in tabs and lists.
 
 See the Cutting and Pasting section for the meaning of the altname
 field.
+
+Slists
+------
+These are much like enums, but they are a scrolled list instead.  This is
+useful for very large lists that cannot be done with a pull-down menu.
+The format is:
+
+slist <name>
+     [altname <name>]
+     <number> <string descriptor>
+     [<number> <string descriptor>]
+     ....
+endslist
 
 Tabs
 ----

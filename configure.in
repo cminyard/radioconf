@@ -3,7 +3,6 @@ AC_CONFIG_SRCDIR(yaesu_rw.c)
 AM_INIT_AUTOMAKE
 AC_PROG_CC
 AC_STDC_HEADERS
-YAESU_CONFIGDIR=`eval echo "$sysconfdir/yaesuconf"`
-echo "$YAESU_CONFIGDIR"
+YAESU_CONFIGDIR="${datarootdir}/yaesuconf"
 AC_SUBST(YAESU_CONFIGDIR)
-AC_OUTPUT([Makefile yaesuconf/Makefile yaesu_edit.py])
+AC_OUTPUT([Makefile yaesuconf/Makefile])

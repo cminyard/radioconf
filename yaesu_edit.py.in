@@ -23,7 +23,7 @@ import traceback
 import Tix
 import Dialog
 
-radiodir = "@YAESU_CONFIGDIR@"
+radiodir = "@YCONF@"
 
 decimal_digits = "0123456789"
 
