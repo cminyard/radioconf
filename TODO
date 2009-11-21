@@ -1,5 +1,13 @@
 Set up altname properly and make it useful.
 
+When creating a new entry, don't make the empty file the default location.
+
+Bind the save/quit/etc keys so they work in all widgets.
+
+Sending data to the FT-60R doesn't seem to work right the first time.
+
+Undo/redo support
+
 Decode a few things on the FT-60R:
        Weather channel
        Current band

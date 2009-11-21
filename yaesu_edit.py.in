@@ -2325,6 +2325,8 @@ class List(TabBase):
 
         self.first_select = -1
         self.last_select = -1
+        self.last_selection = ""
+        self.last_selection_len = 0
         self.list.bind("<Button-1>", self.Button1)
         self.list.bind("<Shift-Button-1>", self.SButton1)
         self.list.bind("<Control-Button-1>", self.CButton1)
@@ -2352,27 +2354,42 @@ class List(TabBase):
         self.list.focus_set()
         return
         
-    def selection_request(self, a, b):
+    def selection_request(self, offset, length):
         if (self.first_select < 0):
             return ""
-        s = ""
-        for i in range(self.first_select, self.last_select + 1):
-            if (s):
-                s += "\n"
-                pass
-            first = True
-            for e in self.entries:
-                if (not e.cutpaste):
-                    continue
-                if (not first):
-                    s += " "
-                else:
-                    first = False
+        offset = int(offset)
+        length = int(length)
+        if (offset == 0):
+            s = ""
+            for i in range(self.first_select, self.last_select + 1):
+                if (s):
+                    s += "\n"
                     pass
-                s += e.getSelect(i)
+                first = True
+                for e in self.entries:
+                    if (not e.cutpaste):
+                        continue
+                    if (not first):
+                        s += " "
+                    else:
+                        first = False
+                        pass
+                    s += e.getSelect(i)
+                    pass
                 pass
+            self.last_selection = s
+            self.last_selection_len = len(s)
             pass
-        return s
+        if (offset > self.last_selection_len):
+            return ""
+        elif ((offset + length) > self.last_selection_len) :
+            return self.last_selection[offset:offset + length]
+        else:
+            s = self.last_selection[offset:]
+            self.last_selection = ""
+            self.last_selection_len = 0
+            return s
+        return ""
 
     def redoSelection(self):
         if ((self.last_select < self.firstdispline)

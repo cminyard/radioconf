@@ -1,3 +1,11 @@
+2009-11-22  Corey Minyard <minyard@acm.org>
+
+	* yaesu_edit.py.in: Fix a problem with large selections
+
+2009-11-20  Corey Minyard <minyard@acm.org>
+
+	* Lots more work, stuff is mostly finished.
+
 2009-11-13  Corey Minyard <minyard@acm.org>
 
 	* Lots of work on the FT-7800R editing, mostly finished at
