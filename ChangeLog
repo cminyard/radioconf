@@ -1,5 +1,15 @@
 2009-11-22  Corey Minyard <minyard@acm.org>
 
+	* yaesuconf/RAD_FILES: Document the changes.
+
+	* yaesu_edit.py.in, yaesuconf/FT-857D.rad: There were strange
+	bit settings required in the 857, so I had to add a bunch of
+	code to account for that.
+
+	* yaesu_edit.py.in, yaesuconf/*.rad: Added proper tone and
+	frequency cutting and pasting to enable cutting and pasting
+	between the various radio types.
+
 	* yaesu_edit.py.in: Fix pasting of frequencies to write to offsets
 	if they are present, and clean up the whole cut/paste thing to use
 	handlers so ties work properly.

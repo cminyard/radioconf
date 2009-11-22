@@ -577,6 +577,7 @@ def rewriteEntry(w, v):
 class BuiltIn:
     def __init__(self, name):
         self.name = name
+        self.displayheader = True
         pass
 
     def matchName(self, c, string):
@@ -634,6 +635,9 @@ class BuiltIn:
             print ("Warning: Unknown type %s tie to %s"
                    % (tie.tietype, tie.value))
             pass
+        if (myh.widget):
+            self.redisplay(myh)
+            pass
         return
     
     pass
@@ -641,21 +645,175 @@ class BuiltIn:
 class BIDummy(BuiltIn):
     def __init__(self, name="Dummy"):
         BuiltIn.__init__(self, name)
+        self.displayheader = False
         pass
 
     def getWidgetHandler(self, parent, t, num):
         h = Handler(None, t, self)
         # This is not actually displayed.
         h.widget = None
+        h.num = num
         return h
 
     def getSelect(self, h, num):
         t = h.data
         return str(t.data.get_bits(t.addr, num))
     
+    def getValue(self, h, num):
+        t = h.data
+        return str(t.data.get_bits(t.addr, num))
+    
+    def setSelect(self, v, h, num):
+        t = h.data
+        t.data.set_bits(int(v), t.addr, num)
+        return
+    
     pass
 
-# FIXME - The "units" is not yet supported
+class BIDummy857A(BIDummy):
+    def __init__(self, name="Dummy857A"):
+        BIDummy.__init__(self, name)
+        return
+
+    def newTie(self, myh, fromh, tie):
+        if (tie.tietype == "offset"):
+            myh.offtie.append(fromh)
+        elif (tie.tietype == "basefreq"):
+            myh.basefreqtie.append(fromh)
+            pass
+        if (myh.widget):
+            self.redisplay(myh)
+            pass
+        return
+
+    def renumWidget(self, h, num):
+        h.num = num
+        t = h.data
+        off = None
+        for m in h.offtie:
+            off = m.getValue(num)
+            if (off):
+                break
+            pass
+        oldv = t.data.get_bits(t.addr, num)
+        if (off and off != "split"):
+            if (oldv != 0):
+                t.data.set_bits(0, t.addr, num)
+            return
+
+        bfreq = None
+        for m in h.basefreqtie:
+            bfreq = m.getValue(num)
+            if (bfreq):
+                break
+            pass
+        if (not bfreq):
+            if (oldv != 0):
+                t.data.set_bits(0, t.addr, num)
+                pass
+            return
+
+        bfreq = int(bfreq)
+        if (bfreq < 4000000):
+            if (oldv != 0):
+                t.data.set_bits(0, t.addr, num)
+                pass
+        elif (bfreq < 8000000):
+            if (oldv != 1):
+                t.data.set_bits(1, t.addr, num)
+                pass
+        elif (bfreq < 11000000):
+            if (oldv != 2):
+                t.data.set_bits(2, t.addr, num)
+                pass
+        elif (bfreq < 14000000):
+            if (oldv != 3):
+                t.data.set_bits(3, t.addr, num)
+                pass
+        elif (bfreq < 40000000):
+            if (oldv != 4):
+                t.data.set_bits(4, t.addr, num)
+                pass
+        else:
+            if (oldv != 5):
+                t.data.set_bits(5, t.addr, num)
+                pass
+            pass
+        pass
+
+    pass        
+
+class BIDummy857B(BIDummy):
+    def __init__(self, name="Dummy857B"):
+        BIDummy.__init__(self, name)
+        return
+
+    def newTie(self, myh, fromh, tie):
+        if (tie.tietype == "basefreq"):
+            myh.basefreqtie.append(fromh)
+            pass
+        return
+
+    def renumWidget(self, h, num):
+        h.num = num
+        t = h.data
+        bfreq = None
+        for m in h.basefreqtie:
+            bfreq = m.getValue(num)
+            if (bfreq):
+                break
+            pass
+        oldv = t.data.get_bits(t.addr, num)
+        if (not bfreq):
+            if (oldv != 0):
+                t.data.set_bits(0, t.addr, num)
+            return
+        if (bfreq < 0x4000000):
+            if (oldv != 1):
+                t.data.set_bits(1, t.addr, num)
+        else:
+            if (oldv != 0):
+                t.data.set_bits(0, t.addr, num)
+            pass
+        pass
+
+    pass        
+
+class BISetToZero(BIDummy):
+    def __init__(self, name="SetToZero"):
+        BIDummy.__init__(self, name)
+        return
+
+    def newTie(self, myh, fromh, tie):
+        if (tie.tietype == "normal"):
+            myh.offtie.append(fromh)
+            pass
+        return
+
+    def renumWidget(self, h, num):
+        off = None
+        for m in h.offtie:
+            off = m.getValue(num)
+            if (off):
+                break
+            pass
+        if off is None:
+            off = True
+        else:
+            off = int(off)
+            pass
+        
+        if (off):
+            t = h.data
+            oldv = t.data.get_bits(t.addr, num)
+            if (oldv != 0):
+                t.data.set_bits(0, t.addr, num)
+                pass
+            pass
+        pass
+
+    pass        
+
 class BIInt(BuiltIn):
     def __init__(self, name="Int"):
         BuiltIn.__init__(self, name)
@@ -930,7 +1088,7 @@ class BIString(BuiltIn):
 
 class BIFixed(BuiltIn):
     def __init__(self, name="Fixed", width=10):
-        self.name = name # Doesn't really matter
+        BuiltIn.__init__(self, name)
         self.width = width
         pass
 
@@ -1153,15 +1311,14 @@ class BIFixedFreq(BIFixed):
             myh.offtie.append(fromh)
         elif (tie.tietype == "basefreq"):
             myh.basefreqtie.append(fromh)
-            pass
         elif (tie.tietype == "freqoff"):
             myh.offfreqtie.append(fromh)
-            pass
         else:
             BuiltIn.newTie(self, myh, fromh, tie)
             pass
         if (myh.widget):
             self.redisplay(myh)
+            pass
         return
 
     def getBits(self, h, num):
@@ -1307,8 +1464,9 @@ class BIFixedFreq(BIFixed):
     
 
 class BICheckBox(BuiltIn):
-    def __init__(self):
-        BuiltIn.__init__(self, "CheckBox")
+    def __init__(self, name="CheckBox"):
+        BuiltIn.__init__(self, name)
+        self.reverse = False
         pass
 
     def getWidgetHandler(self, parent, t, num):
@@ -1318,6 +1476,9 @@ class BICheckBox(BuiltIn):
         h.num = num
         h.widget = w
         h.v = v
+        if self.reverse:
+            v = ~v & 1
+            pass
         if (v):
             w.select()
         else:
@@ -1330,6 +1491,10 @@ class BICheckBox(BuiltIn):
         h.num = num
         t = h.data
         v = t.data.get_bits(t.addr, num)
+        h.v = v
+        if self.reverse:
+            v = ~v & 1
+            pass
         oldstate = h.widget["state"]
         if (oldstate != "normal"):
             h.widget["state"] = "normal"
@@ -1352,13 +1517,20 @@ class BICheckBox(BuiltIn):
         else:
             h.v = 1
             pass
-        t.data.set_bits(h.v, t.addr, h.num)
+        v = h.v
+        if self.reverse:
+            v = ~v & 1
+            pass
+        t.data.set_bits(v, t.addr, h.num)
         h.modified()
         pass
 
     def getSelect(self, h, num):
         t = h.data
         v = t.data.get_bits(t.addr, num)
+        if self.reverse:
+            v = ~v & 1
+            pass
         if (v):
             return '1'
         else:
@@ -1367,12 +1539,24 @@ class BICheckBox(BuiltIn):
     def setSelect(self, v, h, num):
         t = h.data
         if (v == "0"):
-            t.data.set_bits(0, t.addr, num)
+            v = 0
         elif (v == "1"):
-            t.data.set_bits(1, t.addr, num)
+            v = 1
             pass
+        if self.reverse:
+            v = ~v & 1
+            pass
+            t.data.set_bits(v, t.addr, num)
         pass
     
+    pass
+
+class BIRCheckBox(BICheckBox):
+    def __init__(self):
+        BICheckBox.__init__(self, "RCheckBox")
+        self.reverse = True
+        pass
+
     pass
 
 class BIYaesuString(BuiltIn):
@@ -1703,6 +1887,7 @@ class BIBCDFreq(BuiltIn):
             pass
         if myh.widget:
             self.redisplay(myh)
+            pass
         return
     
     def getValue(self, h, num):
@@ -2194,7 +2379,8 @@ class Tie:
     pass
 
 class TabEntry:
-    def __init__(self, name, pos, addr, type, data, tielist_str, cutpaste):
+    def __init__(self, name, pos, addr, type, data, tielist_str, cutpaste,
+                 specials):
         self.name = name
         self.pos = pos
         nn = self.name.replace("\n", "")
@@ -2204,11 +2390,14 @@ class TabEntry:
         self.addr = addr
         self.type = type
         self.data = data
+        self.specials = specials
 
         # The list of Tie items that we are tied to.
         self.tielist = tielist_str
 
         self.cutpaste = cutpaste
+
+        self.displayheader = True
         pass
 
     def getWidgetHandler(self, parent, num):
@@ -2234,6 +2423,78 @@ class TabEntry:
             del vhash[self.nsname]
             self.type.setSelect(v, h, num)
             pass
+        elif "tone" in self.specials:
+            tt = self.specials["tone"]
+            if tt == "both":
+                v = None
+                if "TxToneMode" in vhash:
+                    found = True
+                    r = vhash["TxToneMode"]
+                    del vhash["TxToneMode"]
+                    if (r == "None"):
+                        v = "None"
+                    elif (r == "Tone"):
+                        v = "Tone"
+                    elif (r == "DCS"):
+                        v = "DCode"
+                        pass
+                    pass
+                if "RxToneMode" in vhash:
+                    found = True
+                    r = vhash["RxToneMode"]
+                    del vhash["RxToneMode"]
+                    if v is None:
+                        v = "None"
+                        pass
+                    if (r == "Tone"):
+                        if (v == "Tone"):
+                            v = "T-SQL"
+                        elif (v == "DCode"):
+                            v = "TDCS"
+                            pass
+                        pass
+                    elif (r == "DCS"):
+                        if (v == "Tone"):
+                            v = "DTone"
+                        elif (v == "DCode"):
+                            v = "DCS"
+                            pass
+                        pass
+                        
+                    pass
+                if v:
+                    self.type.setSelect(v, h, num)
+                    pass
+                pass
+            elif tt == "rx":
+                if "ToneMode" in vhash:
+                    v = vhash["ToneMode"]
+                    # Don't delete, tx tone might need it
+                    if ((v == "T-SQL") or (v == "DTone")):
+                        v = "Tone"
+                    elif ((v == "DCS") or (v == "TDCS")):
+                        v = "DCS"
+                    else:
+                        v = "None"
+                        pass
+                    self.type.setSelect(v, h, num)
+                    pass
+                pass
+            elif tt == "tx":
+                if "ToneMode" in vhash:
+                    v = vhash["ToneMode"]
+                    # Don't delete, rx tone might need it
+                    if ((v == "T-SQL") or (v == "Tone") or (v == "TDCS")):
+                        v = "Tone"
+                    elif ((v == "DCS") or (v == "DCode") or (v == "DTone")):
+                        v = "DCS"
+                    else:
+                        v = "None"
+                        pass
+                    self.type.setSelect(v, h, num)
+                    pass
+                pass
+            pass
         return
     
     pass
@@ -2246,10 +2507,52 @@ class TabBase:
         self.entries = []
         return
 
-    def addItem(self, c, name, addr, type, tielist_str, cutpaste):
+    def addItem(self, c, name, addr, type, opts):
         type.checkAddrOk(c, addr)
+
+        ties = []
+        cutpaste = True
+        specials = { }
+        for i in opts:
+            s = i.split('=', 1)
+            if len(s) != 2:
+                raise ParseException(c.filename, c.lineno,
+                                     "Invalid option, no '=': " + i)
+            if (s[0] == "tie"):
+                ties.append(Tie(s[1], "normal"))
+            elif s[0].startswith("tie("):
+                if not s[0].endswith(")"):
+                    raise ParseException(c.filename, c.lineno,
+                                         "tie type does not end with ')'")
+                tietype = s[0][4:len(s[0])-1]
+                ties.append(Tie(s[1], tietype))
+            elif (s[0] == "cutpaste"):
+                if (s[1].lower() == "true"):
+                    cutpaste = True
+                elif (s[1].lower() == "false"):
+                    cutpaste = False
+                else:
+                    raise ParseException(c.filename, c.lineno,
+                                         "cutpaste takes true or false")
+            elif (s[0] == "tone"):
+                if (s[1] == "rx"):
+                    specials["tone"] = "rx"
+                elif (s[1] == "tx"):
+                    specials["tone"] = "tx"
+                elif (s[1] == "both"):
+                    specials["tone"] = "both"
+                else:
+                    raise ParseException(c.filename, c.lineno,
+                                         "tone takes rx, tx, or both")
+                pass
+            else:
+                raise ParseException(c.filename, c.lineno,
+                                     "Invalid option: " + i);
+            pass
+            
         self.entries.append(TabEntry(name, len(self.entries), addr,
-                                     type, c.filedata, tielist_str, cutpaste))
+                                     type, c.filedata, ties, cutpaste,
+                                     specials))
         return
     
     def finalize(self, c):
@@ -2307,36 +2610,7 @@ class List(TabBase):
         if (len(v) < 3):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for list entry")
-        ties = []
-        cutpaste = True
-        for i in v[3:]:
-            s = i.split('=', 1)
-            if len(s) != 2:
-                raise ParseException(c.filename, c.lineno,
-                                     "Invalid option, no '=': " + i)
-            if (s[0] == "tie"):
-                ties.append(Tie(s[1], "normal"))
-            elif s[0].startswith("tie("):
-                if not s[0].endswith(")"):
-                    raise ParseException(c.filename, c.lineno,
-                                         "tie type does not end with ')'")
-                tietype = s[0][4:len(s[0])-1]
-                ties.append(Tie(s[1], tietype))
-            elif (s[0] == "cutpaste"):
-                if (s[1].lower() == "true"):
-                    cutpaste = True
-                elif (s[1].lower() == "false"):
-                    cutpaste = False
-                else:
-                    raise ParseException(c.filename, c.lineno,
-                                         "cutpaste take true or false")
-            else:
-                raise ParseException(c.filename, c.lineno,
-                                     "Invalid option: " + i);
-            pass
-            
-        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), ties,
-                     cutpaste)
+        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), v[3:])
         pass
 
     def bindWidget(self, widget):
@@ -2393,8 +2667,10 @@ class List(TabBase):
         i = 1
         for e in self.entries:
             e.column = i
-            self.list.header_create(i, text=e.name)
-            self.list.column_width(i, "")
+            if (e.type.displayheader):
+                self.list.header_create(i, text=e.name)
+                self.list.column_width(i, "")
+                pass
             i += 1
             pass
 
@@ -2710,31 +2986,9 @@ class Tab(TabBase):
         if (len(v) < 3):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for tab entry");
-        ties = []
-        cutpaste = True
-        for i in v[3:]:
-            s = i.split('=', 1)
-            if len(s) != 2:
-                raise ParseException(c.filename, c.lineno,
-                                     "Invalid option, no '=': " + i)
-            if (s[0] == "tie"):
-                ties.append(Tie(s[1], "normal"))
-            elif (s[0] == "cutpaste"):
-                if (s[1].lower() == "true"):
-                    cutpaste = True
-                elif (s[1].lower() == "false"):
-                    cutpaste = False
-                else:
-                    raise ParseException(c.filename, c.lineno,
-                                         "cutpaste take true or false")
-            else:
-                raise ParseException(c.filename, c.lineno,
-                                     "Invalid option: " + i);
-            pass
 
-        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), ties,
-                     cutpaste)
-        pass
+        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), v[3:])
+        return
 
     def bindWidget(self, widget):
         widget.bind("<MouseWheel>", self.Wheel)
@@ -2859,10 +3113,11 @@ class RadioConfig:
             self.lineno = parent.lineno
         else:
             self.types = [ BIBCDFreq(),
-                           BICheckBox(), BIYaesuString(),
+                           BICheckBox(), BIRCheckBox(), BIYaesuString(),
                            BIString(), BuiltIn("Empty"),
                            BIHex(), BIInt(), BIFixed(),
-                           BIFixedFreq(), BIDummy() ]
+                           BIFixedFreq(), BIDummy(), BIDummy857A(),
+                           BIDummy857B(), BISetToZero() ]
             self.infile = open(filename, "r")
             self.lineno = LineNum()
             pass

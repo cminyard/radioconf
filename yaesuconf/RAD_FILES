@@ -133,6 +133,16 @@ Empty - Used as an empty placeholder in lists, to display a string
 Dummy - This will not be displayed, but it can be used to pull bits or
 	parts of bits from another field for use in ties.
 
+SetToZero - This forces fields to be zero.  It takes a normal tie, which
+	causes it to be set when the value is non-zero.
+
+Dummy857A - There are fields in the 857 memory structure that must be set
+	to certain values based upon the frequency (and, in the TX case
+	are only set when split is enabled).  This type handles that,
+	with the appropriate frequency and offset ties.
+
+Dummy857B - There is a bit in the 857 that must be set in HF mode and cleared
+	in VHF and up modes.  This type handles that.
 
 User defined types
 ------------------
@@ -240,6 +250,9 @@ tie[(<type>)]=<name> - name is the name of another entry in the same
 cutpaste=[true|false] - If cutpaste is set to false, the particular item
   will not be cut or pasted.  Useful for items that represent the same
   data, no need to send both of them over.  The default is true.
+
+tone=[rx|tx|both] - If this is a tone/DCS mode handler, you should
+  set this and follow the rules.
 
 Multis
 ------

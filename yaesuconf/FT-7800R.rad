@@ -633,7 +633,7 @@ list Memories 1000
 	"Offset\nFreq"		(0x4d3,0,16,128)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
 	"Offset\nFTab"		(0x4d3,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
-	"Tone\nMode"		(0x4cc,0,4,128)		ToneMode_e
+	"Tone\nMode"		(0x4cc,0,4,128)		ToneMode_e tone=both
 	"CTCSS\nTone"		(0x4d0,0,6,128)		CTCSS_e
 	"DCS\nCode"		(0x4d1,0,8,128)		DCSCode_e
 	"Xmit\nPower"		(0x4d0,6,2,128)		XmitPower_e
@@ -674,7 +674,7 @@ list VFOs 5 "VHF" "250MHz" "350MHz" "UHF" "850MHz"
 	"Offset\nFreq"		(0x53,0,16,128)		Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
 	"Offset\nFTab"		(0x53,0,16,128)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
-	"Tone\nMode"		(0x4c,0,3,128)		ToneMode_e
+	"Tone\nMode"		(0x4c,0,3,128)		ToneMode_e tone=both
 	"CTCSS\nTone"		(0x50,0,6,128)		CTCSS_e
 	"DCS\nCode"		(0x51,0,8,128)		DCSCode_e
 	"Xmit\nPower"		(0x50,6,2,128)		XmitPower_e
@@ -694,7 +694,7 @@ list Home 5 "VHF" "250MHz" "350MHz" "UHF" "850MHz"
 	"Offset\nFreq"		(0x1d3,0,16,128)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
 	"Offset\nFTab"		(0x1d3,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
-	"Tone\nMode"		(0x1cc,0,3,128)		ToneMode_e
+	"Tone\nMode"		(0x1cc,0,3,128)		ToneMode_e tone=both
 	"CTCSS\nTone"		(0x1d0,0,6,128)		CTCSS_e
 	"DCS\nCode"		(0x1d1,0,8,128)		DCSCode_e
 	"Xmit\nPower"		(0x1d0,6,2,128)		XmitPower_e
@@ -730,7 +730,7 @@ multi HyperMem
 	"Offset\nFreq"		(0x253,0,16,128)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
 	"Offset\nFTab"		(0x253,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
-	"Tone\nMode"		(0x24c,0,3,128)		ToneMode_e
+	"Tone\nMode"		(0x24c,0,3,128)		ToneMode_e tone=both
 	"CTCSS\nTone"		(0x250,0,6,128)		CTCSS_e
 	"DCS\nCode"		(0x251,0,8,128)		DCSCode_e
 	"Xmit\nPower"		(0x250,6,2,128)		XmitPower_e
@@ -765,7 +765,7 @@ multi HyperMem
 	"Offset\nFreq"		(0x2d3,0,16,128)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
 	"Offset\nFTab"		(0x2d3,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
-	"Tone\nMode"		(0x2cc,0,3,128)		ToneMode_e
+	"Tone\nMode"		(0x2cc,0,3,128)		ToneMode_e tone=both
 	"CTCSS\nTone"		(0x2d0,0,6,128)		CTCSS_e
 	"DCS\nCode"		(0x2d1,0,8,128)		DCSCode_e
 	"Xmit\nPower"		(0x2d0,6,2,128)		XmitPower_e
@@ -800,7 +800,7 @@ multi HyperMem
 	"Offset\nFreq"		(0x353,0,16,128)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
 	"Offset\nFTab"		(0x353,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
-	"Tone\nMode"		(0x34c,0,3,128)		ToneMode_e
+	"Tone\nMode"		(0x34c,0,3,128)		ToneMode_e tone=both
 	"CTCSS\nTone"		(0x350,0,6,128)		CTCSS_e
 	"DCS\nCode"		(0x351,0,8,128)		DCSCode_e
 	"Xmit\nPower"		(0x350,6,2,128)		XmitPower_e
@@ -835,7 +835,7 @@ multi HyperMem
 	"Offset\nFreq"		(0x3d3,0,16,128)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
 	"Offset\nFTab"		(0x3d3,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
-	"Tone\nMode"		(0x3cc,0,3,128)		ToneMode_e
+	"Tone\nMode"		(0x3cc,0,3,128)		ToneMode_e tone=both
 	"CTCSS\nTone"		(0x3d0,0,6,128)		CTCSS_e
 	"DCS\nCode"		(0x3d1,0,8,128)		DCSCode_e
 	"Xmit\nPower"		(0x3d0,6,2,128)		XmitPower_e
@@ -870,7 +870,7 @@ multi HyperMem
 	"Offset\nFreq"		(0x453,0,16,128)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
 	"Offset\nFTab"		(0x453,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
-	"Tone\nMode"		(0x44c,0,3,128)		ToneMode_e
+	"Tone\nMode"		(0x44c,0,3,128)		ToneMode_e tone=both
 	"CTCSS\nTone"		(0x450,0,6,128)		CTCSS_e
 	"DCS\nCode"		(0x451,0,8,128)		DCSCode_e
 	"Xmit\nPower"		(0x450,6,2,128)		XmitPower_e
@@ -911,7 +911,7 @@ list Low_Lim 50
 	"Offset\nFreq"		(0x4353,0,16,256)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
 	"Offset\nFTab"		(0x4035,0,16,256)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
-	"Tone\nMode"		(0x434c,0,3,256)	ToneMode_e
+	"Tone\nMode"		(0x434c,0,3,256)	ToneMode_e tone=both
 	"CTCSS\nTone"		(0x4350,0,6,256)	CTCSS_e
 	"DCS\nCode"		(0x4351,0,8,256)	DCSCode_e
 	"Xmit\nPower"		(0x4350,6,2,256)	XmitPower_e
@@ -934,7 +934,7 @@ list Up_Lim 50
 	"Offset\nFreq"		(0x4363,0,16,256)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
 	"Offset\nFTab"		(0x4363,0,16,256)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
-	"Tone\nMode"		(0x435c,0,3,256)	ToneMode_e
+	"Tone\nMode"		(0x435c,0,3,256)	ToneMode_e tone=both
 	"CTCSS\nTone"		(0x4360,0,6,256)	CTCSS_e
 	"DCS\nCode"		(0x4361,0,8,256)	DCSCode_e
 	"Xmit\nPower"		(0x4360,6,2,256)	XmitPower_e
@@ -952,7 +952,7 @@ list Current 1
 	"Offset\nFreq"		(0x13,0,16)		Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
 	"Offset\nFTab"		(0x13,0,16)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
-	"Tone\nMode"		(0xc,0,3)		ToneMode_e
+	"Tone\nMode"		(0xc,0,3)		ToneMode_e tone=both
 	"CTCSS\nTone"		(0x10,0,6)		CTCSS_e
 	"DCS\nCode"		(0x11,0,8)		DCSCode_e
 	"Xmit\nPower"		(0x10,6,2)		XmitPower_e

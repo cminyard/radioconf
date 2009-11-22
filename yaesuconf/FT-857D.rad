@@ -174,10 +174,10 @@ enum ReceiveMode_e
 endenum
 
 enum OffsetDir_e
-	0 "smplx"
-	1 "-"
-	2 "+"
-	3 "split"
+	0x0 "smplx"
+	0x1 "-"
+	0x2 "+"
+	0xf "split"
 endenum
 
 # This is a helper for convenient values, the real value is a fixed-point
@@ -231,17 +231,17 @@ enum ToneMode_e
 endenum
 
 list Memories 200
-        "Enable"		(0x04ab,0,1,1)		CheckBox
-	"Label\nEnable"		(0x04e1,7,1,224)	CheckBox
+        "Enable"		(0x04ab,0,1,1)		CheckBox tie=Zero1 tie=Zero2
+	"Label\nEnable"		(0x04e1,6,1,224)	RCheckBox
 	"Label"			(0x04f5,0,64,224)	String(10)
 	"Mode"			(0x04e1,0,3,224)	ReceiveMode_e
-	"Rx\nFreq"		(0x04ed,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie(basefreq)=Tx\nFreq"
-	"Offset\nDirect"	(0x04e2,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab"
-	"Tx\nFreq"		(0x04f1,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie=Offset\nFTab"
+	"Rx\nFreq"		(0x04ed,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie(basefreq)=Tx\nFreq" "tie(basefreq)=Dummy2" "tie(basefreq)=Dummy3"
+	"Offset\nDirect"	(0x04e6,3,1,224:0x04e6,5,1,224:0x04e2,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab" "tie(offset)=Dummy1"
+	"Tx\nFreq"		(0x04f1,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie=Offset\nFTab" "tie(basefreq)=Dummy1"
 	"Offset\nFTab"		(0x04f1,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
 	"Split\nTone"		(0x04e5,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
-	"Rx Tone\nMode"		(0x04e5,0,2,224)	ToneMode_e
-	"Tx Tone\nMode"		(0x04e5,2,2,224)	ToneMode_e
+	"Rx Tone\nMode"		(0x04e5,0,2,224)	ToneMode_e tone=rx
+	"Tx Tone\nMode"		(0x04e5,2,2,224)	ToneMode_e tone=tx
 	"CTCSS\nTone"		(0x04e7,0,8,224)	CTCSS_e
 	"Rx\nTone"		(0x04e8,0,8,224)	CTCSS_e
 	"DCS\nCode"		(0x04e9,0,8,224)	DCSCode_e
@@ -252,6 +252,11 @@ list Memories 200
 	"FM\nStep"		(0x04e4,0,3,224)	FMStep_e
 	"AM\nStep"		(0x04e4,3,3,224)	AMStep_e
 	"SSB/CW\nStep"		(0x04e4,6,2,224)	SSBCWStep_e
+	"Dummy1"		(0x04e6,0,3,224)	Dummy857A
+	"Dummy2"		(0x04e1,5,1,224)	Dummy857B
+	"Zero1"			(0x04e1,3,2,224:0x04e2,3,3,224:0x04e3,0,3,224:0x04e3,6,1,224:0x04e5,5,3,224:0x04e6,4,1,224:0x04e6,6,2,224) SetToZero
+	"Zero2"			(0x04eb,0,8,224:0x04ec,0,8,224) SetToZero
+	"Dummy3"		(0x04e2,0,3,224)	Dummy857A
 endlist
 
 list VFOa 16 160m 80m 60m 40m 30m 20m 17m 15m 12m 10m 6m FM 118MHz VHF UHF 15MHz
@@ -261,8 +266,8 @@ list VFOa 16 160m 80m 60m 40m 30m 20m 17m 15m 12m 10m 6m FM 118MHz VHF UHF 15MHz
 	"Tx\nFreq"		(0x0066,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie=Offset\nFTab"
 	"Offset\nFTab"		(0x0066,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
 	"Split\nTone"		(0x005a,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
-	"Rx Tone\nMode"		(0x005a,0,2,224)	ToneMode_e
-	"Tx Tone\nMode"		(0x005a,2,2,224)	ToneMode_e
+	"Rx Tone\nMode"		(0x005a,0,2,224)	ToneMode_e tone=rx
+	"Tx Tone\nMode"		(0x005a,2,2,224)	ToneMode_e tone=tx
 	"Tx\nTone"		(0x005c,0,8,224)	CTCSS_e
 	"Rx\nTone"		(0x005d,0,8,224)	CTCSS_e
 	"Tx\nCode"		(0x005e,0,8,224)	DCSCode_e
@@ -281,8 +286,8 @@ list VFOb 16
 	"Tx\nFreq"		(0x0226,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie=Offset\nFTab"
 	"Offset\nFTab"		(0x0226,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
 	"Split\nTone"		(0x021a,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
-	"Rx Tone\nMode"		(0x021a,0,2,224)	ToneMode_e
-	"Tx Tone\nMode"		(0x021a,2,2,224)	ToneMode_e
+	"Rx Tone\nMode"		(0x021a,0,2,224)	ToneMode_e tone=rx
+	"Tx Tone\nMode"		(0x021a,2,2,224)	ToneMode_e tone=tx
 	"Tx\nTone"		(0x021c,0,8,224)	CTCSS_e
 	"Rx\nTone"		(0x021d,0,8,224)	CTCSS_e
 	"Tx\nCode"		(0x021e,0,8,224)	DCSCode_e
@@ -301,8 +306,8 @@ list Home 1
 	"Tx\nFreq"		(0x0456,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie=Offset\nFTab"
 	"Offset\nFTab"		(0x0456,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
 	"Split\nTone"		(0x044a,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
-	"Rx Tone\nMode"		(0x044a,0,2,224)	ToneMode_e
-	"Tx Tone\nMode"		(0x044a,2,2,224)	ToneMode_e
+	"Rx Tone\nMode"		(0x044a,0,2,224)	ToneMode_e tone=rx
+	"Tx Tone\nMode"		(0x044a,2,2,224)	ToneMode_e tone=tx
 	"Tx\nTone"		(0x044c,0,8,224)	CTCSS_e
 	"Rx\nTone"		(0x044d,0,8,224)	CTCSS_e
 	"Tx\nCode"		(0x044e,0,8,224)	DCSCode_e
