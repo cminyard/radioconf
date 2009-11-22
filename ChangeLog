@@ -1,5 +1,12 @@
 2009-11-22  Corey Minyard <minyard@acm.org>
 
+	* yaesu_edit.py: Fix a pasting problem with checkboxes and
+	some select/paste problems.
+
+	* configure.in: Move to version 0.6.
+
+2009-11-21  Corey Minyard <minyard@acm.org>
+
 	* yaesuconf/RAD_FILES: Document the changes.
 
 	* yaesu_edit.py.in, yaesuconf/FT-857D.rad: There were strange
