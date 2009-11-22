@@ -1464,9 +1464,9 @@ class BIFixedFreq(BIFixed):
     
 
 class BICheckBox(BuiltIn):
-    def __init__(self, name="CheckBox"):
+    def __init__(self, name="CheckBox", reverse=False):
         BuiltIn.__init__(self, name)
-        self.reverse = False
+        self.reverse = reverse
         pass
 
     def getWidgetHandler(self, parent, t, num):
@@ -1542,21 +1542,14 @@ class BICheckBox(BuiltIn):
             v = 0
         elif (v == "1"):
             v = 1
-            pass
+        else:
+            return
         if self.reverse:
             v = ~v & 1
             pass
-            t.data.set_bits(v, t.addr, num)
+        t.data.set_bits(v, t.addr, num)
         pass
     
-    pass
-
-class BIRCheckBox(BICheckBox):
-    def __init__(self):
-        BICheckBox.__init__(self, "RCheckBox")
-        self.reverse = True
-        pass
-
     pass
 
 class BIYaesuString(BuiltIn):
@@ -2719,7 +2712,7 @@ class List(TabBase):
             pass
         if (offset > self.last_selection_len):
             return ""
-        elif ((offset + length) > self.last_selection_len) :
+        elif ((offset + length) <= self.last_selection_len) :
             return self.last_selection[offset:offset + length]
         else:
             s = self.last_selection[offset:]
@@ -3113,7 +3106,9 @@ class RadioConfig:
             self.lineno = parent.lineno
         else:
             self.types = [ BIBCDFreq(),
-                           BICheckBox(), BIRCheckBox(), BIYaesuString(),
+                           BICheckBox(),
+                           BICheckBox(name="RCheckBox", reverse=True),
+                           BIYaesuString(),
                            BIString(), BuiltIn("Empty"),
                            BIHex(), BIInt(), BIFixed(),
                            BIFixedFreq(), BIDummy(), BIDummy857A(),
