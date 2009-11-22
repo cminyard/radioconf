@@ -232,7 +232,8 @@ endenum
 
 list Memories 200
         "Enable"		(0x04ab,0,1,1)		CheckBox tie=Zero1 tie=Zero2
-	"Label\nEnable"		(0x04e1,6,1,224)	RCheckBox
+	"Label\nEnable"		(0x04e1,7,1,224)	CheckBox
+	"Label\nValid"		(0x04e1,6,1,224)	RCheckBox
 	"Label"			(0x04f5,0,64,224)	String(10)
 	"Mode"			(0x04e1,0,3,224)	ReceiveMode_e
 	"Rx\nFreq"		(0x04ed,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie(basefreq)=Tx\nFreq" "tie(basefreq)=Dummy2" "tie(basefreq)=Dummy3"
