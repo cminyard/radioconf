@@ -17,6 +17,13 @@
 
 	* yaesuconf/RAD_FILES: Clean up the docs a little.
 
+	* yaesu_edit.py.in: When creating a new file, make sure it
+	doesn't save back to the empty file automatically.
+
+	* yaesu_edit.py.in: Fix some selection problems.
+
+	* yaesu_edit.py.in: Fix BCDFreq to properly handle 2.5kHz steps.
+
 2009-11-22  Corey Minyard <minyard@acm.org>
 
 	* yaesu_edit.py.in: Fix a pasting problem with checkboxes and

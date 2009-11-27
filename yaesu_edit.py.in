@@ -1606,7 +1606,6 @@ def convFromBCD(v):
     return decimal_digits[v]
 
 # Yaesu BCD format for frequency, see FT60-layout.txt
-# FIXME - This does not properly do the 2.5kHz steps.
 class BIBCDFreq(YType):
     def __init__(self):
         YType.__init__(self, "BCDFreq")
@@ -1634,7 +1633,7 @@ class BIBCDFreq(YType):
         s = data.get_bytes(addr, num)
         v = [ ]
         i = 0
-        add5 = s[i] >> 4
+        add5 = s[i] >> 6
         v.append(convFromBCD(s[i] & 0xf))
         i += 1
         numbytes = 3
@@ -1643,10 +1642,14 @@ class BIBCDFreq(YType):
             v.append(convFromBCD(s[i] & 0xf))
             i += 1
             pass
-        if (add5):
-            v.append('5')
+        if (add5 == 0x0):
+            v.append('0.0')
+        elif (add5 == 0x1):
+            v.append('2.5')
+        elif (add5 == 0x2):
+            v.append('5.0')
         else:
-            v.append('0')
+            v.append('7.5')
             pass
         v.insert(3, '.')
         return "".join(v)
@@ -1657,11 +1660,15 @@ class BIBCDFreq(YType):
         numbytes = addr.entries[0][2] / 8
 
         vlen = len(v)
-        add5 = v[vlen - 1] >= '5'
-        if (add5):
-            d = 0x8
+        add5 = v[vlen - 3]
+        if (add5 < '2'):
+            d = 0x0
+        elif (add5 < '4'):
+            d = 0x1 << 2
+        elif (add5 < '7'):
+            d = 0x2 << 2
         else:
-            d = 0
+            d = 0x3 << 2
             pass
         second = True
         i = 0
@@ -1716,6 +1723,7 @@ class BIBCDFreq(YType):
                         break
                     pass
                 if (freq):
+                    freq = freq[0:7] + freq[8]
                     freq = float(freq)
                     if (off != 'smplx'):
                         # It's a + or - offset, add/sub the offset frequency
@@ -1761,16 +1769,16 @@ class BIBCDFreq(YType):
                         pre = 999
                         post = 999
                         pass
-                    if (len(post) > 4):
-                        post = post[0:3]
+                    if (len(post) > 5):
+                        post = post[0:4]
                         pass
                     while (len(pre) < 3):
                         pre = "0" + pre
                         pass
-                    while (len(post) < 3):
+                    while (len(post) < 4):
                         post += "0"
                         pass
-                    v = pre + "." + post
+                    v = pre + "." + post[0:3] + "." + post[3]
 
                     return v;
                 pass
@@ -1848,16 +1856,22 @@ class BIBCDFreq(YType):
 
         if (cursor == 6):
             # Last digit can only be 0 or 5
-            if (c < '5'):
-                c = '0'
+            if (c < '2'):
+                c = '0.0'
+            elif (c < '4'):
+                c = '2.5'
+            elif (c < '7'):
+                c = '5.0'
             else:
-                c = '5'
+                c = '7.5'
                 pass
             pass
                 
         s = w.get()
         if (s[cursor] != c):
-            w.delete(cursor)
+            for m in c:
+                w.delete(cursor)
+                pass
             w.insert(cursor, c)
             t = h.data
             self.set_bcd(w.get(), t.data, t.addr, h.num, h)
@@ -1874,9 +1888,9 @@ class BIBCDFreq(YType):
         for c in v:
             if ((c != '.') and (c not in decimal_digits)):
                 return
-            if (c == '.'): # Cut off the last .nnn, if present
+            if (c == '.'): # Cut off the last '.', if present
                 if (firstc):
-                    break;
+                    continue
                 firstc = True;
                 pass
             c2.append(c)
@@ -1901,6 +1915,7 @@ class BIBCDFreq(YType):
                         break
                     pass
                 if (bfreq):
+                    bfreq = bfreq[0:7] + bfreq[8]
                     bfreq = float(bfreq)
                     if (off != 'smplx'):
                         # It's a + or - offset, add/sub the offset frequency
@@ -2676,6 +2691,12 @@ class List(TabBase):
         self.list.selection_clear()
         self.list.selection_set(pos1, pos2)
         self.list.selection_own()
+
+        # For some reason, for me, the first one doesn't Actually cause
+        # the display to change, doing it twice seems to fix the problem.
+        self.list.selection_clear()
+        self.list.selection_set(pos1, pos2)
+        self.list.selection_own()
         pass
     
     def Button1(self, event):
@@ -2691,7 +2712,7 @@ class List(TabBase):
             return self.Button1(event)
         line = int(self.list.nearest(event.y))
         pos = line + self.firstdispline
-        if (pos < self.first_select):
+        if (pos <= self.first_select):
             self.first_select = pos
         else:
             self.last_select = pos
@@ -3338,13 +3359,14 @@ class GUI(Tix.Frame):
 
     def open_select(self, filename):
         if (not filename):
-            return
+            return None
         if (not self.fd):
+            g = self
             self.openfile(filename)
         else:
-            GUI(filename, MyTop())
+            g = GUI(filename, MyTop())
             pass
-        return
+        return g
     
     def saveascmd(self, event=None):
         if (not self.fd):
@@ -3352,19 +3374,25 @@ class GUI(Tix.Frame):
         self.saveasdialog.popup()
         pass
 
-    def saveas_select(self, filename):
+    def saveas_select(self, filename=None):
         if (not filename):
             return
         self.fd.write(filename)
         return
     
     def savecmd(self, event=None):
+        if (self.fd.filename is None):
+            return self.saveascmd()
         self.fd.write()
-        pass
+        return
 
     def newradio(self, r):
         filename = radiodir + "/" + r.name + ".empty"
-        self.open_select(filename)
+        g = self.open_select(filename)
+        if g:
+            # Make sure to not save the file back to the empty file.
+            g.fd.filename = None
+            pass
         pass
 
     def createWidgets(self):

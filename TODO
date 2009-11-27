@@ -1,6 +1,5 @@
-Set up altname properly and make it useful.
-
-When creating a new entry, don't make the empty file the default location.
+Allow alternate names to be specified for files to ease cutting and
+pasting.
 
 Bind the save/quit/etc keys so they work in all widgets.
 
