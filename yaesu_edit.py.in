@@ -708,9 +708,7 @@ class BIDummy857A(BIDummy):
                 break
             pass
         if (not bfreq):
-            if (oldv != 0):
-                t.data.set_bits(0, t.addr, num)
-                pass
+            # bfreq should be coming later, don't get it now.
             return
 
         bfreq = int(bfreq)
@@ -3319,6 +3317,10 @@ class MyTop(Tix.Tk):
         self.destroyhandler()
         return
 
+    def realDestroy(self):
+        Tix.Tk.destroy(self)
+        return
+
     pass
 
 class GUI(Tix.Frame):
@@ -3345,12 +3347,25 @@ class GUI(Tix.Frame):
     def openfile(self, filename):
         try:
             self.fd = RadioFileData(filename)
+        except IOError, e:
+            d = Dialog.Dialog(self, title="Open File",
+                              text=str(e),
+                              bitmap="error",
+                              default = 0,
+                              strings=("Ok",))
+            self.fd = None
+            pass
+
+        if (not self.fd):
+            return
+        
+        try:
             self.radioname = find_radio(self.fd.data)
             if (not self.radioname):
                 d = Dialog.Dialog(self, title="Error Finding Radio",
                                   text=("Unable to find a radio that matches"
-                                        + " the file, it is likely not a"
-                                        + " radio save file."),
+                                        + " the file %s, it is likely not a"
+                                        + " radio save file.") % filename,
                                   bitmap="error",
                                   default = 0,
                                   strings=("Ok",))
@@ -3370,7 +3385,7 @@ class GUI(Tix.Frame):
     
     def quitcmd(self, event=None):
         if (not self.fd or not self.fd.changed):
-            self.quit()
+            self.top.realDestroy()
             return
         d = Dialog.Dialog(self, title="Ok to quit?",
                           text=("Unchanged data has not been written, do you"
@@ -3379,7 +3394,7 @@ class GUI(Tix.Frame):
                           default = 1,
                           strings=("Yes","No"))
         if (d.num == 0):
-            self.quit()
+            self.top.realDestroy()
             pass
         pass
 
@@ -3477,14 +3492,16 @@ while len(sys.argv) > 1:
         pass
     pass
 
-if (len(sys.argv) > 1):
-    filename = sys.argv[1]
-else:
-    filename = None
-    pass
-
 read_radios()
 
-gui = GUI(filename, MyTop());
+if (len(sys.argv) > 1):
+    for filename in sys.argv[1:]:
+        gui = GUI(filename, MyTop());
+        pass
+    pass
+else:
+    gui = GUI(None, MyTop());
+    pass
+
 gui.mainloop();
 sys.exit(0)

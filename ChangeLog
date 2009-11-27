@@ -1,6 +1,13 @@
+2009-11-26  Corey Minyard <minyard@acm.org>
+
+	* yaesu_edit.py.in: Clean up the startup and shutdown to properly
+	handle multiple files, closing only one window when one is closed,
+	print out decent errors on invalid files, and fix a problem where
+	the data will be modified.
+
 2009-11-22  Corey Minyard <minyard@acm.org>
 
-	* yaesu_edit.py: Fix a pasting problem with checkboxes and
+	* yaesu_edit.py.in: Fix a pasting problem with checkboxes and
 	some select/paste problems.
 
 	* configure.in: Move to version 0.6.
