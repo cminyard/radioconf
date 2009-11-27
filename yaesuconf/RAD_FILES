@@ -130,18 +130,18 @@ Int(min,max,offset,multiplier,label) - An integer with the given min/max
 Empty - Used as an empty placeholder in lists, to display a string
       in the heading with nothing under it/beside it.
 
-Dummy - This will not be displayed, but it can be used to pull bits or
+Special - This will not be displayed, but it can be used to pull bits or
 	parts of bits from another field for use in ties.
 
 SetToZero - This forces fields to be zero.  It takes a normal tie, which
 	causes it to be set when the value is non-zero.
 
-Dummy857A - There are fields in the 857 memory structure that must be set
+Special857A - There are fields in the 857 memory structure that must be set
 	to certain values based upon the frequency (and, in the TX case
 	are only set when split is enabled).  This type handles that,
 	with the appropriate frequency and offset ties.
 
-Dummy857B - There is a bit in the 857 that must be set in HF mode and cleared
+Special857B - There is a bit in the 857 that must be set in HF mode and cleared
 	in VHF and up modes.  This type handles that.
 
 User defined types

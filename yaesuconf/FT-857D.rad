@@ -236,9 +236,9 @@ list Memories 200
 	"Label\nValid"		(0x04e1,6,1,224)	RCheckBox
 	"Label"			(0x04f5,0,64,224)	String(10)
 	"Mode"			(0x04e1,0,3,224)	ReceiveMode_e
-	"Rx\nFreq"		(0x04ed,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie(basefreq)=Tx\nFreq" "tie(basefreq)=Dummy2" "tie(basefreq)=Dummy3"
-	"Offset\nDirect"	(0x04e6,3,1,224:0x04e6,5,1,224:0x04e2,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab" "tie(offset)=Dummy1"
-	"Tx\nFreq"		(0x04f1,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie=Offset\nFTab" "tie(basefreq)=Dummy1"
+	"Rx\nFreq"		(0x04ed,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie(basefreq)=Tx\nFreq" "tie(basefreq)=Special2" "tie(basefreq)=Special3"
+	"Offset\nDirect"	(0x04e6,3,1,224:0x04e6,5,1,224:0x04e2,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab" "tie(offset)=Special1"
+	"Tx\nFreq"		(0x04f1,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie=Offset\nFTab" "tie(basefreq)=Special1"
 	"Offset\nFTab"		(0x04f1,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
 	"Split\nTone"		(0x04e5,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
 	"Rx Tone\nMode"		(0x04e5,0,2,224)	ToneMode_e tone=rx
@@ -253,11 +253,11 @@ list Memories 200
 	"FM\nStep"		(0x04e4,0,3,224)	FMStep_e
 	"AM\nStep"		(0x04e4,3,3,224)	AMStep_e
 	"SSB/CW\nStep"		(0x04e4,6,2,224)	SSBCWStep_e
-	"Dummy1"		(0x04e6,0,3,224)	Dummy857A
-	"Dummy2"		(0x04e1,5,1,224)	Dummy857B
+	"Special1"		(0x04e6,0,3,224)	Special857A
+	"Special2"		(0x04e1,5,1,224)	Special857B
 	"Zero1"			(0x04e1,3,2,224:0x04e2,3,3,224:0x04e3,0,3,224:0x04e3,6,1,224:0x04e5,5,3,224:0x04e6,4,1,224:0x04e6,6,2,224) SetToZero
 	"Zero2"			(0x04eb,0,8,224:0x04ec,0,8,224) SetToZero
-	"Dummy3"		(0x04e2,0,3,224)	Dummy857A
+	"Special3"		(0x04e2,0,3,224)	Special857A
 endlist
 
 list VFOa 16 160m 80m 60m 40m 30m 20m 17m 15m 12m 10m 6m FM 118MHz VHF UHF 15MHz

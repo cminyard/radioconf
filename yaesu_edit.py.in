@@ -493,7 +493,7 @@ class HandlerTie:
 class Handler:
     """This is an internal type that eases handling events for a type.
     The type objects do not own the data about the particular object
-    they are used to represent, since they are reused fo rmany
+    they are used to represent, since they are reused for many
     different objects.  Instead, when a widget is allocated to handle
     a particular type, one of these is allocated to hold that data and
     deliver it to the type object."""
@@ -574,7 +574,7 @@ def rewriteEntry(w, v):
         pass
     return
 
-class BuiltIn:
+class YType:
     def __init__(self, name):
         self.name = name
         self.displayheader = True
@@ -642,9 +642,9 @@ class BuiltIn:
     
     pass
 
-class BIDummy(BuiltIn):
-    def __init__(self, name="Dummy"):
-        BuiltIn.__init__(self, name)
+class BISpecial(YType):
+    def __init__(self, name="Special"):
+        YType.__init__(self, name)
         self.displayheader = False
         pass
 
@@ -670,9 +670,9 @@ class BIDummy(BuiltIn):
     
     pass
 
-class BIDummy857A(BIDummy):
-    def __init__(self, name="Dummy857A"):
-        BIDummy.__init__(self, name)
+class BISpecial857A(BISpecial):
+    def __init__(self, name="Special857A"):
+        BISpecial.__init__(self, name)
         return
 
     def newTie(self, myh, fromh, tie):
@@ -741,9 +741,9 @@ class BIDummy857A(BIDummy):
 
     pass        
 
-class BIDummy857B(BIDummy):
-    def __init__(self, name="Dummy857B"):
-        BIDummy.__init__(self, name)
+class BISpecial857B(BISpecial):
+    def __init__(self, name="Special857B"):
+        BISpecial.__init__(self, name)
         return
 
     def newTie(self, myh, fromh, tie):
@@ -777,9 +777,9 @@ class BIDummy857B(BIDummy):
 
     pass        
 
-class BISetToZero(BIDummy):
+class BISetToZero(BISpecial):
     def __init__(self, name="SetToZero"):
-        BIDummy.__init__(self, name)
+        BISpecial.__init__(self, name)
         return
 
     def newTie(self, myh, fromh, tie):
@@ -812,9 +812,9 @@ class BISetToZero(BIDummy):
 
     pass        
 
-class BIInt(BuiltIn):
+class BIInt(YType):
     def __init__(self, name="Int"):
-        BuiltIn.__init__(self, name)
+        YType.__init__(self, name)
         return
 
     def setup(self, minval, maxval, offset, multi, units):
@@ -864,7 +864,7 @@ class BIInt(BuiltIn):
         return h
 
     def renumWidget(self, h, num):
-        BuiltIn.renumWidget(self, h, num)
+        YType.renumWidget(self, h, num)
         h.num = num
         t = h.data
         v = t.data.get_bits(t.addr, num)
@@ -970,9 +970,9 @@ class BIInt(BuiltIn):
 
     pass
 
-class BIString(BuiltIn):
+class BIString(YType):
     def __init__(self, name="String", width=10):
-        BuiltIn.__init__(self, name)
+        YType.__init__(self, name)
         self.width = width
         pass
 
@@ -1052,7 +1052,7 @@ class BIString(BuiltIn):
         return h
 
     def renumWidget(self, h, num):
-        BuiltIn.renumWidget(self, h, num)
+        YType.renumWidget(self, h, num)
         h.num = num
         t = h.data
         rewriteEntry(h.widget, self.get_string(t.data, t.addr, num));
@@ -1084,9 +1084,9 @@ class BIString(BuiltIn):
     pass
 
 
-class BIFixed(BuiltIn):
+class BIFixed(YType):
     def __init__(self, name="Fixed", width=10):
-        BuiltIn.__init__(self, name)
+        YType.__init__(self, name)
         self.width = width
         pass
 
@@ -1167,7 +1167,7 @@ class BIFixed(BuiltIn):
         return
     
     def renumWidget(self, h, num):
-        BuiltIn.renumWidget(self, h, num)
+        YType.renumWidget(self, h, num)
         h.num = num
         v = self.getBits(h, num)
         rewriteEntry(h.widget, self.conv_to_str(v))
@@ -1312,7 +1312,7 @@ class BIFixedFreq(BIFixed):
         elif (tie.tietype == "freqoff"):
             myh.offfreqtie.append(fromh)
         else:
-            BuiltIn.newTie(self, myh, fromh, tie)
+            YType.newTie(self, myh, fromh, tie)
             pass
         if (myh.widget):
             self.redisplay(myh)
@@ -1461,9 +1461,9 @@ class BIFixedFreq(BIFixed):
     pass
     
 
-class BICheckBox(BuiltIn):
+class BICheckBox(YType):
     def __init__(self, name="CheckBox", reverse=False):
-        BuiltIn.__init__(self, name)
+        YType.__init__(self, name)
         self.reverse = reverse
         pass
 
@@ -1485,7 +1485,7 @@ class BICheckBox(BuiltIn):
         return h
 
     def renumWidget(self, h, num):
-        BuiltIn.renumWidget(self, h, num)
+        YType.renumWidget(self, h, num)
         h.num = num
         t = h.data
         v = t.data.get_bits(t.addr, num)
@@ -1550,9 +1550,9 @@ class BICheckBox(BuiltIn):
     
     pass
 
-class BIYaesuString(BuiltIn):
+class BIYaesuString(YType):
     def __init__(self, name="YaesuString", width=10):
-        BuiltIn.__init__(self, name)
+        YType.__init__(self, name)
         self.width = width
         pass
 
@@ -1635,7 +1635,7 @@ class BIYaesuString(BuiltIn):
         return h
 
     def renumWidget(self, h, num):
-        BuiltIn.renumWidget(self, h, num)
+        YType.renumWidget(self, h, num)
         h.num = num
         t = h.data
         rewriteEntry(h.widget, self.get_yaesu_string(t.data, t.addr, num))
@@ -1673,9 +1673,9 @@ def convFromBCD(v):
 
 # Yaesu BCD format for frequency, see FT60-layout.txt
 # FIXME - This does not properly do the 2.5kHz steps.
-class BIBCDFreq(BuiltIn):
+class BIBCDFreq(YType):
     def __init__(self):
-        BuiltIn.__init__(self, "BCDFreq")
+        YType.__init__(self, "BCDFreq")
         pass
 
     def checkAddrOk(self, c, addr):
@@ -1845,7 +1845,7 @@ class BIBCDFreq(BuiltIn):
         return self.get_bcd(t.data, t.addr, num)
 
     def renumWidget(self, h, num):
-        BuiltIn.renumWidget(self, h, num)
+        YType.renumWidget(self, h, num)
         off = None
         for m in h.offtie:
             off = m.getValue(num)
@@ -1874,7 +1874,7 @@ class BIBCDFreq(BuiltIn):
             myh.offfreqtie.append(fromh)
             pass
         else:
-            BuiltIn.newTie(self, myh, fromh, tie)
+            YType.newTie(self, myh, fromh, tie)
             pass
         if myh.widget:
             self.redisplay(myh)
@@ -2007,9 +2007,9 @@ def convFromHex(v):
         return '0'
     return hex_digits[v]
 
-class BIHex(BuiltIn):
+class BIHex(YType):
     def __init__(self):
-        BuiltIn.__init__(self, "HexDigits")
+        YType.__init__(self, "HexDigits")
         pass
 
     def checkAddrOk(self, c, addr):
@@ -2075,7 +2075,7 @@ class BIHex(BuiltIn):
         return h
 
     def renumWidget(self, h, num):
-        BuiltIn.renumWidget(self, h, num)
+        YType.renumWidget(self, h, num)
         h.num = num
         t = h.data
         v = self.get_hex(t.data, t.addr, num)
@@ -2150,9 +2150,9 @@ class EnumEntry:
         return
     pass
 
-class Enum(BuiltIn):
+class Enum(YType):
     def __init__(self, name):
-        BuiltIn.__init__(self, name)
+        YType.__init__(self, name)
         self.entries = []
         pass
 
@@ -2202,7 +2202,7 @@ class Enum(BuiltIn):
         pass
 
     def renumWidget(self, toph, num):
-        BuiltIn.renumWidget(self, toph, num)
+        YType.renumWidget(self, toph, num)
         toph.num = num
         t = toph.data
         v = t.data.get_bits(t.addr, num)
@@ -2253,9 +2253,9 @@ class SListEntry:
         return
     pass
 
-class SList(BuiltIn):
+class SList(YType):
     def __init__(self, name):
-        BuiltIn.__init__(self, name)
+        YType.__init__(self, name)
         self.entries = []
         pass
 
@@ -2313,7 +2313,7 @@ class SList(BuiltIn):
         pass
 
     def renumWidget(self, h, num):
-        BuiltIn.renumWidget(self, h, num)
+        YType.renumWidget(self, h, num)
         h.num = num
         t = h.data
         v = t.data.get_bits(t.addr, num)
@@ -3107,10 +3107,10 @@ class RadioConfig:
                            BICheckBox(),
                            BICheckBox(name="RCheckBox", reverse=True),
                            BIYaesuString(),
-                           BIString(), BuiltIn("Empty"),
+                           BIString(), YType("Empty"),
                            BIHex(), BIInt(), BIFixed(),
-                           BIFixedFreq(), BIDummy(), BIDummy857A(),
-                           BIDummy857B(), BISetToZero() ]
+                           BIFixedFreq(), BISpecial(), BISpecial857A(),
+                           BISpecial857B(), BISetToZero() ]
             self.infile = open(filename, "r")
             self.lineno = LineNum()
             pass

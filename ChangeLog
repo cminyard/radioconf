@@ -5,6 +5,12 @@
 	print out decent errors on invalid files, and fix a problem where
 	the data will be modified.
 
+	* yaesu_edit.py.in: Rename BuiltIn to YType.
+
+	* yaesu_edit.py.in, FT-857D.layout, yaesuconf/RAD_FILES,
+	yaesuconf/FT-857.rad: Renamed "Dummy" to "Special".
+	
+
 2009-11-22  Corey Minyard <minyard@acm.org>
 
 	* yaesu_edit.py.in: Fix a pasting problem with checkboxes and

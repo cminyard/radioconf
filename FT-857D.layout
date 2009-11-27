@@ -42,8 +42,9 @@ DCS code
 A memory is a 28 byte field:
     byte 0 - bits 0-2 - Mode - 0=LSB, 1=USB, 2=CW, 3=CWR, 4=AM, 5=FM, 6=DIG
     	     	  7 = PKT
-	   - bit 5 - Set for <50MHz, clear for >=50MHz
- 	   - bit 6 - Label not valid?
+	   - bit 5 - Set for <50MHz, clear for >=50MHz (This is Special857B
+			in the RAD file)
+ 	   - bit 6 - Label not valid
     	   - bit 7 - Alphanumeric tag is enabled (MFb-C)
 
     byte 1 = bits 0-2 - 0 for HF, 1=50MHz, 2=88MHz, 3=118MHz, 4=VHF,
