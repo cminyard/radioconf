@@ -252,74 +252,6 @@ class RadioFileData:
 
     # The get and set routine throw IndexError if out of range.
     
-    def get_bits_le(self, addr, num):
-        v = 0
-        for a in addr.entries:
-            byte_off = a[0]
-            bit_off = a[1] + a[3] * num
-            byte_off += bit_off / 8
-            bit_off %= 8
-            numbits = a[2]
-            v <<= numbits
-            
-            x = self.data[byte_off] >> bit_off
-            bits = 8 - bit_off
-            shift = bit_off
-            while (bits < numbits):
-                byte_off += 1
-                x |= self.data[byte_off] << shift
-                shift += 8
-                bits += 8
-                pass
-            v |= x & ~(0xffffffff << numbits)
-            pass
-        return v
-
-    def set_bits_le(self, vt, addr, num):
-        self.changed = True
-        bitsleft = 0
-        for a in addr.entries:
-            bitsleft += a[2]
-            pass
-        for a in addr.entries:
-            byte_off = a[0]
-            bit_off = a[1] + a[3] * num
-            byte_off += bit_off / 8
-            bit_off %= 8
-            numbits = a[2]
-            bitsleft -= numbits
-
-            v = vt >> bitsleft
-            v = v & ~(0xffffffff << numbits)
-        
-            x = self.data[byte_off]
-            if ((bit_off + numbits) <= 8):
-                # Special case, all in one byte
-                mask = (0xff >> (8 - numbits)) << bit_off
-                x &= ~ mask
-                x |= (v << bit_off) & mask
-                self.data[byte_off] = x
-                continue
-            mask = 0xff << bit_off
-            x &= ~mask
-            self.data[byte_off] = x | ((v << bit_off) & mask)
-            byte_off += 1
-            v >>= bit_off
-            numbits -= 8 - bit_off
-            while (numbits >= 8):
-                self.data[byte_off] = v & 0xff
-                byte_off += 1
-                v >>= 8
-                numbits -= 8
-                pass
-            mask = 0xff << numbits
-            x = self.data[byte_off]
-            x &= mask
-            x |= v & ~mask;
-            self.data[byte_off] = x
-            pass
-        pass
-
     def get_bits(self, addr, num):
         v = 0
         for a in addr.entries:
@@ -575,6 +507,8 @@ def rewriteEntry(w, v):
     return
 
 class YType:
+    """This is the base class for all the different types that may be
+    declared in a radio file."""
     def __init__(self, name):
         self.name = name
         self.displayheader = True

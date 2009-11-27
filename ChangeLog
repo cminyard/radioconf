@@ -9,7 +9,13 @@
 
 	* yaesu_edit.py.in, FT-857D.layout, yaesuconf/RAD_FILES,
 	yaesuconf/FT-857.rad: Renamed "Dummy" to "Special".
+
+	* *.layout, layouts/Makefile.am, Makefile.am, configure.in: Move
+	layout files to their own directory.
 	
+	* yaesu_edit.py.in: Remove some unused code.
+
+	* yaesuconf/RAD_FILES: Clean up the docs a little.
 
 2009-11-22  Corey Minyard <minyard@acm.org>
 

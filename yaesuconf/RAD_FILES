@@ -242,10 +242,10 @@ tie[(<type>)]=<name> - name is the name of another entry in the same
   freqoff.  A tie to FixedFreq understands offset and basefreq.
   offset is an enum with "smplx", "+", "-", "split", BCDFreq and
   FixedFreq uses this to do a proper offset from the basefreq, which
-  must be another BCDFreq.  freqoff is a Fixed type that must end in
-  MHz, kHz, or Hz and gives the offset to add or subtract.  FixedFreq
-  does not use freqoff because it uses its internal value as the
-  offset.
+  must be another BCDFreq for that type or another FixedFreq for that
+  type.  freqoff is a Fixed type that must end in MHz, kHz, or Hz and
+  gives the offset to add or subtract.  FixedFreq does not use freqoff
+  because it uses its internal value as the offset.
 
 cutpaste=[true|false] - If cutpaste is set to false, the particular item
   will not be cut or pasted.  Useful for items that represent the same
