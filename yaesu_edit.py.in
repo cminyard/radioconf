@@ -22,6 +22,8 @@ import sys
 import traceback
 import Tix
 import Dialog
+import os
+import locale
 
 radiodir = "@YCONF@"
 
@@ -53,6 +55,24 @@ class DataException(Exception):
     
     pass
 
+class LineNum:
+    def __init__(self):
+        self.val = 0
+        return
+    
+    def get(self):
+        return self.val
+
+    def inc(self):
+        self.val += 1
+        return
+    pass
+
+###############################################################################
+#
+# Radio information parsing and storage.
+#
+###############################################################################
 class RadioInfo:
     def __init__(self, name):
         self.name = name;
@@ -82,17 +102,17 @@ def find_radio(data):
 
 # Throws IOError and ParseException
 def read_radios():
-    filename = radiodir + "/radios"
+    filename = os.path.join(radiodir, "radios")
     f = open(filename, "r");
     try:
-        lineno = 0
+        lineno = LineNum()
         in_radio = False
         l = ""
         while True:
             l += f.readline()
             if (not l):
                 break;
-            lineno += 1
+            lineno.inc()
             if l[len(l) - 1] == '\\':
                continue 
             if l[0] == '#':
@@ -152,7 +172,153 @@ def read_radios():
         raise exceptionType, exceptionValue, exceptionTraceback
     return
 
+###############################################################################
+#
+# Handling of repeater offsets
+#
+###############################################################################
+def getHz(s, filename, lineno):
+    v = 0
+    numdec = 0
+    postdec = 0
+    units = None
+    l = 0
+    for c in s:
+        if (c == '.'):
+            if (numdec > 0):
+                if (postdec != 3):
+                    raise ParseException(filename, lineno,
+                                         "Invalid number %s" % s)
+                pass
+            postdec = 0
+            numdec += 1
+            l += 1
+            continue
+        d = decimal_digits.find(c)
+        if (d == -1):
+            units = s[l:]
+            break
+        postdec += 1
+
+        v *= 10
+        v += d
+        l += 1
+        pass
+
+    if (numdec > 0):
+        if (postdec > 3):
+            raise ParseException(filename, lineno,
+                                 "Invalid number %s" % s)
+        v *= (10 ** (3 - postdec)) # Extend n.n to n.nnn
+        pass
+
+    if (units):
+        if (units == "MHz"):
+            while (numdec < 2):
+                v *= 1000
+                numdec += 1
+                pass
+            pass
+        elif (units == "kHz"):
+            while (numdec < 1):
+                v *= 1000
+                numdec += 1
+                pass
+            pass
+        elif (units == "Hz"):
+            pass
+        else:
+            raise ParseException(filename, lineno,
+                                 "Invalid units %s" % units)
+        pass
+
+    return v
+
+def getCountry():
+    l = locale.getdefaultlocale()
+    if (not l):
+        return None
+    l = l[0].split("_")
+    if len(l) < 2:
+        return None
+    return l[1]
+
+class RepeaterOffsets:
+    def __init__(self, country=None):
+        self.offsets = []
+
+        if (country is None):
+            country = getCountry()
+            if (not country):
+                return
+            pass
+        
+        filename = os.path.join(radiodir, country + ".rpt")
+        try:
+            fd = open(filename, "r")
+        except IOError, e:
+            print "Can't load repeater offsets: " + str(e)
+            return
+
+        try:
+            lineno = LineNum()
+            while True:
+                l = fd.readline();
+                if (not l):
+                    break
+                lineno.inc()
+                if l[0] == '#':
+                    continue
+                v = l.split();
+                if not v:
+                    continue
+                if len(v) != 4:
+                    raise ParseException(filename, lineno,
+                                         "Invalid number of elements on line")
+                if v[2] != "+" and v[2] != "-":
+                    raise ParseException(filename, lineno,
+                                         "Invalid offset, must be + or -")
+                    
+                self.offsets.append((getHz(v[0], filename, lineno),
+                                     getHz(v[1], filename, lineno),
+                                     v[2],
+                                     getHz(v[3], filename, lineno)))
+                pass
+            pass
+        except ParseException, e:
+            print e
+        return
+
+    def calcOffset(self, freq):
+        for e in self.offsets:
+            if ((freq >= e[0]) and (freq <= e[1])):
+                return (e[2], e[3])
+            pass
+        return ("smplx", 0)
+
+    pass
+
+###############################################################################
+#
+# Configuration information
+#
+###############################################################################
+class GenConfig:
+    def __init__(self):
+        self.doRptOffsets = True
+        self.rptoff = RepeaterOffsets()
+        return
+    pass
+
+###############################################################################
+#
+# Raw file data handling
+#
+###############################################################################
 class Address:
+    """This holds an address in a radio file.  It is a set of
+    locations (entries), each holding a 4-tuple: start byte, start bit,
+    length (in bits), and a offset between succeeding entries."""
     def __init__(self, c, s):
         l = len(s)
         if (l == 0):
@@ -215,7 +381,6 @@ class Address:
         return numbits
     
     pass
-
 
 class RadioFileData:
     # Throws IOError
@@ -415,6 +580,11 @@ class RadioFileData:
     pass
 
 
+###############################################################################
+#
+# 
+#
+###############################################################################
 class HandlerTie:
     def __init__(self, handler, tie):
         self.handler = handler
@@ -446,6 +616,7 @@ class Handler:
         self.offtie = []
         self.basefreqtie = []
         self.offfreqtie = []
+        self.lastbfreq = None
         
         self.enabletie = None
         self.enableoffsettie = None
@@ -461,15 +632,19 @@ class Handler:
     def newTie(self, fromh, tie):
         self.type.newTie(self, fromh, tie)
         if (fromh.widget):
-            fromh.modified()
+            fromh.modified(newtie=True)
         return
-    
+
+    def tieChanged(self, h, newtie):
+        self.type.tieChanged(self, h, newtie)
+        return
+        
     # Called when the user modifies a value.  Not required for setSelect
     # because that does a full redisplay.  Causes any tied values to be
     # redisplayed.
-    def modified(self):
+    def modified(self, newtie=False):
         for ht in self.tielist:
-            ht.tie.redisplay(ht.handler)
+            ht.tie.tieChanged(ht.handler, newtie)
             pass
         return
 
@@ -481,6 +656,10 @@ class Handler:
     
     def setSelect(self, v, num):
         return self.type.setSelect(v, self, num)
+
+    def redisplay(self, h):
+        self.type.redisplay(h)
+        return
     
     def set(self):
         self.handler(self)
@@ -491,6 +670,11 @@ class Handler:
 
     pass
 
+###############################################################################
+#
+# 
+#
+###############################################################################
 def rewriteEntry(w, v):
     """Rewrite the value in an entry widget, setting the state to normal so
     it is writable, the setting the value, then setting the state back"""
@@ -521,6 +705,7 @@ class YType:
 
     def getWidgetHandler(self, parent, t, num):
         h = Handler(None, None, self)
+        h.num = num
         h.widget = None
         return h
 
@@ -545,6 +730,10 @@ class YType:
 
     def redisplay(self, h):
         self.renumWidget(h, h.num)
+        return
+
+    def tieChanged(self, h, newtie):
+        self.redisplay(h)
         return
     
     def checkAddrOk(self, c, addr):
@@ -1212,9 +1401,10 @@ class BIFixed(YType):
                 pass
             pass
         if (postdec > self.suf):
-            v /= 10 * (postdec - self.suf)
+            v /= 10 ** (postdec - self.suf)
+            pass
         elif (postdec < self.suf):
-            v *= 10 * (self.suf - postdec)
+            v *= 10 ** (self.suf - postdec)
             pass
         
         # Make sure to round as necessary
@@ -1234,6 +1424,10 @@ class BIFixed(YType):
     pass
 
 class BIFixedFreq(BIFixed):
+    def __init__(self, name="FixedFreq", width=10):
+        BIFixed.__init__(self, name, width)
+        return
+    
     def getWidgetHandler(self, parent, t, num):
         h = BIFixed.getWidgetHandler(self, parent, t, num)
         return h
@@ -1334,6 +1528,7 @@ class BIFixedFreq(BIFixed):
         off = None
         for m in h.offtie:
             off = m.getValue(num)
+            offh = m
             if (off):
                 break
             pass
@@ -1344,9 +1539,65 @@ class BIFixedFreq(BIFixed):
                 h.widget["state"] = "normal"
                 pass
             pass
+
         BIFixed.renumWidget(self, h, num)
         return
+    
+    def tieChanged(self, h, newtie):
+        num = h.num
+        off = None
+        for m in h.offtie:
+            off = m.getValue(num)
+            offh = m
+            if (off):
+                break
+            pass
+        if (off):
+            if (off == "smplx"):
+                h.widget["state"] = "readonly"
+            else:
+                h.widget["state"] = "normal"
+                pass
+            pass
+
+        if newtie:
+            BIFixed.renumWidget(self, h, num)
+            return
+
+        if ((not off) or (off == "split") or (off == "smplx")):
+            BIFixed.renumWidget(self, h, num)
         
+        t = h.data
+        if (not t.data.config.doRptOffsets):
+            BIFixed.renumWidget(self, h, num)
+            return
+
+        bfreq = None
+        for m in h.basefreqtie:
+            bfreq = m.getValue(num)
+            bfreqh = m
+            if (bfreq):
+                break
+            pass
+
+        if (not bfreq):
+            BIFixed.renumWidget(self, h, num)
+            return
+        
+        bfreq = int(bfreq) * 10
+        if bfreq != h.lastbfreq:
+            h.lastbfreq = bfreq
+            (o, freq) = t.data.config.rptoff.calcOffset(bfreq)
+            offh.setSelect(o, num)
+            offh.redisplay(offh)
+            BIFixed.setBits(self, freq / 10, h, num)
+            for m in h.offfreqtie:
+                m.redisplay(m)
+                pass
+            pass
+        self.renumWidget(h, num)
+        return
+    
     def matchName(self, c, string):
         if not string.startswith("FixedFreq("):
             return None
@@ -1806,6 +2057,66 @@ class BIBCDFreq(YType):
         rewriteEntry(h.widget, v)
         pass
 
+    def tieChanged(self, h, newtie):
+        num = h.num
+        YType.renumWidget(self, h, num)
+        off = None
+        for m in h.offtie:
+            off = m.getValue(num)
+            offh = m
+            if (off):
+                break
+            pass
+        if (off):
+            if (off == "split"):
+                h.widget["state"] = "normal"
+            else:
+                h.widget["state"] = "readonly"
+                pass
+            pass
+
+        if newtie:
+            self.renumWidget(h, num)
+            return
+
+        if ((not off) or (off == "split") or (off == "smplx")):
+            self.renumWidget(h, num)
+            return
+        
+        t = h.data
+        if (not t.data.config.doRptOffsets):
+            self.renumWidget(h, num)
+            return
+
+        bfreq = None
+        for m in h.basefreqtie:
+            bfreq = m.getValue(num)
+            bfreqh = m
+            if (bfreq):
+                break
+            pass
+
+        if (not bfreq):
+            v = self.getStr(h, num)
+            rewriteEntry(h.widget, v)
+            return
+        
+        bfreq = getHz(bfreq, "", 0)
+        if bfreq != h.lastbfreq:
+            h.lastbfreq = bfreq
+            (o, freq) = t.data.config.rptoff.calcOffset(bfreq)
+            offh.setSelect(o, num)
+            offh.redisplay(offh)
+            for m in h.offfreqtie:
+                m.setSelect(str(freq)+"Hz", num)
+                m.redisplay(m)
+                pass
+            pass
+        
+        v = self.getStr(h, num)
+        rewriteEntry(h.widget, v)
+        return
+    
     def newTie(self, myh, fromh, tie):
         if (tie.tietype == "offset"):
             myh.offtie.append(fromh)
@@ -1830,7 +2141,7 @@ class BIBCDFreq(YType):
     def getSelect(self, h, num):
         t = h.data
         # Note that we pad it out to Hz for copy/paste, for compatability
-        return self.getStr(h, num) + ".000"
+        return self.getStr(h, num) + "00"
 
     def set(self, h, event):
         if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
@@ -2301,6 +2612,11 @@ class SList(YType):
     
     pass
 
+###############################################################################
+#
+# 
+#
+###############################################################################
 class Tie:
     def __init__(self, value, tietype):
         self.tietype = tietype
@@ -2315,7 +2631,9 @@ class Tie:
     def redisplay(self, h):
         self.widget.redisplay(h)
         return
-    
+
+    def tieChanged(self, h, newtie):
+        self.widget.tieChanged(h, newtie)
     pass
 
 class TabEntry:
@@ -2349,6 +2667,10 @@ class TabEntry:
 
     def redisplay(self, h):
         self.type.redisplay(h)
+        return
+
+    def tieChanged(self, h, newtie):
+        self.type.tieChanged(h, newtie)
         return
 
     def getSelect(self, h, num):
@@ -3007,6 +3329,11 @@ class Tab(TabBase):
 
     pass
 
+###############################################################################
+#
+# 
+#
+###############################################################################
 quote_hash = {"n" : "\n",
               "t" : "\t",
               "r" : "\r" }
@@ -3031,19 +3358,6 @@ def unquote(s):
             pass
         pass
     return "".join(v)
-
-class LineNum:
-    def __init__(self):
-        self.val = 0
-        return
-    
-    def get(self):
-        return self.val
-
-    def inc(self):
-        self.val += 1
-        return
-    pass
 
 class RadioConfig:
     def __init__(self, filename, filedata, parent=None, name=None):
@@ -3286,6 +3600,7 @@ class GUI(Tix.Frame):
         self.top = master
         self.pack(fill=Tix.BOTH, expand=1);
         master.geometry('800x400')
+        self.config = GenConfig()
         self.createWidgets();
         self.filedialog = Tix.FileSelectDialog(master,
                                                command=self.open_select)
@@ -3313,6 +3628,8 @@ class GUI(Tix.Frame):
 
         if (not self.fd):
             return
+
+        self.fd.config = self.config
         
         try:
             self.radioname = find_radio(self.fd.data)
@@ -3395,6 +3712,10 @@ class GUI(Tix.Frame):
             pass
         pass
 
+    def rptShftCmd(self):
+        self.config.doRptOffsets = not self.config.doRptOffsets
+        return
+    
     def createWidgets(self):
         self.buttons = Tix.Frame(self)
         self.buttons.pack(side=Tix.TOP, fill=Tix.X)
@@ -3428,6 +3749,20 @@ class GUI(Tix.Frame):
         self.top.bind_all("<Control-S>", self.savecmd)
         self.top.bind_all("<Control-s>", self.savecmd)
         self.filebutton.pack(side=Tix.LEFT)
+
+        self.editbutton = Tix.Menubutton(self.buttons, text="Edit",
+                                         underline=0, takefocus=0)
+        self.editmenu = Tix.Menu(self.editbutton, tearoff=0)
+        self.editbutton["menu"] = self.editmenu
+        self.editmenu.add_checkbutton(label="Auto Rpt Shift", underline=1,
+                                      command = lambda
+                                      self=self: self.rptShftCmd() )
+        self.editbutton.pack(side=Tix.LEFT)
+
+        if self.config.doRptOffsets:
+            self.config.doRptOffsets = False
+            self.editmenu.invoke(0)
+            pass
         return
     
     pass

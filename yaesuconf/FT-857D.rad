@@ -239,7 +239,7 @@ list Memories 200
 	"Rx\nFreq"		(0x04ed,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie(basefreq)=Tx\nFreq" "tie(basefreq)=Special2" "tie(basefreq)=Special3"
 	"Offset\nDirect"	(0x04e6,3,1,224:0x04e6,5,1,224:0x04e2,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab" "tie(offset)=Special1"
 	"Tx\nFreq"		(0x04f1,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie=Offset\nFTab" "tie(basefreq)=Special1"
-	"Offset\nFTab"		(0x04f1,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
+	"Offset\nFTab"		(0x04f1,0,32,224)	OffsetFreq_e "tie(freqoff)=Tx\nFreq" cutpaste=False
 	"Split\nTone"		(0x04e5,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
 	"Rx Tone\nMode"		(0x04e5,0,2,224)	ToneMode_e tone=rx
 	"Tx Tone\nMode"		(0x04e5,2,2,224)	ToneMode_e tone=tx
@@ -265,7 +265,7 @@ list VFOa 16 160m 80m 60m 40m 30m 20m 17m 15m 12m 10m 6m FM 118MHz VHF UHF 15MHz
 	"Rx\nFreq"		(0x0062,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(0x0057,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab"
 	"Tx\nFreq"		(0x0066,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie=Offset\nFTab"
-	"Offset\nFTab"		(0x0066,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
+	"Offset\nFTab"		(0x0066,0,32,224)	OffsetFreq_e "tie(freqoff)=Tx\nFreq" cutpaste=False
 	"Split\nTone"		(0x005a,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
 	"Rx Tone\nMode"		(0x005a,0,2,224)	ToneMode_e tone=rx
 	"Tx Tone\nMode"		(0x005a,2,2,224)	ToneMode_e tone=tx
@@ -285,7 +285,7 @@ list VFOb 16
 	"Rx\nFreq"		(0x0222,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(0x0217,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab"
 	"Tx\nFreq"		(0x0226,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie=Offset\nFTab"
-	"Offset\nFTab"		(0x0226,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
+	"Offset\nFTab"		(0x0226,0,32,224)	OffsetFreq_e "tie(freqoff)=Tx\nFreq" cutpaste=False
 	"Split\nTone"		(0x021a,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
 	"Rx Tone\nMode"		(0x021a,0,2,224)	ToneMode_e tone=rx
 	"Tx Tone\nMode"		(0x021a,2,2,224)	ToneMode_e tone=tx
@@ -305,7 +305,7 @@ list Home 1
 	"Rx\nFreq"		(0x0452,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(0x0447,6,2,224)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFTab"
 	"Tx\nFreq"		(0x0456,0,32,224)	FixedFreq(3,5,1,,sd=6) "tie=Offset\nFTab"
-	"Offset\nFTab"		(0x0456,0,32,224)	OffsetFreq_e "tie=Tx\nFreq" cutpaste=False
+	"Offset\nFTab"		(0x0456,0,32,224)	OffsetFreq_e "tie(freqoff)=Tx\nFreq" cutpaste=False
 	"Split\nTone"		(0x044a,4,1,224)	CheckBox "tie(enable)=Rx\nTone" "tie(enable)=Rx\nCode"
 	"Rx Tone\nMode"		(0x044a,0,2,224)	ToneMode_e tone=rx
 	"Tx Tone\nMode"		(0x044a,2,2,224)	ToneMode_e tone=tx
