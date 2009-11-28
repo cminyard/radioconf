@@ -1,3 +1,17 @@
+2009-11-27  Corey Minyard <minyard@acm.org>
+
+	* yaesu_edit.py.in: Added some docs, fixed path joining to use
+	the proper python operations.
+
+	* yaesu_edit.py.in: Add the ability to do automatic repeater
+	offsets based upon the typed-in frequency.
+
+	* yaesuconf/FT-857D.rad: Fix an offset link problem.
+
+	* yaesuconf/US.rpt: Add US repeater offsets.
+
+	* yaesuconf/FT-857.mem: Clean up the "empty" file for this radio.
+	
 2009-11-26  Corey Minyard <minyard@acm.org>
 
 	* yaesu_edit.py.in: Clean up the startup and shutdown to properly
@@ -23,19 +37,6 @@
 	* yaesu_edit.py.in: Fix some selection problems.
 
 	* yaesu_edit.py.in: Fix BCDFreq to properly handle 2.5kHz steps.
-
-	* yaesu_edit.py.in: Added some docs, fixed path joining to use
-	the proper python operations.
-
-	* yaesu_edit.py.in: Add the ability to do automatic repeater
-	offsets based upon the typed-in frequency.
-
-	* yaesuconf/FT-857D.rad: Fix an offset link problem.
-
-	* yaesuconf/US.rpt: Add US repeater offsets.
-
-	* yaesuconf/FT-857.mem: Clean up the "empty" file for this radio.
-	
 
 2009-11-22  Corey Minyard <minyard@acm.org>
 
