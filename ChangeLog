@@ -1,3 +1,10 @@
+2009-11-30  Corey Minyard <minyard@acm.org>
+
+	* yaesuconf/RAD_FILES, yaesu_edit.1: Added some more documentation
+	for the new features, cleaned things up a little.
+
+	* configure.in: Move to version 0.7.
+
 2009-11-27  Corey Minyard <minyard@acm.org>
 
 	* yaesu_edit.py.in: Added some docs, fixed path joining to use

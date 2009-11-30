@@ -13,6 +13,19 @@ and modify.
 <radio>.empty - This is an clone of a radio in factory configuration.
 It is used by yaesu_edit when you use the "New" operation.
 
+<country code>.rpt - This holds repeater offsets for the various country
+codes.  It's format is fairly simple, each non-empty and non-comment line
+is:
+  <start freq> <end freq> <offset direction> <offset amount>
+The frequencies are given in MHz.kHz.Hz format, so 7.1 MHz would be
+7.100.0.  Offset direction is "+" or "-", and the offset amount is
+given in nn.nnkHz or nn.nnMHz.
+So, for instance, US repeater offsets on 10 meters is:
+ 29.610.0	 29.690.0	-	100kHz
+This means that if the radio is receiving on 29.650MHz, it will transmit
+on 29.550MHz, for instance.  Note that the country code should be the
+two-letter country code in the LANG environment variable.
+
 RAD File Format
 ---------------
 The descriptor file is a fairly simple format.  It's a pretty loose language,

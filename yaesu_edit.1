@@ -1,4 +1,4 @@
-.TH yaesu_edit 1 11/02/09 Yaesu "Yaesu radio config editing program"
+.TH yaesu_edit 1 11/30/09 Yaesu "Yaesu radio config editing program"
 
 .SH NAME
 yaesu_config \- A program to edit clone information for Yaesu radios
@@ -46,6 +46,33 @@ yaesu_rw -h -w radio_file
 This will put a prompt up.  Put your radio into clone RX mode, then press
 enter on the screen to start the transmission to the radio.
 
+.SH "CUTTING AND PASTING"
+Cutting and pasting is the easiest way to move memories around.  You
+should be able to cut and paste arbitrarily large sets of memories.
+Overlapping cut and paste may or may not be a problem.  If it causes
+issues, it may be best to create an empty file to use as a temporary
+repository.
+
+Not that you can cut and paste memories between different types of
+radios, any feature that is compatible should transfer.
+
+.SH "AUTO REPEATER OFFSETS"
+The program will attempt to automatically determine the country you are
+in and set the repeater offsets appropriately.  This requires that someone
+has entered repeater offsets for your country/region and that the program
+can determine the country properly.
+
+You can override the country for the program by changing the
+.B LANG
+environment variable.  For instance, the author's
+.B LANG
+variable is en_US.UTF8, so the language is English, the country is the
+US, and the default encoding is UTF8.  If he wanted to use British
+repeater offsets, he would do:
+.IP
+LANG=en_GB.UTF8 yaesu_edit myfile.mem
+.PP
+
 .SH "NOTES"
 It's pretty straightforward to use this.  A few notes:
 
@@ -84,10 +111,10 @@ the ones I have.  See the FAQ for more details.
 .B yaesu_rw.1
 
 .BR /etc/yaesuconf/RAD_FILES
-has the description of the configuration file.
+has the description of the various configuration files.
 
 .SH "KNOWN PROBLEMS"
-None
+Still lots of things needed to be added.
 
 .SH AUTHOR
 .PP

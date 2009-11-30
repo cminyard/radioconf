@@ -12,8 +12,6 @@ Decode a few things on the FT-60R:
        Current band
        others?
 
-Auto repeater offsets
-
 I have no filter 2 for the FT-857, don't know how to set it, see byte 0043
 
 Memory group settings for the FT-857 are not done
