@@ -1658,10 +1658,10 @@ class BICheckBox(YType):
         w = Tix.Checkbutton(parent, command=h.set)
         h.num = num
         h.widget = w
-        h.v = v
         if self.reverse:
             v = ~v & 1
             pass
+        h.v = v
         if (v):
             w.select()
         else:
@@ -1674,10 +1674,10 @@ class BICheckBox(YType):
         h.num = num
         t = h.data
         v = t.data.get_bits(t.addr, num)
-        h.v = v
         if self.reverse:
             v = ~v & 1
             pass
+        h.v = v
         oldstate = h.widget["state"]
         if (oldstate != "normal"):
             h.widget["state"] = "normal"
