@@ -1309,6 +1309,7 @@ class BIFixed(YType):
 
     def set(self, h, event):
         if ((event.keysym == "Left") or (event.keysym == "Right")
+            or (event.keysym == "Tab") or (event.keysym == "ISO_Left_Tab")
             or (event.keysym == "Up") or (event.keysym == "Down")):
             # Let these through
             return
@@ -2081,7 +2082,6 @@ class BIBCDFreq(YType):
 
         if ((not off) or (off == "split") or (off == "smplx")):
             self.renumWidget(h, num)
-            return
         
         t = h.data
         if (not t.data.config.doRptOffsets):
@@ -2147,6 +2147,8 @@ class BIBCDFreq(YType):
         if ((event.keysym == "BackSpace") or (event.keysym == "Delete")
             or (event.keysym == "Insert") or (event.keysym == "space")):
             return "break" # Don't allow deletions
+        if (event.keysym == 'period'):
+            return "break" # Ignore typed '.'
         if (len(event.keysym) > 1):
             return # Let other key editing through
 
