@@ -44,6 +44,7 @@ static struct option long_options[] = {
     {"hash",	 0, NULL, 'h'},
     {"verbose",  0, NULL, 'v'},
     {"device",	 1, NULL, 'd'},
+    {"speed",	 1, NULL, 's'},
     {"ignerr",	 0, NULL, 'i'},
     {"notermio", 0, NULL, 'n'},
     {"read",	 0, NULL, 'r'},
@@ -1368,6 +1369,7 @@ usage(void)
     printf("  -h, --hash - Print . marks for every block transferred.\n");
     printf("  -v, --verbose - once to get the version, twice to get data.\n");
     printf("  -d, --device - specify the device to use for the radio.\n");
+    printf("  -s, --speed - specify the serial baud to use, 9600 by default\n");
     printf("  -i, --ignerr - if an error occurs on read, still save as much"
 	   "data as possible.\n");
     printf("  -n, --notermio - don't set up the serial port parameters, useful"
@@ -1387,6 +1389,15 @@ usage(void)
 	   " configuration instead\nof the default %s\n", YAESU_CONFIGDIR);
 }
 
+struct {
+    char *sval;
+    int val;
+} speeds[] = {
+    { "9600", B9600 },
+    { "19200", B19200 },
+    { NULL }
+};
+
 int
 main(int argc, char *argv[])
 {
@@ -1397,6 +1408,7 @@ main(int argc, char *argv[])
     int fd;
     int rv;
     char dummy;
+    unsigned int i;
 
     char *devicename = "/dev/ttyS0";
     char *configdir = YAESU_CONFIGDIR;
@@ -1409,12 +1421,14 @@ main(int argc, char *argv[])
     int recv_echo = -1;
     int do_checksum = -1;
     int do_checkblock = -1;
+    char *speed = "9600";
+    int bspeed = -1;
     struct termios orig_termios, curr_termios;
 
     progname = argv[0];
 
     while (1) {
-	c = getopt_long(argc, argv, "?hvd:inrwtemycgf:pq", long_options, NULL);
+	c = getopt_long(argc, argv, "?hvd:inrwtemycgf:pqs", long_options, NULL);
 	if (c == -1)
 	    break;
 	switch(c) {
@@ -1478,6 +1492,10 @@ main(int argc, char *argv[])
 		do_checkblock = 0;
 		break;
 
+	    case 's':
+		speed = optarg;
+		break;
+		
 	    case '?':
 		usage();
 		exit(0);
@@ -1533,6 +1551,20 @@ main(int argc, char *argv[])
 	exit(1);
     }
 
+    for (i = 0; speeds[i].sval; i++) {
+	if (strcmp(speeds[i].sval, speed) == 0) {
+	    bspeed = speeds[i].val;
+	    break;
+	}
+    }
+    if (bspeed == -1) {
+	fprintf(stderr, "Unknown speed, valid speeds are:");
+	for (i = 0; speeds[i].sval; i++)
+	    fprintf(stderr, " %s", speeds[i].sval);
+	fprintf(stderr, "\n");
+	goto out_err;
+    }
+
     if (dotermios) {
 	if (tcgetattr(fd, &orig_termios) == -1) {
 	    fprintf(stderr, "error getting tty attributes %s(%d)\n",
@@ -1542,8 +1574,8 @@ main(int argc, char *argv[])
 
 	curr_termios = orig_termios;
 
-	cfsetospeed(&curr_termios, B9600);
-	cfsetispeed(&curr_termios, B9600);
+	cfsetospeed(&curr_termios, bspeed);
+	cfsetispeed(&curr_termios, bspeed);
 	cfmakeraw(&curr_termios);
 	/* two stop bits, ignore handshake, make sure rx enabled */
 	curr_termios.c_cflag |= (CSTOPB | CLOCAL | CREAD);
@@ -1604,7 +1636,6 @@ main(int argc, char *argv[])
     if (do_write) {
 	unsigned int hsize, bsize;
 	unsigned char *header, *block;
-	unsigned int i;
 	unsigned int len;
 	unsigned int readoff = 0, readsub = 0;
 	unsigned int blocknum = 1;

@@ -1,0 +1,29 @@
+A lot of this comes from the work of Jim Mitchell and Hiroto Fukui at
+http://hse.dyndns.org/hiroto/RFY_LAB/vx7/e/vx7_8510.htm
+
+
+0000-0005 - Identifier, contents are:
+	  0a 01 02 06 09 24
+
+0006 - Current hardware setting (see byte 000a)
+
+0007 - CPU Version Byte 1?? 00:Jap 01:US 03:Euro
+
+0008 - CPU Version Byte 1?? 00:Jap 01:US 03:Euro (I think this is not right)
+
+000a - "Virtual Jumper Byte" (Changes "Current Hardware Setting" in 0006)
+     Values are:
+        E0H - US Unmodified
+	F0H - US MARS/CAP Modification
+	E8H - US Freeband Modification
+	F8H - Japanese Default
+
+000c - Receiver configuration, values are:
+     00 - Ham only RX
+     01 - Wide/Ham RX
+     02 - Wide RX
+
+000d - Wide/Ham TX (Must also have proper "Virtual Jumper" setting)
+     00 - Ham Only TX
+     01 - Wide TX
+

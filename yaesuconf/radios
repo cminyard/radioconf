@@ -38,6 +38,10 @@
 #
 #  checksum | nochecksum (optional)
 #    Sets whether the radio send/receives a checksum.  Defaults to nochecksum.
+#    A checksum is a single byte at the end of the data that is the modulo-256
+#    sum of all the other bytes in the data.  Note that the checksum is not
+#    part of the filesize, so if a checksum is present, the filesize will be
+#    one less than the total data sent.
 #
 #  checkblock | nocheckblock (optional)
 #    Sets whether the radio send/receives a checkblock.  In this mode,
@@ -52,6 +56,14 @@ radio FT-60R
 	headerlen 8
 	filesize  28616
 	blocksize 64
+	checksum
+endradio
+
+radio VX-7R
+	headercmp 0a 01 02 06 09 24
+	headerlen 10
+	filesize  16210
+	blocksizelist (1, 8) (1, 16193)
 	checksum
 endradio
 
