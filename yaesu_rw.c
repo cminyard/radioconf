@@ -120,7 +120,7 @@ struct yaesu_data {
     unsigned int bsize_left;
     unsigned int curr_bsize;
     int check_write;
-    unsigned char write_buf[256];
+    unsigned char write_buf[65536];
     unsigned int write_start;
     unsigned int write_len;
     int check_write2;
@@ -777,11 +777,14 @@ handle_yaesu_write_ready(struct yaesu_data *d)
     int rv;
     unsigned int to_write;
 
+    printf("4: %d\n", d->state);
     if (d->is_read)
 	return yaesu_write(d, NULL, 0);
 
+    printf("5: %d\n", d->state);
     if (d->state == YAESU_STATE_WAITCSUM) {
 	unsigned char cs[1];
+	printf("6: %d\n", d->state);
 	cs[0] = d->csum;
 	rv = yaesu_write(d, cs, 1);
 	if (rv == ENOBUFS)
@@ -795,9 +798,12 @@ handle_yaesu_write_ready(struct yaesu_data *d)
 	d->check_write = 0;
 	return 0;
     }
+    printf("7: %d\n", d->state);
     b = d->curr_block;
     to_write = b->len - d->pos;
+    printf("8: %d %d\n", b->len, d->pos);
     rv = yaesu_write(d, b->buff + d->pos, to_write);
+    printf("9: %d\n", rv);
     if (rv == ENOBUFS)
 	return 0;
     else if (rv)
@@ -827,7 +833,7 @@ handle_yaesu_write_data(struct yaesu_data *d)
     len = rv;
 
     if (verbose > 1) {
-	printf("Read:");
+	printf("Read (%d):", d->state);
 	for (i = 0; i < len; i++)
 	    printf(" %2.2x", buf[i]);
 	printf("\n");
@@ -894,8 +900,10 @@ handle_yaesu_write_data(struct yaesu_data *d)
     for (i = 0; i < b->len; i++)
 	d->csum += b->buff[i];
     d->pos = 0;
+    printf("1: %d\n", d->state);
     if (b == &d->head) {
 	unsigned char cs[1];
+	printf("2\n");
 	if (d->has_checksum) {
 	    cs[0] = d->csum;
 	    rv = yaesu_write(d, cs, 1);
@@ -912,6 +920,7 @@ handle_yaesu_write_data(struct yaesu_data *d)
 	    d->state = YAESU_STATE_DONE;
     } else
 	return handle_yaesu_write_ready(d);
+    printf("3: %d\n", d->state);
 
     return 0;
 }
@@ -1428,7 +1437,8 @@ main(int argc, char *argv[])
     progname = argv[0];
 
     while (1) {
-	c = getopt_long(argc, argv, "?hvd:inrwtemycgf:pqs", long_options, NULL);
+	c = getopt_long(argc, argv, "?hvd:inrwtemycgf:pqs:",
+			long_options, NULL);
 	if (c == -1)
 	    break;
 	switch(c) {
@@ -1497,6 +1507,7 @@ main(int argc, char *argv[])
 		break;
 		
 	    case '?':
+		fprintf(stderr, "unknown argument: %c\n", optopt);
 		usage();
 		exit(0);
 		break;
@@ -1701,7 +1712,7 @@ main(int argc, char *argv[])
 	while (d->data_count < d->expect_len) {
 	    len = fread(block + readoff, 1, d->block_len - readsub, f);
 	    if (len != (d->block_len - readsub)) {
-		fprintf(stderr, "Not enough data in file: %d\n",len);
+		fprintf(stderr, "Not enough data in file: %d\n", len);
 		goto out_err;
 	    }
 

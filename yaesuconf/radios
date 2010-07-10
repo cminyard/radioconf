@@ -32,7 +32,7 @@
 #    is the size of the block.  The blocksize of the last pair is used for
 #    all blocks after it.  For instance, if the first block is 20 bytes,
 #    the 2nd-10th block is 50 bytes, and the last 5 blocks are 10 byte,
-#    You cold use: (1, 20) (9, 50) (0, 10).
+#    You could use: (1, 20) (9, 50) (0, 10).
 #    Notice that the count in the last field is not used, since it's used
 #    for all succeeeding blocks.
 #
@@ -63,7 +63,7 @@ radio VX-7R
 	headercmp 0a 01 02 06 09 24
 	headerlen 10
 	filesize  16210
-	blocksizelist (1, 8) (1, 16193)
+	blocksizelist (1, 8) (1, 16192)
 	checksum
 endradio
 
