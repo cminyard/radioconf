@@ -73,6 +73,32 @@ generally set up in the configuration file, but this option will override
 the default.  In timer mode, checksum is off.
 
 .TP
+\fB\-a\fR, \fB\-\-chunksize\fR \fIsize\fR
+Some radios cannot handle having data thrown at them continuously.  This
+option will send size bytes to the radio and then wait until the buffer
+clears, wait waitchunk microseconds if that is specified, then continue
+writing.
+
+.TP
+\fB\-b\fR, \fB\-\-waitchunk\fR \fImicroseconds\fR
+If chunksize is non-zero, this sets the number of microseconds to wait
+between the chunks.  It also sets the end delay if nowaitchecksum is
+specified.
+
+.TP
+\fB\-j\fR, \fB\-\-waitchecksum\fR
+If a checksum is used, this sets that the program should wait for an
+ack after sending the last bit of data to the radio, then send the
+checksum, then wait for an ack for the checksum.  This is the default.
+
+.TP
+\fB\-j\fR, \fB\-\-nowaitchecksum\fR
+If a checksum is used, this sets that the program, after sending the
+last bit of data,  should wait for waitchunk microseconds then send
+the checksum and exit.  Some radios don't send an ack but expect that
+there is a delay between the last data and the checksum byte.
+
+.TP
 \fB\-f\fR, \fB\-\-configdir\fR \fIdirectory\fR
 Use the given directory for the radio configuration instead of the default
 location.

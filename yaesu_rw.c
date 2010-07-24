@@ -80,6 +80,7 @@ enum yaesu_read_state {
     YAESU_STATE_INFIRSTBLOCK,
     YAESU_STATE_WAITBLOCK,
     YAESU_STATE_INBLOCK,
+    YAESU_STATE_DELAYCSUM,
     YAESU_STATE_WAITCSUM,
     YAESU_STATE_CSUM,
     YAESU_STATE_CSUM_WAITACK,
@@ -128,15 +129,17 @@ struct yaesu_data {
     unsigned char write_buf[65536];
     unsigned int write_start;
     unsigned int write_len;
-    unsigned int waitchunk;
-    unsigned int chunksize;
-    int waiting_chunk_done;
+    int waitchunk;
+    int chunksize;
+    enum { CHUNK_NOWAIT, CHUNK_CHECK, CHUNK_DELAY } waiting_chunk_done;
     int check_write2;
     int has_checksum;
     int has_checkblock;
     int waitchecksum;
 };
 
+#define DEFAULT_CHUNKSIZE 0
+#define DEFAULT_WAITCHUNK 0
 
 const unsigned char testbuf[8] = { '0', '1', '2', '3', '4', '5', '6', '7' };
 const unsigned char ack[1] = { 0x06 };
@@ -144,7 +147,8 @@ const unsigned char ack[1] = { 0x06 };
 struct yaesu_data *
 alloc_yaesu_data(int rfd, int wfd, int is_read,
 		 int send_echo, int recv_echo, int has_checksum,
-		 int has_checkblock, int waitchecksum)
+		 int has_checkblock, int waitchecksum, int chunksize,
+		 int waitchunk)
 {
     struct yaesu_data *d;
 
@@ -170,9 +174,9 @@ alloc_yaesu_data(int rfd, int wfd, int is_read,
     d->check_write2 = 0;
     d->write_start = 0;
     d->write_len = 0;
-    d->chunksize = 32;
-    d->waitchunk = 100000;
-    d->waiting_chunk_done = 0;
+    d->chunksize = chunksize;
+    d->waitchunk = waitchunk;
+    d->waiting_chunk_done = CHUNK_NOWAIT;
     d->send_echo = send_echo;
     d->recv_echo = recv_echo;
     d->bsizes = NULL;
@@ -288,6 +292,8 @@ struct yaesu_conf {
     int has_checksum;
     int has_checkblock;
     int waitchecksum;
+    int chunksize;
+    int waitchunk;
     struct yaesu_blocksizes *bsizes;
     struct yaesu_conf *next;
 };
@@ -335,6 +341,10 @@ check_yaesu_type(struct yaesu_data *d, unsigned char *buff, unsigned int len,
 		d->has_checkblock = r->has_checkblock;
 	    if (d->waitchecksum < 0)
 		d->waitchecksum = r->waitchecksum;
+	    if (d->chunksize < 0)
+		d->chunksize = r->chunksize;
+	    if (d->waitchunk < 0)
+		d->waitchunk = r->waitchunk;
 	    return 1;
 	}
     }
@@ -352,6 +362,10 @@ check_yaesu_type(struct yaesu_data *d, unsigned char *buff, unsigned int len,
 	    d->has_checkblock = 0;
 	if (d->waitchecksum < 0)
 	    d->waitchecksum = 1;
+	if (d->waitchunk < 0)
+	    d->waitchunk = DEFAULT_WAITCHUNK;
+	if (d->chunksize < 0)
+	    d->chunksize = DEFAULT_CHUNKSIZE;
 	d->timeout_mode = 1;
 	return 1;
     }
@@ -441,7 +455,8 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 
 	if (end > d->write_start) {
 	write_nowrap:
-	    if (total_written + d->write_len > d->chunksize)
+	    if ((d->chunksize > 0)
+		&& (total_written + d->write_len > (unsigned int) d->chunksize))
 		to_write = d->chunksize - total_written;
 	    else
 		to_write = d->write_len;
@@ -463,7 +478,8 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 
 	    d->write_len -= rv;
 	    d->write_start += rv;
-	    if (total_written >= d->chunksize)
+	    if ((d->chunksize > 0)
+		&& (total_written >= (unsigned int) d->chunksize))
 		goto out_delay;
 	    if (d->write_len > 0)
 		goto not_all_written;
@@ -474,7 +490,8 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 	     * end == write_start.
 	     */
 	    wrc = sizeof(d->write_buf) - d->write_start;
-	    if (total_written + wrc > d->chunksize)
+	    if ((d->chunksize > 0)
+		&& (total_written + wrc > (unsigned int) d->chunksize))
 		to_write = d->chunksize - total_written;
 	    else
 		to_write = d->write_len;
@@ -501,7 +518,8 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 		if (d->write_len > 0)
 		    /* Finish up the write. */
 		    goto write_nowrap;
-	    } else if (total_written >= d->chunksize)
+	    } else if ((d->chunksize > 0)
+		       && (total_written >= (unsigned int) d->chunksize))
 		goto out_delay;
 	    else
 		goto not_all_written;
@@ -514,7 +532,7 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
  out_delay:
     d->check_write2 = 0;
     YAESU_WAITWRITE_TIMEOUT(d);
-    d->waiting_chunk_done = 1;
+    d->waiting_chunk_done = CHUNK_CHECK;
     return 0;
 
  not_all_written:
@@ -690,7 +708,8 @@ handle_yaesu_read_data(struct yaesu_data *d)
 
     case YAESU_STATE_CSUM_WAITACK:
     case YAESU_STATE_DONE:
-	break;
+    case YAESU_STATE_DELAYCSUM:
+    break;
     }
 
     return 0;
@@ -719,6 +738,7 @@ handle_yaesu_read_timeout(struct yaesu_data *d)
 
     case YAESU_STATE_CSUM_WAITACK:
     case YAESU_STATE_DONE:
+    case YAESU_STATE_DELAYCSUM:
 	break;
     }
 
@@ -833,7 +853,9 @@ handle_yaesu_write_ready(struct yaesu_data *d)
 	    return 0;
 	else if (rv)
 	    return rv;
-	if (!d->recv_echo)
+	if (!d->waitchecksum)
+	    d->state = YAESU_STATE_DONE;
+	else if (!d->recv_echo)
 	    d->state = YAESU_STATE_CSUM_WAITACK;
 	else
 	    d->state = YAESU_STATE_CSUM;
@@ -889,18 +911,20 @@ handle_yaesu_write_data(struct yaesu_data *d)
     if (d->state == YAESU_STATE_DONE)
 	return 0;
 
+    if (d->state == YAESU_STATE_CSUM) {
+	if (buf[0] != (d->csum & 0xff))
+	    return EINVAL;
+	d->state = YAESU_STATE_CSUM_WAITACK;
+	len--;
+	if (len == 0)
+	    return 0;
+    }
+
     if (d->state == YAESU_STATE_CSUM_WAITACK) {
 	rv = yaesu_write(d, ack, 1);
 	if (rv)
 	    return rv;
 	d->state = YAESU_STATE_DONE;
-	return 0;
-    }
-
-    if (d->state == YAESU_STATE_CSUM) {
-	if (buf[0] != (d->csum & 0xff))
-	    return EINVAL;
-	d->state = YAESU_STATE_CSUM_WAITACK;
 	return 0;
     }
 
@@ -964,6 +988,12 @@ handle_yaesu_write_data(struct yaesu_data *d)
     return 0;
 
  send_checksum:
+    if (!d->waitchecksum) {
+	d->state = YAESU_STATE_DELAYCSUM;
+	YAESU_WAITCHUNK_TIMEOUT(d);
+	return 0;
+    }
+
     {
 	unsigned char cs[1];
 	cs[0] = d->csum;
@@ -986,19 +1016,25 @@ handle_yaesu_write_timeout(struct yaesu_data *d)
 {
     int rv;
 
-    if (d->waiting_chunk_done == 1) {
+    if (d->state == YAESU_STATE_DELAYCSUM) {
+	d->state = YAESU_STATE_WAITCSUM;
+	d->check_write = 1;
+	return 0;
+    }
+
+    if (d->waiting_chunk_done == CHUNK_CHECK) {
 	int left;
 	rv = ioctl(d->wfd, TIOCOUTQ, &left);
 	if (rv < 0)
 	    return errno;
 	if (left == 0) {
 	    YAESU_WAITCHUNK_TIMEOUT(d);
-	    d->waiting_chunk_done = 2;
+	    d->waiting_chunk_done = CHUNK_DELAY;
 	}
 	return 0;
-    } else if (d->waiting_chunk_done) {
+    } else if (d->waiting_chunk_done == CHUNK_DELAY) {
 	YAESU_CHAR_TIMEOUT(d);
-	d->waiting_chunk_done = 0;
+	d->waiting_chunk_done = CHUNK_NOWAIT;
 	d->check_write2 = 1;
 	return 0;
     }
@@ -1189,6 +1225,8 @@ read_yaesu_config(char *configdir)
 	    r->has_checksum = -1;
 	    r->has_checkblock = -1;
 	    r->waitchecksum = -1;
+	    r->chunksize = -1;
+	    r->waitchunk = -1;
 	    r->name = strdup(tok);
 	    if (!r->name)
 		conferr(linenum, "out of memory\n");
@@ -1214,6 +1252,10 @@ read_yaesu_config(char *configdir)
 		r->has_checkblock = 0;
 	    if (r->waitchecksum == -1)
 		r->waitchecksum = 1;
+	    if (r->waitchunk == -1)
+		r->waitchunk = DEFAULT_WAITCHUNK;
+	    if (r->chunksize == -1)
+		r->chunksize = DEFAULT_CHUNKSIZE;
 
 	    r->next = radios;
 	    radios = r;
@@ -1405,6 +1447,36 @@ read_yaesu_config(char *configdir)
 	    goto line_done;
 	}
 
+	if (strcmp(tok, "chunksize") == 0) {
+	    if (r->chunksize >= 0)
+		conferr(linenum, "Chunk size already specified");
+
+	    tok = strtok_r(NULL, " \t", &nexttok);
+	    if (!tok)
+		conferr(linenum, "Expected number");
+
+	    r->chunksize = strtoul_nooctal(tok, &ep);
+	    if (*ep)
+		conferr(linenum, "Invalid chunk size");
+
+	    goto line_done;
+	}
+
+	if (strcmp(tok, "waitchunk") == 0) {
+	    if (r->waitchunk >= 0)
+		conferr(linenum, "Chunk wait already specified");
+
+	    tok = strtok_r(NULL, " \t", &nexttok);
+	    if (!tok)
+		conferr(linenum, "Expected number");
+
+	    r->waitchunk = strtoul_nooctal(tok, &ep);
+	    if (*ep)
+		conferr(linenum, "Invalid chunk wait");
+
+	    goto line_done;
+	}
+
 	if (strcmp(tok, "checksum") == 0) {
 	    if (r->has_checksum != -1)
 		conferr(linenum, "checksum already specified");
@@ -1487,6 +1559,8 @@ usage(void)
     printf("  -k, --nowaitchecksum - No ack wait before sending checksum\n");
     printf("  -p, --checkblock - Send/expect block checksums\n");
     printf("  -q, --nocheckblock - Do not send/expect block checksums\n");
+    printf("  -a, --chunksize <size> - Send data in size blocks and wait\n");
+    printf("  -b, --waitchunk <usec> - wait usecs between chunks\n");
     printf("  -f, --configdir <file> - Use the given directory for the radio"
 	   " configuration instead\nof the default %s\n", YAESU_CONFIGDIR);
 }
@@ -1510,6 +1584,7 @@ main(int argc, char *argv[])
     int fd;
     int rv;
     char dummy;
+    char *dend;
     unsigned int i;
 
     char *devicename = "/dev/ttyS0";
@@ -1524,6 +1599,8 @@ main(int argc, char *argv[])
     int do_checksum = -1;
     int do_checkblock = -1;
     int do_waitchecksum = -1;
+    int waitchunk = -1;
+    int chunksize = -1;
     char *speed = "9600";
     int bspeed = -1;
     struct termios orig_termios, curr_termios;
@@ -1531,7 +1608,7 @@ main(int argc, char *argv[])
     progname = argv[0];
 
     while (1) {
-	c = getopt_long(argc, argv, "?hvd:inrwtemycgf:pqs:",
+	c = getopt_long(argc, argv, "?hvd:a:b:inrwtemycgf:pqs:",
 			long_options, NULL);
 	if (c == -1)
 	    break;
@@ -1590,6 +1667,24 @@ main(int argc, char *argv[])
 
 	    case 'k':
 		do_waitchecksum = 0;
+		break;
+
+	    case 'a':
+		chunksize = strtoul_nooctal(optarg, &dend);
+		if ((*optarg == '\0') || (*dend != '\0')) {
+		    fprintf(stderr, "Invalid chunksize: '%s'.\n", optarg);
+		    usage();
+		    exit(1);
+		}
+		break;
+
+	    case 'b':
+		waitchunk = strtoul_nooctal(optarg, &dend);
+		if ((*optarg == '\0') || (*dend != '\0')) {
+		    fprintf(stderr, "Invalid waitchunk: '%s'.\n", optarg);
+		    usage();
+		    exit(1);
+		}
 		break;
 
 	    case 'y':
@@ -1738,7 +1833,7 @@ main(int argc, char *argv[])
     }
 
     d = alloc_yaesu_data(fd, fd, do_read, send_echo, recv_echo, do_checksum,
-			 do_checkblock, do_waitchecksum);
+			 do_checkblock, do_waitchecksum, chunksize, waitchunk);
     if (!d) {
 	fclose(f);
 	close(fd);

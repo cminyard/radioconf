@@ -69,6 +69,8 @@ radio VX-7R
 #	a high rate, and it doesn't send an ack before or after the
 #	checksum.
 	nowaitchecksum
+	chunksize 64
+	waitchunk 50000
 endradio
 
 radio FT-7800R
