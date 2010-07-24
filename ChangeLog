@@ -1,3 +1,17 @@
+2010-07-24  Corey Minyard <minyard@acm.org>
+
+	* yaesu_rw.c, yaesu_rw.1: Added some options to allow chunksize
+	sending with delay between the chunks and different handling of
+	the sent checksum to support the VX-7R.
+
+	* yaesuconf/radios: Added the VX-7R.
+
+	* yaesu_edit.py.in, yaesucon/RAD_FILES: Added the BCDFixedFreq,
+	YaesuLCString, and BCDFreq2 types for supporting the VX-7R.
+
+	* yaesuconf/VX-7R.empty, yaesuconf/VX-7R.rad, layouts/VX-7R.layout:
+	Begin work on the VX-7R.
+
 2010-02-17  Corey Minyard <minyard@acm.org>
 
 	* yaesu_edit.py.in: Ignore a typed '.' in the BCDFreq widget.

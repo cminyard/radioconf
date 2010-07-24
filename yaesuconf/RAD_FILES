@@ -95,21 +95,27 @@ BCDFreq - BCD representation of a frequency, this is a 3-byte values
 	as used in the FT-60R and probably others.  Must start on a
 	byte offset and by a byte multiple length.
 
+BCDFreq2 - A slightly different representation of BCD than BCDFreq,
+	described in the VX-7R layout file.
+
 CheckBox - A true/false value, the address specified should generally
-	 be one bit.
+	be one bit.
 
 RCheckBox - A true/false value, but 0 meand enabled and 1 means disabled.
 
 YaesuString - This is a Yaesu-specific string format used in some radios
-	    like the FT-60R.  Must start on a byte offset and by a byte
-	    multiple length.
+	like the FT-60R.  Must start on a byte offset and by a byte
+	multiple length.
+
+YaesuLCString = This is like YaesuString, but supports lower case and
+	has a different layout.  This is for the VX-7R.
 
 String - An ASCII string (though it's limited to standard characters).
-         Must start on a byte offset and by a byte multiple length.
+        Must start on a byte offset and by a byte multiple length.
 
 HexDigits - Unpacked hex digits (one per byte) with 0xff specifying the
-	 end of the string if it's shorter than the length.
-         Must start on a byte offset and by a byte multiple length.
+	end of the string if it's shorter than the length.
+        Must start on a byte offset and by a byte multiple length.
 
 Fixed(pre,suf,inc,units[,options]) - This is a fixed-point decimal number
 	represented as bits.  "pre" is the number of digits before the
@@ -139,6 +145,9 @@ FixedFreq(pre,suf,inc,units[,options]) - This is like Fixed, but has
 		on the FT-857 display.  This is the location of the second
 		decimal place.  So, for a 9-digit frequency display,
 		Fixed(3,6,1,MHz,sd=6) will display NNN.NNN.NNN.
+
+BCDFixedFreq(pre,suf,inc,units[,options]) - Like FixedFreq, but the storage
+        in memory is BCD.  Otherwise the same.
 
 Int(min,max,offset,multiplier,label) - An integer with the given min/max
 	range.  offset is added to the value when read out of memory and
