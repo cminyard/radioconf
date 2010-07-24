@@ -918,6 +918,7 @@ handle_yaesu_write_data(struct yaesu_data *d)
 	len--;
 	if (len == 0)
 	    return 0;
+	buf++;
     }
 
     if (d->state == YAESU_STATE_CSUM_WAITACK) {
