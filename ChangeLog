@@ -1,3 +1,12 @@
+2010-02-17  Corey Minyard <minyard@acm.org>
+
+	* yaesu_edit.py.in: Ignore a typed '.' in the BCDFreq widget.
+
+	* yaesu_edit.py.in: Allow tabs to go through in the fixed widget
+
+	* yaesu_edit.py.in: Fix repeater offset handling for the BCDFreq
+	widget.
+
 2009-12-12  Corey Minyard <minyard@acm.org>
 
 	* yaesu_edit.py.in: Fix a problem with reverse checkboxes that
@@ -25,7 +34,7 @@
 	* yaesuconf/US.rpt: Add US repeater offsets.
 
 	* yaesuconf/FT-857.mem: Clean up the "empty" file for this radio.
-	
+
 2009-11-26  Corey Minyard <minyard@acm.org>
 
 	* yaesu_edit.py.in: Clean up the startup and shutdown to properly
@@ -40,7 +49,7 @@
 
 	* *.layout, layouts/Makefile.am, Makefile.am, configure.in: Move
 	layout files to their own directory.
-	
+
 	* yaesu_edit.py.in: Remove some unused code.
 
 	* yaesuconf/RAD_FILES: Clean up the docs a little.
