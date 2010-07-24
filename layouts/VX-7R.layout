@@ -1,6 +1,66 @@
 A lot of this comes from the work of Jim Mitchell and Hiroto Fukui at
 http://hse.dyndns.org/hiroto/RFY_LAB/vx7/e/vx7_8510.htm
 
+CTCSS Tone
+	00 -  67.0  01 -  69.3  02 -  71.9  03 -  74.4
+	04 -  77.0  05 -  79.7  06 -  82.5  07 -  85.4
+	08 -  88.5  09 -  91.5  0a -  94.8  0b -  97.4
+	0c - 100.0  0d - 103.5  0e - 107.2  0f - 110.9
+	10 - 114.8  11 - 188.8  12 - 123.0  13 - 127.3
+	14 - 131.8  15 - 136.5  16 - 141.3  17 - 146.2
+	18 - 151.4  19 - 156.7  1a - 159.8  1b - 162.2
+	1c - 165.5  1d - 167.9  1e - 171.3  1f - 173.8
+	20 - 177.3  21 - 179.9  22 - 183.5  23 - 186.2
+	24 - 189.9  25 - 192.8  26 - 196.6  27 - 199.5
+	28 - 203.5  29 - 206.5  2a - 210.7  2b - 218.1
+	2c - 225.7  2d - 229.1  2e - 233.6  2f - 241.8
+	30 - 250.3  31 - 254.1
+
+DCS code
+	00-023 01-025 02-026 03-031 04-032 05-036 06-043 07-047
+	08-051 09-053 0a-054 0b-065 0c-071 0d-072 0e-073 0f-074
+	10-114 11-115 12-116 13-122 14-125 15-131 16-132 17-134
+	18-143 19-145 1a-152 1b-155 1c-156 1d-162 1e-165 1f-172
+	20-174 21-205 22-212 23-223 24-225 25-226 26-243 27-244
+	28-245 29-246 2a-251 2b-252 2c-255 2d-261 2e-263 2f-265
+	30-266 31-271 32-274 33-306 34-311 35-315 36-325 37-331
+	38-332 39-343 3a-346 3b-351 3c-356 3d-364 3e-365 3f-371
+	40-411 41-412 42-413 43-423 44-431 45-432 46-445 47-446
+	48-452 49-454 4a-455 4b-462 4c-464 4d-465 4e-466 4f-503
+	50-506 51-516 52-523 53-526 54-532 55-546 56-565 57-606
+	58-612 59-624 5a-627 5b-631 5c-632 5d-654 5e-662 5f-664
+	60-703 61-712 62-723 63-731 64-732 65-734 66-743 67-754
+
+A frequency is 3 bytes:
+    byte 0 bits 4-7 - 100MHz
+    byte 0 bits 0-3 - 10MHz
+    byte 1 bits 4-7 - 1MHz
+    byte 1 bits 0-3 - 100KHz
+    byte 2 bits 4-7 - 10KHz
+    byte 2 bits 0-3 - 1KHz, sort of.  Really, the valid values are:
+    	 0=0, 2=2.5, 5=5, 7=7.5
+
+Memories take up 22 bytes, format is:
+
+	 00 bit 5 - Half Deviation
+	    bit 4 - CPU Shift
+	    bits 0-3 - 500Hz BCD digit (for 12.5KHz step).  Note that this
+	    	 is set to 5 if either the transmit or receive frequency has a
+		 500Hz offset, so it's not terribly useful.
+	 01 bits 7-6 - power level: 0=l1, 1=L2, 2=L3, 3=Full power
+	    bits 5-4 - Repeater direction: 0=Simplex, 1=-RPT, 2=+RPT, 3=split
+	    bits 0-2 - Frequency Step: 0=5KHz, 1=10KHz, 2=12.5KHz, 3=15KHz,
+	    	 4=20KHz, 5=25KHz, 6=50KHz, 7=100KHz
+	 02-04 - Frequency
+	 05 bits 0-1 - Mode: 0=NFM, 1=AM, 2=WFM
+	 06-13 - Memory label.  Note that there is no label enable or valid
+	       field that I could find, it's just all spaces if "disabled".
+	 15-17 - Repeater offset (-RPT, +RPT) or transmit frequency (split)
+		This is BCD encoded, when an offset it goes from 0-99.95.
+	 18 - CTCSS Tone (see table)
+	 19 - DCS code (see table)
+	 20 - Tone type - 0=None, 1=Tone, 2=TSQL, 3=DCS, 
+	 21 - Character set of memory label
 
 0000-0005 - Identifier, contents are:
 	  0a 01 02 06 09 24
@@ -27,3 +87,43 @@ http://hse.dyndns.org/hiroto/RFY_LAB/vx7/e/vx7_8510.htm
      00 - Ham Only TX
      01 - Wide TX
 
+0742 - Memory group 1 enable: 00=enable, ffh=disable
+0743 - Memory group 1 count: 00=1 entry, 01=2 entries, 03=3 entries, etc.
+     ffh=disable
+0744-0753 - Memory group enable/count for groups 2-9
+
+0c62-0d53 - Home memories in the following order: BC, SW, FM BC, VHF TV,
+	  50MHz, 144MHz, 220MHz, 430MHz, Air, Action 1, Action2.
+	  FIXME - where is UHF TV band?  Seems to be part of VHF TV?
+
+0d54-0e45 - Current VFO memories, in the above order.
+
+0e46-0e9d - Sub VFO memories: 50MHz, 144MHz, 220MHz, 430MHz
+
+0ea2-0f01 - Memory group 1.  This is 48 2-byte values, big endian, holding
+	  memories in the group.  Unused memories are ffffh.  See also
+	  data at 0742 for the memory group enable and number of entries.
+0f02-1201 - Memory groups 2-9
+
+1202-12e2 - Regular memory enables, 4 bits each.  Mem0 is is the bottom
+	  4 bits of 1202, mem1 is in the top 4 bits of 1202, mem2 is in
+	  the bottom 4 bits of 1203, etc.  Format is:
+	  bits 0-1 - valid: 0=invalid, 1=masks, 2=?, 3=valid.  Note that
+	       bit 0 might be considered a "valid" bit and bit 1 a
+	       "unmasked" bit.
+	  bit 2 - skip memory (scanning)
+	  bit 3 - preferential memory (scanning)
+
+12e3-12e7 - One touch memory enables (see above), otm1 int bottom 4 bits
+	  of 12e3, ... otm9 in bottom 4 bits of 12e7, otm0 (or maybe 10)
+	  in top 4 bits of 12e7.
+
+12e8-12fb - Programmed memory scan enables (see above), in the following
+	  order: PMS_L01, PMS_U01, PMS_L02, ... PMS_L20, PMS_U20
+
+1322-39cd - Regular memory channels (001-450)
+
+39ce-3aa9 - One touch memory channels (otm1-otm0)
+
+3aaa-3b17 - Programmed memory scan channels - PMS_L01, PMS_U01,
+	  PMS_L02, ... PMS_L20, PMS_U20

@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <termios.h>
+#include <sys/ioctl.h>
 #include <errno.h>
 #include <unistd.h>
 #include <getopt.h>
@@ -54,6 +55,8 @@ static struct option long_options[] = {
     {"send_echo",0, NULL, 'y'},
     {"checksum", 0, NULL, 'c'},
     {"nochecksum",0, NULL, 'g'},
+    {"waitchecksum", 0, NULL, 'j'},
+    {"nowaitchecksum", 0, NULL, 'k'},
     {"checkblock", 0, NULL, 'p'},
     {"nocheckblock",0, NULL, 'q'},
     {"configdir",0, NULL, 'f'},
@@ -65,8 +68,10 @@ int hash = 0;
 
 #define YAESU_TIMEOUT(d, s, u) do { d->timeout.tv_sec = s; d->timeout.tv_usec = u; } while(0)
 #define YAESU_TEST_TIMEOUT(d) YAESU_TIMEOUT(d, 1, 0)
-#define YAESU_CHAR_TIMEOUT(d) YAESU_TIMEOUT(d, 1, 0)
+#define YAESU_CHAR_TIMEOUT(d) YAESU_TIMEOUT(d, 5, 0)
 #define YAESU_TIMING_TIMEOUT(d) YAESU_TIMEOUT(d, 0, 200000)
+#define YAESU_WAITWRITE_TIMEOUT(d) YAESU_TIMEOUT(d, 0, 5000)
+#define YAESU_WAITCHUNK_TIMEOUT(d) YAESU_TIMEOUT(d, 0, d->waitchunk)
 #define YAESU_START_TIMEOUT(d) YAESU_TIMEOUT(d, 10, 0)
 #define YAESU_MAX_RETRIES 5
 
@@ -123,9 +128,13 @@ struct yaesu_data {
     unsigned char write_buf[65536];
     unsigned int write_start;
     unsigned int write_len;
+    unsigned int waitchunk;
+    unsigned int chunksize;
+    int waiting_chunk_done;
     int check_write2;
     int has_checksum;
     int has_checkblock;
+    int waitchecksum;
 };
 
 
@@ -135,7 +144,7 @@ const unsigned char ack[1] = { 0x06 };
 struct yaesu_data *
 alloc_yaesu_data(int rfd, int wfd, int is_read,
 		 int send_echo, int recv_echo, int has_checksum,
-		 int has_checkblock)
+		 int has_checkblock, int waitchecksum)
 {
     struct yaesu_data *d;
 
@@ -161,12 +170,16 @@ alloc_yaesu_data(int rfd, int wfd, int is_read,
     d->check_write2 = 0;
     d->write_start = 0;
     d->write_len = 0;
+    d->chunksize = 32;
+    d->waitchunk = 100000;
+    d->waiting_chunk_done = 0;
     d->send_echo = send_echo;
     d->recv_echo = recv_echo;
     d->bsizes = NULL;
     d->timeout_mode = 0;
     d->has_checksum = has_checksum;
     d->has_checkblock = has_checkblock;
+    d->waitchecksum = waitchecksum;
 
     return d;
 }
@@ -274,6 +287,7 @@ struct yaesu_conf {
     int echo;
     int has_checksum;
     int has_checkblock;
+    int waitchecksum;
     struct yaesu_blocksizes *bsizes;
     struct yaesu_conf *next;
 };
@@ -319,6 +333,8 @@ check_yaesu_type(struct yaesu_data *d, unsigned char *buff, unsigned int len,
 		d->has_checksum = r->has_checksum;
 	    if (d->has_checkblock < 0)
 		d->has_checkblock = r->has_checkblock;
+	    if (d->waitchecksum < 0)
+		d->waitchecksum = r->waitchecksum;
 	    return 1;
 	}
     }
@@ -334,6 +350,8 @@ check_yaesu_type(struct yaesu_data *d, unsigned char *buff, unsigned int len,
 	    d->has_checksum = 0;
 	if (d->has_checkblock < 0)
 	    d->has_checkblock = 0;
+	if (d->waitchecksum < 0)
+	    d->waitchecksum = 1;
 	d->timeout_mode = 1;
 	return 1;
     }
@@ -391,6 +409,7 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 {
     unsigned int end;
     int rv;
+    unsigned int total_written = 0;
 
     if (len + d->write_len > sizeof(d->write_buf))
 	return ENOBUFS;
@@ -402,6 +421,7 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 	    for (i = 0; i < len; i++)
 		printf(" %2.2x", data[i]);
 	    printf("\n");
+	    fflush(stdout);
 	}
 
 	end = (d->write_start + d->write_len) % sizeof(d->write_buf);
@@ -417,24 +437,34 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 
     end = (d->write_start + d->write_len) % sizeof(d->write_buf);
     if (d->write_len > 0) {
+	int to_write;
+
 	if (end > d->write_start) {
 	write_nowrap:
-	    rv = write(d->wfd, d->write_buf + d->write_start, d->write_len);
+	    if (total_written + d->write_len > d->chunksize)
+		to_write = d->chunksize - total_written;
+	    else
+		to_write = d->write_len;
+	    rv = write(d->wfd, d->write_buf + d->write_start, to_write);
 	    if (rv < 0) {
 		if (errno == EAGAIN)
 		    goto not_all_written;
 		return errno;
 	    }
+	    total_written += rv;
 	    if (rv > 0 && verbose > 2) {
 		int i;
 		printf("Write(2):");
 		for (i = 0; i < rv; i++)
 		    printf(" %2.2x", d->write_buf[d->write_start+i]);
 		printf("\n");
+		fflush(stdout);
 	    }
 
 	    d->write_len -= rv;
 	    d->write_start += rv;
+	    if (total_written >= d->chunksize)
+		goto out_delay;
 	    if (d->write_len > 0)
 		goto not_all_written;
 	} else {
@@ -444,18 +474,24 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 	     * end == write_start.
 	     */
 	    wrc = sizeof(d->write_buf) - d->write_start;
-	    rv = write(d->wfd, d->write_buf + d->write_start, wrc);
+	    if (total_written + wrc > d->chunksize)
+		to_write = d->chunksize - total_written;
+	    else
+		to_write = d->write_len;
+	    rv = write(d->wfd, d->write_buf + d->write_start, to_write);
 	    if (rv < 0) {
 		if (errno == EAGAIN)
 		    goto not_all_written;
 		return errno;
 	    }
+	    total_written += rv;
 	    if (rv > 0 && verbose > 2) {
 		int i;
 		printf("Write(2):");
 		for (i = 0; i < rv; i++)
 		    printf(" %2.2x", d->write_buf[d->write_start+i]);
 		printf("\n");
+		fflush(stdout);
 	    }
 	    d->write_len -= rv;
 	    d->write_start += rv;
@@ -465,12 +501,20 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 		if (d->write_len > 0)
 		    /* Finish up the write. */
 		    goto write_nowrap;
-	    } else
+	    } else if (total_written >= d->chunksize)
+		goto out_delay;
+	    else
 		goto not_all_written;
 	}
     }
 
     d->check_write2 = 0;
+    return 0;
+
+ out_delay:
+    d->check_write2 = 0;
+    YAESU_WAITWRITE_TIMEOUT(d);
+    d->waiting_chunk_done = 1;
     return 0;
 
  not_all_written:
@@ -524,6 +568,7 @@ handle_yaesu_read_data(struct yaesu_data *d)
 	for (i = 0; i < len; i++)
 	    printf(" %2.2x", buf[i]);
 	printf("\n");
+	fflush(stdout);
     }
 
     if (d->send_echo) {
@@ -756,7 +801,7 @@ yaesu_start_write(struct yaesu_data *d)
     b = d->curr_block;
     for (i = 0; i < b->len; i++)
 	d->csum += b->buff[i];
-    b = d->curr_block;
+
     to_write = b->len - d->pos;
     rv = yaesu_write(d, b->buff + d->pos, to_write);
     if (rv == ENOBUFS)
@@ -777,14 +822,11 @@ handle_yaesu_write_ready(struct yaesu_data *d)
     int rv;
     unsigned int to_write;
 
-    printf("4: %d\n", d->state);
     if (d->is_read)
 	return yaesu_write(d, NULL, 0);
 
-    printf("5: %d\n", d->state);
     if (d->state == YAESU_STATE_WAITCSUM) {
 	unsigned char cs[1];
-	printf("6: %d\n", d->state);
 	cs[0] = d->csum;
 	rv = yaesu_write(d, cs, 1);
 	if (rv == ENOBUFS)
@@ -798,12 +840,10 @@ handle_yaesu_write_ready(struct yaesu_data *d)
 	d->check_write = 0;
 	return 0;
     }
-    printf("7: %d\n", d->state);
+
     b = d->curr_block;
     to_write = b->len - d->pos;
-    printf("8: %d %d\n", b->len, d->pos);
     rv = yaesu_write(d, b->buff + d->pos, to_write);
-    printf("9: %d\n", rv);
     if (rv == ENOBUFS)
 	return 0;
     else if (rv)
@@ -837,6 +877,7 @@ handle_yaesu_write_data(struct yaesu_data *d)
 	for (i = 0; i < len; i++)
 	    printf(" %2.2x", buf[i]);
 	printf("\n");
+	fflush(stdout);
     }
 
     if (d->send_echo) {
@@ -870,17 +911,26 @@ handle_yaesu_write_data(struct yaesu_data *d)
 	    if (buf[i] != b->buff[d->rpos])
 		return EINVAL;
 	}
-	len -= i;
-	if (len == 0)
-	    return 0;
 	if (d->rpos < b->len)
+	    /* More echos to receive, so just return. */
 	    return 0;
-	/* Might have the echo. */
+
+	len -= i;
 	buf += i;
+	/* Might have the ack, so go on. */
     }
 
+    b = b->next;
+    if (d->has_checksum && !d->waitchecksum && (b == &d->head))
+	/* Ugly, but if we don't wait for the ack before sending the
+	   checksum, then send it now. */
+	goto send_checksum;
+
+    if (len == 0)
+	return 0;
+
     if (d->check_write)
-	/* We haven't written all the data, so we shouldn't read anything. */
+	/* We haven't written all the data, so we shouldn't read an ack. */
 	return EINVAL;
 
     /* We should have the ack. */
@@ -894,40 +944,64 @@ handle_yaesu_write_data(struct yaesu_data *d)
 	printf(".");
 	fflush(stdout);
     }
-    b = d->curr_block->next;
-    d->curr_block = b;
-    d->rpos = 0;
-    for (i = 0; i < b->len; i++)
-	d->csum += b->buff[i];
-    d->pos = 0;
-    printf("1: %d\n", d->state);
-    if (b == &d->head) {
-	unsigned char cs[1];
-	printf("2\n");
-	if (d->has_checksum) {
-	    cs[0] = d->csum;
-	    rv = yaesu_write(d, cs, 1);
-	    if (rv == ENOBUFS) {
-		d->state = YAESU_STATE_WAITCSUM;
-		d->check_write = 1;
-	    } else if (rv)
-		return rv;
-	    if (!d->recv_echo)
-		d->state = YAESU_STATE_CSUM_WAITACK;
-	    else
-		d->state = YAESU_STATE_CSUM;
-	} else
-	    d->state = YAESU_STATE_DONE;
-    } else
-	return handle_yaesu_write_ready(d);
-    printf("3: %d\n", d->state);
 
+    if (b == &d->head) {
+	/* We just sent the last block */
+	if (d->has_checksum)
+	    goto send_checksum;
+	else
+	    d->state = YAESU_STATE_DONE;
+    } else {
+	/* Prepare the next block */
+	d->curr_block = b;
+	d->rpos = 0;
+	d->pos = 0;
+	for (i = 0; i < b->len; i++)
+	    d->csum += b->buff[i];
+	return handle_yaesu_write_ready(d);
+    }
+
+    return 0;
+
+ send_checksum:
+    {
+	unsigned char cs[1];
+	cs[0] = d->csum;
+	rv = yaesu_write(d, cs, 1);
+	if (rv == ENOBUFS) {
+	    d->state = YAESU_STATE_WAITCSUM;
+	    d->check_write = 1;
+	} else if (rv)
+	    return rv;
+	if (!d->recv_echo)
+	    d->state = YAESU_STATE_CSUM_WAITACK;
+	else
+	    d->state = YAESU_STATE_CSUM;
+    }
     return 0;
 }
 
 int
 handle_yaesu_write_timeout(struct yaesu_data *d)
 {
+    int rv;
+
+    if (d->waiting_chunk_done == 1) {
+	int left;
+	rv = ioctl(d->wfd, TIOCOUTQ, &left);
+	if (rv < 0)
+	    return errno;
+	if (left == 0) {
+	    YAESU_WAITCHUNK_TIMEOUT(d);
+	    d->waiting_chunk_done = 2;
+	}
+	return 0;
+    } else if (d->waiting_chunk_done) {
+	YAESU_CHAR_TIMEOUT(d);
+	d->waiting_chunk_done = 0;
+	d->check_write2 = 1;
+	return 0;
+    }
     return ETIMEDOUT;
 }
 
@@ -1114,6 +1188,7 @@ read_yaesu_config(char *configdir)
 	    r->echo = -1;
 	    r->has_checksum = -1;
 	    r->has_checkblock = -1;
+	    r->waitchecksum = -1;
 	    r->name = strdup(tok);
 	    if (!r->name)
 		conferr(linenum, "out of memory\n");
@@ -1137,6 +1212,8 @@ read_yaesu_config(char *configdir)
 		r->has_checksum = 0;
 	    if (r->has_checkblock == -1)
 		r->has_checkblock = 0;
+	    if (r->waitchecksum == -1)
+		r->waitchecksum = 1;
 
 	    r->next = radios;
 	    radios = r;
@@ -1335,6 +1412,27 @@ read_yaesu_config(char *configdir)
 	    goto line_done;
 	}
 
+	if (strcmp(tok, "nochecksum") == 0) {
+	    if (r->has_checksum != -1)
+		conferr(linenum, "checksum already specified");
+	    r->has_checksum = 0;
+	    goto line_done;
+	}
+
+	if (strcmp(tok, "waitchecksum") == 0) {
+	    if (r->waitchecksum != -1)
+		conferr(linenum, "waitchecksum already specified");
+	    r->waitchecksum = 1;
+	    goto line_done;
+	}
+
+	if (strcmp(tok, "nowaitchecksum") == 0) {
+	    if (r->waitchecksum != -1)
+		conferr(linenum, "waitchecksum already specified");
+	    r->waitchecksum = 0;
+	    goto line_done;
+	}
+
 	if (strcmp(tok, "checkblock") == 0) {
 	    if (r->has_checkblock != -1)
 		conferr(linenum, "checkblock already specified");
@@ -1346,13 +1444,6 @@ read_yaesu_config(char *configdir)
 	    if (r->has_checkblock != -1)
 		conferr(linenum, "checkblock already specified");
 	    r->has_checkblock = 0;
-	    goto line_done;
-	}
-
-	if (strcmp(tok, "nochecksum") == 0) {
-	    if (r->has_checksum != -1)
-		conferr(linenum, "checksum already specified");
-	    r->has_checksum = 0;
 	    goto line_done;
 	}
 
@@ -1392,6 +1483,8 @@ usage(void)
     printf("  -y, --send_echo - Echo all received characters.\n");
     printf("  -c, --checksum - Send/expect a checksum at the end\n");
     printf("  -g, --nochecksum - Do not send/expect a checksum at the end\n");
+    printf("  -j, --waitchecksum - Wait for ack before sending checkum\n");
+    printf("  -k, --nowaitchecksum - No ack wait before sending checksum\n");
     printf("  -p, --checkblock - Send/expect block checksums\n");
     printf("  -q, --nocheckblock - Do not send/expect block checksums\n");
     printf("  -f, --configdir <file> - Use the given directory for the radio"
@@ -1430,6 +1523,7 @@ main(int argc, char *argv[])
     int recv_echo = -1;
     int do_checksum = -1;
     int do_checkblock = -1;
+    int do_waitchecksum = -1;
     char *speed = "9600";
     int bspeed = -1;
     struct termios orig_termios, curr_termios;
@@ -1488,6 +1582,14 @@ main(int argc, char *argv[])
 
 	    case 'g':
 		do_checksum = 0;
+		break;
+
+	    case 'j':
+		do_waitchecksum = 1;
+		break;
+
+	    case 'k':
+		do_waitchecksum = 0;
 		break;
 
 	    case 'y':
@@ -1636,7 +1738,7 @@ main(int argc, char *argv[])
     }
 
     d = alloc_yaesu_data(fd, fd, do_read, send_echo, recv_echo, do_checksum,
-			 do_checkblock);
+			 do_checkblock, do_waitchecksum);
     if (!d) {
 	fclose(f);
 	close(fd);

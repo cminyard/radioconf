@@ -98,6 +98,8 @@ BCDFreq - BCD representation of a frequency, this is a 3-byte values
 CheckBox - A true/false value, the address specified should generally
 	 be one bit.
 
+RCheckBox - A true/false value, but 0 meand enabled and 1 means disabled.
+
 YaesuString - This is a Yaesu-specific string format used in some radios
 	    like the FT-60R.  Must start on a byte offset and by a byte
 	    multiple length.
@@ -127,6 +129,12 @@ Fixed(pre,suf,inc,units[,options]) - This is a fixed-point decimal number
 
 	options are not required, but may exist.  They are separated by
 	":" and are:
+	w=n - The character display width of the field
+
+FixedFreq(pre,suf,inc,units[,options]) - This is like Fixed, but has
+	some special attributed dealing with frequencies, the handling
+	of ties as defined in "Lists" below.  In addition, it supports
+	one extra option:
 	sd=n - Sometimes it's useful to show a second decimal place, like
 		on the FT-857 display.  This is the location of the second
 		decimal place.  So, for a 9-digit frequency display,
@@ -224,10 +232,10 @@ Lists
 -----
 
 Lists are for things that repeat regularly, like memories, groups of
-DTMF digit sets, etc.  They use the same format as tabls, except they
+DTMF digit sets, etc.  They use the same format as tables, except they
 also take a length:
 
-list <name> <length>
+list <name> <length>[(base)] [label1 [label2 [....]]
     <string>	<address>	<type> [<options>]
     .
     .
@@ -236,6 +244,12 @@ endlist
 The length is a number that specifies how many entries are in the list.
 In this, the offset should be specified and gives the number of bits between
 each item of the same type.
+
+If a base is specified, that is added to all the address entries that end
+with a "*".
+
+The labels are used for the "name" field of the list items, for as many
+as there are labels.
 
 List entries may take options at the end.  Options are:
 
@@ -249,7 +263,7 @@ tie[(<type>)]=<name> - name is the name of another entry in the same
   Ties may have types, which give special meaning to the tie.  Several
   are generic.  A tie type of "enable" means the value enables another
   value if true.  A tie type of "enableoff" expects it is an offset
-  direction and "+" or "-" values enable, any other value disabled.
+  direction and "+" or "-" values enable, any other value disables.
 
   A tie to BCDFreq understands three types: offset, basefreq, and
   freqoff.  A tie to FixedFreq understands offset and basefreq.

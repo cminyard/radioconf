@@ -29,10 +29,6 @@ radiodir = "@YCONF@"
 
 decimal_digits = "0123456789"
 
-# These are internal Yaesu string values for some radios, and a clean set
-# of characters to allow in general strings.
-ys_chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ !\"\\$#%'()*+,-;/|:<=>?@[&]^_"
-
 class ParseException(Exception):
     def __init__(self, filename, lineno, err):
         self.filename = filename
@@ -319,7 +315,7 @@ class Address:
     """This holds an address in a radio file.  It is a set of
     locations (entries), each holding a 4-tuple: start byte, start bit,
     length (in bits), and a offset between succeeding entries."""
-    def __init__(self, c, s):
+    def __init__(self, c, s, base=0):
         l = len(s)
         if (l == 0):
             raise ParseException(c.filename, c.lineno,
@@ -340,7 +336,7 @@ class Address:
         self.entries.append(v)
         while (i < l):
             if (s[i] == ','):
-                v[pos] = c.toNum(s[start:i])
+                v[pos] = self.parseNum(c, s[start:i], base)
                 start = i + 1
                 pos += 1
                 if (pos > 3):
@@ -353,7 +349,7 @@ class Address:
                     raise ParseException(c.filename, c.lineno,
                                          "Address has too few values"
                                          + " in a field");
-                v[pos] = c.toNum(s[start:i])
+                v[pos] = self.parseNum(c, s[start:i], base)
                 start = i + 1
                 pos = 0
                 v = [0, 0, 0, 0]
@@ -370,8 +366,17 @@ class Address:
             start += 1
             self.revbits = True
             pass
-        v[pos] = c.toNum(s[start:i])
+        v[pos] = self.parseNum(c, s[start:i], base)
         return
+
+    def parseNum(self, c, s, base):
+        l = len(s)
+        if (s[l-1] == '*'):
+            v = c.toNum(s[0:l-1]) + base
+        else:
+            v = c.toNum(s[0:l])
+            pass
+        return v
 
     def numbits(self):
         numbits = 0
@@ -520,61 +525,6 @@ class RadioFileData:
         byte_pos = addr.entries[0][0] + (addr.entries[0][3] * num / 8)
         self.changed = True
         self.data[byte_pos + offset] = v
-        pass
-
-    def get_string(self, addr, num):
-        if (len(addr) != 1):
-            raise DataException("String formats only support one"
-                                + " location field")
-        if (addr[0][2] != 0):
-            raise DataException("String formats must of a zero bit offset")
-        if ((addr[0][3] % 8) != 0):
-            raise DataException("String formats must have a byte-multiple"
-                                + " offset")
-        byte_off = addr[0][0] + (addr[0][3] * num / 8)
-        numbytes = addr[0][2]
-
-        s = []
-        for i in (0, numbyte):
-            s.append(chr(self.data[byte_off+i]))
-            pass
-        for i in range(0, len(s)):
-            if (s[i] not in ys_chars):
-                if (s[i].islower()):
-                    s[i] = s[i].upper()
-                    continue
-                s[i] = ' '
-                pass
-            pass
-        s = "".join(s)
-        return s
-    
-    def set_string(self, v, addr, num):
-        if (len(addr) != 1):
-            raise DataException("String formats only support one"
-                                + " location field")
-        if (addr[0][2] != 0):
-            raise DataException("String formats must of a zero bit offset")
-        if ((offset % 8) != 0):
-            raise DataException("String formats must have a byte-multiple"
-                                + " offset")
-        byte_off = addr[0][0] + (addr[0][3] * num / 8)
-        numbytes = addr[0][2]
-
-        self.changed = True
-        inlen = len(v)
-        for i in range(0, numbytes):
-            if (i >= inlen):
-                c = " "
-            else:
-                c = v[i]
-                pass
-            if c not in ys_chars:
-                c = " "
-                pass
-            self.data[byte_off] = ord(c)
-            byte_off += 1
-            pass
         pass
     
     pass
@@ -1020,7 +970,7 @@ class BIInt(YType):
         t = h.data
         return str(self.getInt(t.data, t.addr, num))
 
-    def setSelect(self, v, g, num):
+    def setSelect(self, v, h, num):
         t = h.data
         try:
             self.setInt(int(v), t.data, t.addr, num)
@@ -1094,6 +1044,8 @@ class BIInt(YType):
     pass
 
 class BIString(YType):
+    valid_chars = "0123456789 ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,:;!\"#$%&'()*+-/=<>?@[]^_\\{|}`~"
+
     def __init__(self, name="String", width=10):
         YType.__init__(self, name)
         self.width = width
@@ -1136,7 +1088,7 @@ class BIString(YType):
     def get_string(self, data, addr, num):
         s = data.get_bytes(addr, num)
         for i in range(0, len(s)):
-            if (chr(s[i]) not in ys_chars):
+            if (chr(s[i]) not in self.valid_chars):
                 s[i] = ' '
             else:
                 s[i] = chr(s[i])
@@ -1235,6 +1187,13 @@ class BIFixed(YType):
             self.numdec += 1
         pass
 
+    def get_raw(self, t, num):
+        return t.data.get_bits(t.addr, num)
+
+    def set_raw(self, t, v, num):
+        t.data.set_bits(v, t.addr, num)
+        return
+
     def matchName(self, c, string):
         if not string.startswith("Fixed("):
             return None
@@ -1269,7 +1228,7 @@ class BIFixed(YType):
         return b
 
     def getWidgetHandler(self, parent, t, num):
-        v = t.data.get_bits(t.addr, num)
+        v = self.get_raw(t, num)
         h = Handler(self.set, t, self)
         w = Tix.Entry(parent, readonlybackground="tan")
         w["width"] = self.width
@@ -1282,11 +1241,11 @@ class BIFixed(YType):
 
     def getBits(self, h, num):
         t = h.data
-        return t.data.get_bits(t.addr, num)
+        return self.get_raw(t, num)
     
     def setBits(self, v, h, num):
         t = h.data
-        t.data.set_bits(v, t.addr, num)
+        self.set_raw(t, v, num)
         return
     
     def renumWidget(self, h, num):
@@ -1301,7 +1260,7 @@ class BIFixed(YType):
 
     def getValue(self, h, num):
         t = h.data
-        return str(t.data.get_bits(t.addr, num))
+        return str(self.get_raw(t, num))
 
     def setSelect(self, v, h, num):
         self.setBits(self.conv_from_str(v), h, num)
@@ -1330,7 +1289,6 @@ class BIFixed(YType):
         if (c not in decimal_digits):
             return "break" # Ignore everything but numbers
 
-        t = h.data
         s = w.get()
         if (s[cursor] != c):
             s = s[0:cursor-1] + c + s[cursor:]
@@ -1449,7 +1407,7 @@ class BIFixedFreq(BIFixed):
 
     def getBits(self, h, num):
         t = h.data
-        freq = t.data.get_bits(t.addr, num)
+        freq = self.get_raw(t, num)
 
         off = None
         for m in h.offtie:
@@ -1496,7 +1454,7 @@ class BIFixedFreq(BIFixed):
                 break
             pass
         if (not off or off == "split"):
-            t.data.set_bits(v, t.addr, num)
+            self.set_raw(t, v, num)
             return
         if (off == "smplx"):
             # Ignore in simplex mode
@@ -1521,7 +1479,7 @@ class BIFixedFreq(BIFixed):
         else:
             print("Warning: unknown offset: " + off)
             pass
-        t.data.set_bits(v, t.addr, num)
+        self.set_raw(t, v, num)
         return
 
     def renumWidget(self, h, num):
@@ -1537,6 +1495,18 @@ class BIFixedFreq(BIFixed):
                 h.widget["state"] = "readonly"
             else:
                 h.widget["state"] = "normal"
+                pass
+            pass
+
+        if (h.lastbfreq is None):
+            bfreq = None
+            for m in h.basefreqtie:
+                bfreq = m.getValue(num)
+                if (bfreq):
+                    break
+                pass
+            if (bfreq):
+                h.lastbfreq = int(bfreq) * 10
                 pass
             pass
 
@@ -1566,6 +1536,7 @@ class BIFixedFreq(BIFixed):
 
         if ((not off) or (off == "split") or (off == "smplx")):
             BIFixed.renumWidget(self, h, num)
+            pass
         
         t = h.data
         if (not t.data.config.doRptOffsets):
@@ -1599,15 +1570,15 @@ class BIFixedFreq(BIFixed):
         return
     
     def matchName(self, c, string):
-        if not string.startswith("FixedFreq("):
+        if not string.startswith(self.name + "("):
             return None
         if not string.endswith(")"):
             raise ParseException(c.filename, c.lineno,
-                                 "FixedFreq does not end with ')'")
-        spec = string[10:len(string)-1].split(",")
+                                 self.name + " does not end with ')'")
+        spec = string[len(self.name)+1:len(string)-1].split(",")
         if (len(spec) < 4) or (len(spec) > 5):
             raise ParseException(c.filename, c.lineno,
-                                 "Invalid FixedFreq specifier")
+                                 "Invalid %s specifier" % self.name)
         pre = c.toNum(spec[0])
         suf = c.toNum(spec[1])
         inc = c.toNum(spec[2])
@@ -1636,15 +1607,55 @@ class BIFixedFreq(BIFixed):
                     width = c.toNum(o[1])
                 else:
                     raise ParseException(c.filename, c.lineno,
-                                         "Invalid Fixed option: " + o[0])
+                                         ("Invalid %s option: %s"
+                                          % (self.name, o[0])))
                 pass
             pass
-        b = BIFixedFreq(name=string, width=width)
+        b = self.newInst(string, width)
         b.setup(pre, suf, inc, units, snddec)
         return b
 
+    def newInst(self, name, width):
+        return BIFixedFreq(name=name, width=width)
+
     pass
+
+# Like the above, but the value is stored in BCD format.    
+class BIBCDFixedFreq(BIFixedFreq):
+    def __init__(self, name="BCDFixedFreq", width=10):
+        BIFixedFreq.__init__(self, name, width)
+        return
     
+    def newInst(self, name, width):
+        return BIBCDFixedFreq(name=name, width=width)
+
+    def get_raw(self, t, num):
+        v = t.data.get_bits(t.addr, num)
+        # Convert from BCD to decimal
+        d = 0
+        mult = 1
+        while (v > 0):
+            d += (v % 16) * mult
+            v /= 16
+            mult *= 10
+            pass
+        d /= self.inc
+        return d
+
+    def set_raw(self, t, d, num):
+        d *= self.inc
+        # Convert from decimal to BCD
+        v = 0
+        mult = 1
+        while (d > 0):
+            v += (d % 10) * mult
+            d /= 10
+            mult *= 16
+            pass
+        t.data.set_bits(v, t.addr, num)
+        return
+
+    pass
 
 class BICheckBox(YType):
     def __init__(self, name="CheckBox", reverse=False):
@@ -1736,6 +1747,12 @@ class BICheckBox(YType):
     pass
 
 class BIYaesuString(YType):
+    # These are internal Yaesu string values for some radios, and a
+    # clean set of characters to allow in general strings.
+    string_conv = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ !\"\\$#%'()*+,-;/|:<=>?@[&]^_"
+    space_char = 0x24
+
+
     def __init__(self, name="YaesuString", width=10):
         YType.__init__(self, name)
         self.width = width
@@ -1744,17 +1761,20 @@ class BIYaesuString(YType):
     def matchName(self, c, string):
         if (self.name == string):
             return self
-        elif string.startswith("YaesuString("):
+        elif string.startswith(self.name + "("):
             if not string.endswith(")"):
                 raise ParseException(c.filename, c.lineno,
-                                     "YaesuString does not end with ')'")
-            spec = string[12:len(string)-1].split(",")
+                                     self.name + " does not end with ')'")
+            spec = string[len(self.name)+1:len(string)-1].split(",")
             if (len(spec) != 1):
                 raise ParseException(c.filename, c.lineno,
-                                     "Invalid YaesuString specifier")
+                                     "Invalid %s specifier" % self.name)
             width = c.toNum(spec[0])
-            return BIYaesuString(string, width=width)
+            return self.newInst(string, width)
         return None
+
+    def newInst(self, string, width):
+        return BIYaesuString(string, width=width)
 
     def checkAddrOk(self, c, addr):
         if (len(addr.entries) != 1):
@@ -1781,7 +1801,7 @@ class BIYaesuString(YType):
             if (s[i] > 0x3f):
                 s[i] = ' '
             else:
-                s[i] = ys_chars[s[i]]
+                s[i] = self.string_conv[s[i]]
                 pass
             pass
         s = "".join(s)
@@ -1792,11 +1812,14 @@ class BIYaesuString(YType):
         inlen = len(v)
         for i in range(0, numbytes):
             if (i >= inlen):
-                p = 0x24
+                p = self.space_char
             else:
-                p = ys_chars.find(v[i].upper())
+                p = self.string_conv.find(v[i])
                 if (p < 0):
-                    p = 0x24
+                    p = self.string_conv.find(v[i].upper())
+                    pass
+                if (p < 0):
+                    p = self.space_char
                     pass
                 pass
             data.set_byte(p, addr, num, i)
@@ -1851,6 +1874,22 @@ class BIYaesuString(YType):
         pass
     pass
 
+# Like above, but supports lower-case characters.  Still a
+# non-standard encoding.
+class BIYaesuLCString(BIYaesuString):
+    string_conv = "0123456789 ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,:;!\"#$%&'()*+-/=<>?@[?]^_\\{|}"
+    space_char = 10
+
+    def __init__(self, name="YaesuLCString", width=10):
+        YType.__init__(self, name)
+        self.width = width
+        pass
+
+    def newInst(self, string, width):
+        return BIYaesuLCString(string, width=width)
+
+    pass
+
 def convFromBCD(v):
     if (v >= 10) or (v < 0):
         return '0'
@@ -1865,19 +1904,19 @@ class BIBCDFreq(YType):
     def checkAddrOk(self, c, addr):
         if (len(addr.entries) != 1):
             raise ParseException(c.filename, c.lineno,
-                                 "BCDFreq formats only support one"
-                                + " location field")
+                                 "%s formats only support one"
+                                + " location field" % self.name)
         if (addr.entries[0][1] != 0):
             raise ParseException(c.filename, c.lineno,
-                                 "BCDFreq formats must have a zero bit"
-                                 + " offset")
+                                 "%s formats must have a zero bit"
+                                 + " offset" % self.name)
         if (addr.entries[0][2] != 24):
             raise ParseException(c.filename, c.lineno,
-                                 "BCDFreq formats must be 24 bits long")
+                                 "%s formats must be 24 bits long" % self.name)
         if ((addr.entries[0][3] % 8) != 0):
             raise ParseException(c.filename, c.lineno,
-                                 "BCDFreq formats must have a"
-                                 + " byte-multiple offset")
+                                 "%s formats must have a"
+                                 + " byte-multiple offset" % self.name)
         return True
 
     def get_bcd(self, data, addr, num):
@@ -1906,10 +1945,7 @@ class BIBCDFreq(YType):
         return "".join(v)
         pass
 
-    # Yaesu BCD format for frequency, see FT60-layout.txt
     def set_bcd(self, v, data, addr, num, h):
-        numbytes = addr.entries[0][2] / 8
-
         vlen = len(v)
         add5 = v[vlen - 3]
         if (add5 < '2'):
@@ -1923,7 +1959,7 @@ class BIBCDFreq(YType):
             pass
         second = True
         i = 0
-        for c in v[0:vlen - 1]:
+        for c in v[0:vlen - 3]:
             if c == '.':
                 continue
             if (second):
@@ -1932,7 +1968,6 @@ class BIBCDFreq(YType):
                 second = False
                 data.set_byte(d, addr, num, i)
                 i += 1
-                pass
             else:
                 d = decimal_digits.find(c)
                 second = True
@@ -2052,6 +2087,19 @@ class BIBCDFreq(YType):
                 h.widget["state"] = "readonly"
                 pass
             pass
+
+        if (h.lastbfreq is None):
+            bfreq = None
+            for m in h.basefreqtie:
+                bfreq = m.getValue(num)
+                if (bfreq):
+                    break
+                pass
+            if (bfreq):
+                h.lastbfreq = getHz(bfreq, "", 0)
+                pass
+            pass
+
         h.num = num
         v = self.getStr(h, num)
         rewriteEntry(h.widget, v)
@@ -2081,7 +2129,7 @@ class BIBCDFreq(YType):
 
         if ((not off) or (off == "split") or (off == "smplx")):
             self.renumWidget(h, num)
-            return
+            pass
         
         t = h.data
         if (not t.data.config.doRptOffsets):
@@ -2258,6 +2306,59 @@ class BIBCDFreq(YType):
         self.set_bcd(v, t.data, t.addr, num, None)
         pass
     pass
+
+# Different style of BCD, look in VX-7R.layout for info
+class BIBCDFreq2(BIBCDFreq):
+    def __init__(self):
+        YType.__init__(self, "BCDFreq2")
+        pass
+
+    def get_bcd(self, data, addr, num):
+        s = data.get_bytes(addr, num)
+        v = [ ]
+        i = 0
+        numbytes = 3
+        while (i < numbytes):
+            v.append(convFromBCD(s[i] >> 4))
+            v.append(convFromBCD(s[i] & 0xf))
+            i += 1
+            pass
+
+        # The bottom two digits is either 0.0, 2.5, 5.0, or 7.5, the 0 or 5
+        # at the end is derived.
+        if (v[5] == '2' or v[5] == '7'):
+            v.append('.5')
+        else:
+            v.append('.0')
+            pass
+        v.insert(3, '.')
+        return "".join(v)
+
+    def set_bcd(self, v, data, addr, num, h):
+        # Note that the .5 or .0 at the end is not relevant, that can be
+        # derived from the digit before, so we don't process that
+        second = False
+        i = 0
+        for c in v[0:len(v) - 2]:
+            if c == '.':
+                continue
+            if (second):
+                d <<= 4
+                d |= decimal_digits.find(c)
+                second = False
+                data.set_byte(d, addr, num, i)
+                i += 1
+                pass
+            else:
+                d = decimal_digits.find(c)
+                second = True
+                pass
+            pass
+        if (h):
+            h.modified()
+            pass
+        pass
+
 
 hex_digits = "0123456789ABCDEF "
 def convFromHex(v):
@@ -2762,8 +2863,9 @@ class TabEntry:
     pass
 
 class TabBase:
-    def __init__(self, name):
+    def __init__(self, name, base):
         self.name = name
+        self.base = base
 
         # A list of TabEntry objects
         self.entries = []
@@ -2844,8 +2946,8 @@ class List(TabBase):
     is too slow because of the tens of thousands of widgets created.  So
     this class only creates widgets for the dislayed amount, then it
     redoes what is in the widgets based upon the scroll position."""
-    def __init__(self, name, length, labels):
-        TabBase.__init__(self, name)
+    def __init__(self, name, length, labels, base=0):
+        TabBase.__init__(self, name, base)
 
         # Total length of elements in the list
         self.length = length
@@ -2872,7 +2974,8 @@ class List(TabBase):
         if (len(v) < 3):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for list entry")
-        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), v[3:])
+        self.addItem(c, v[0], Address(c, v[1], base=self.base),
+                     c.findType(v[2]), v[3:])
         pass
 
     def bindWidget(self, widget):
@@ -3242,8 +3345,8 @@ class List(TabBase):
     pass
 
 class Tab(TabBase):
-    def __init__(self, name):
-        TabBase.__init__(self, name)
+    def __init__(self, name, base=0):
+        TabBase.__init__(self, name, base)
         pass
 
     def add(self, c, v):
@@ -3255,7 +3358,8 @@ class Tab(TabBase):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for tab entry");
 
-        self.addItem(c, v[0], Address(c, v[1]), c.findType(v[2]), v[3:])
+        self.addItem(c, v[0], Address(c, v[1], base=self.base),
+                     c.findType(v[2]), v[3:])
         return
 
     def bindWidget(self, widget):
@@ -3373,12 +3477,15 @@ class RadioConfig:
             self.lineno = parent.lineno
         else:
             self.types = [ BIBCDFreq(),
+                           BIBCDFreq2(),
                            BICheckBox(),
                            BICheckBox(name="RCheckBox", reverse=True),
                            BIYaesuString(),
+                           BIYaesuLCString(),
                            BIString(), YType("Empty"),
                            BIHex(), BIInt(), BIFixed(),
-                           BIFixedFreq(), BISpecial(), BISpecial857A(),
+                           BIFixedFreq(), BIBCDFixedFreq(),
+                           BISpecial(), BISpecial857A(),
                            BISpecial857B(), BISetToZero() ]
             self.infile = open(filename, "r")
             self.lineno = LineNum()
@@ -3504,8 +3611,20 @@ class RadioConfig:
                 if (len(s) < 3):
                     raise ParseException(self.filename, self.lineno,
                                          "List has no length")
-                length = self.toNum(s[2])
-                self.curr = List(s[1], length, s[3:])
+                i = s[2].find('(')
+                if (i == -1):
+                    base = 0
+                    length = self.toNum(s[2])
+                else:
+                    ep = s[2].find(')')
+                    if ((ep == -1) or (ep != (len(s[2]) - 1))):
+                        raise ParseException(self.filename, self.lineno,
+                                             "List base doesn't end with ')'")
+                    length = self.toNum(s[2][0:i])
+                    base = self.toNum(s[2][i+1:ep])
+                    pass
+                    
+                self.curr = List(s[1], length, s[3:], base)
             elif (s[0] == "tab"):
                 if (len(s) < 2):
                     raise ParseException(self.filename, self.lineno,

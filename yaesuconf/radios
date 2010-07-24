@@ -65,6 +65,10 @@ radio VX-7R
 	filesize  16210
 	blocksizelist (1, 8) (1, 16192)
 	checksum
+#	The VX-7R doesn't seem to handle having data thrown at it at
+#	a high rate, and it doesn't send an ack before or after the
+#	checksum.
+	nowaitchecksum
 endradio
 
 radio FT-7800R

@@ -292,11 +292,10 @@ enum ToneMode_e
 	0 "None"
 	1 "Tone"
 	2 "T-SQL"
-	3 "Rev CTCSS"
-	4 "DCS"
-	5 "D Code"
-	6 "T DCS"
-	7 "D Tone"
+	3 "DCS"
+	4 "D Code"
+	5 "T DCS"
+	6 "D Tone"
 endenum
 
 enum Step_e
