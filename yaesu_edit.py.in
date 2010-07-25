@@ -886,6 +886,9 @@ class BISetToZero(BISpecial):
     pass        
 
 class BIInt(YType):
+    valid_digits = decimal_digits
+    conv_val = 10
+
     def __init__(self, name="Int"):
         YType.__init__(self, name)
         return
@@ -900,16 +903,19 @@ class BIInt(YType):
         self.unitslen = len(units)
         return
     
+    def newInst(self, name):
+        return BIInt(name=name)
+
     def matchName(self, c, string):
-        if not string.startswith("Int("):
+        if not string.startswith(self.name + "("):
             return None
         if not string.endswith(")"):
             raise ParseException(c.filename, c.lineno,
-                                 "Int does not end with ')'")
+                                 self.name + " does not end with ')'")
         spec = string[4:len(string)-1].split(",")
         if (len(spec) != 5):
             raise ParseException(c.filename, c.lineno,
-                                 "Invalid Int specifier")
+                                 "Invalid %s specifier" % self.name)
         minval = c.toNum(spec[0])
         maxval = c.toNum(spec[1])
         if (minval >= maxval):
@@ -921,7 +927,7 @@ class BIInt(YType):
             raise ParseException(c.filename, c.lineno,
                                  "Multiplier must be > 0")
         units = spec[4]
-        b = BIInt(name=string)
+        b = self.newInst(name=string)
         b.setup(minval, maxval, offset, multi, units)
         return b
 
@@ -933,7 +939,7 @@ class BIInt(YType):
         h.num = num
         w.bind("<Key>", h.set_event)
         w.delete(0, 'end')
-        w.insert(0, str(v)+self.units)
+        w.insert(0, self.convFromNum(v)+self.units)
         return h
 
     def renumWidget(self, h, num):
@@ -978,16 +984,19 @@ class BIInt(YType):
             pass
         pass
 
-    def isvalidnum(self, s):
+    def convFromNum(self, v):
+        return str(v)
+
+    def convToNum(self, s):
         try:
-            i = int(s)
+            i = int(s, self.conv_val)
             if ((i < self.minval) or (i > self.maxval)):
                 return None
             pass
         except Exception, e:
             return None
         
-        return True
+        return i
     
     def set(self, h, event):
         c = event.keysym
@@ -1023,23 +1032,37 @@ class BIInt(YType):
                 return "break"
             s = s[0:cursor] + s[cursor + 1:]
             cursor -= 1
-        elif (c not in decimal_digits) and (c != '-'):
+        elif (c not in self.valid_digits) and (c != '-'):
             return "break" # Ignore everything but numbers and '-'
         else:
             s = s[0:cursor] + c + s[cursor:]
             pass
 
         intstr = s[0:len(s)-self.unitslen]
-        if (not self.isvalidnum(intstr)):
-            return "break"
-
+        v = self.convToNum(intstr)
         t = h.data
-        self.setInt(int(intstr), t.data, t.addr, h.num)
+        self.setInt(v, t.data, t.addr, h.num)
 
         h.widget.delete(0, 'end')
         w.insert(0, s)
         w.icursor(cursor + 1)
         return "break"
+
+    pass
+
+class BIHex(BIInt):
+    valid_digits = decimal_digits + "ABCDEFabcdef"
+    conv_val = 16
+
+    def __init__(self, name="Hex"):
+        YType.__init__(self, name)
+        return
+
+    def newInst(self, name):
+        return BIHex(name=name)
+
+    def convFromNum(self, v):
+        return "%x" % v
 
     pass
 
@@ -1797,7 +1820,7 @@ class BIYaesuString(YType):
         return True
 
     def get_yaesu_string(self, data, addr, num):
-        s = data.get_bytes(addr, num)
+        s = self.get_chars(data, addr, num)
         for i in range(0, len(s)):
             if (s[i] > 0x3f):
                 s[i] = ' '
@@ -1823,12 +1846,19 @@ class BIYaesuString(YType):
                     p = self.space_char
                     pass
                 pass
-            data.set_byte(p, addr, num, i)
+            self.set_char(data, p, addr, num, i)
             pass
         if (h):
             h.modified()
             pass
         pass
+
+    def get_chars(self, data, addr, num):
+        return data.get_bytes(addr, num)
+
+    def set_char(self, data, p, addr, num, i):
+        data.set_byte(p, addr, num, i)
+        return
 
     def getWidgetHandler(self, parent, t, num):
         v = self.get_yaesu_string(t.data, t.addr, num)
@@ -1890,6 +1920,45 @@ class BIYaesuLCString(BIYaesuString):
         return BIYaesuLCString(string, width=width)
 
     pass
+
+# Like above, but each character is 16 bits big endian
+class BIYaesuLCString16(BIYaesuLCString):
+    def __init__(self, name="YaesuLCString16", width=10):
+        YType.__init__(self, name)
+        self.width = width
+        pass
+
+    def newInst(self, string, width):
+        return BIYaesuLCString16(string, width=width)
+
+    def get_chars(self, data, addr, num):
+        bytes = data.get_bytes(addr, num)
+        v = []
+        for i in range(0, self.width):
+            c = bytes[i * 2 + 1]
+            if (c == 0xff):
+                c = self.space_char
+                pass
+            v.append(c)
+            pass
+        return v
+
+    def set_char(self, data, p, addr, num, i):
+        p1 = 0x00
+        if (p == self.space_char):
+            p1 = 0xff
+            p = 0xff
+            pass
+        data.set_byte(p1, addr, num, i * 2)
+        data.set_byte(p, addr, num, i * 2 + 1)
+        return
+
+    pass
+
+def convFromBCD(v):
+    if (v >= 10) or (v < 0):
+        return '0'
+    return decimal_digits[v]
 
 def convFromBCD(v):
     if (v >= 10) or (v < 0):
@@ -2310,6 +2379,14 @@ class BIBCDFreq(YType):
         pass
     pass
 
+hex_digits = "0123456789ABCDEF "
+def convFromHex(v):
+    if (v == 0xff):
+        return ' '
+    if (v >= 16) or (v < 0):
+        return '0'
+    return hex_digits[v]
+
 # Different style of BCD, look in VX-7R.layout for info
 class BIBCDFreq2(BIBCDFreq):
     def __init__(self):
@@ -2363,15 +2440,7 @@ class BIBCDFreq2(BIBCDFreq):
         pass
 
 
-hex_digits = "0123456789ABCDEF "
-def convFromHex(v):
-    if (v == 0xff):
-        return ' '
-    if (v >= 16) or (v < 0):
-        return '0'
-    return hex_digits[v]
-
-class BIHex(YType):
+class BIHexDigits(YType):
     def __init__(self):
         YType.__init__(self, "HexDigits")
         pass
@@ -3484,9 +3553,9 @@ class RadioConfig:
                            BICheckBox(),
                            BICheckBox(name="RCheckBox", reverse=True),
                            BIYaesuString(),
-                           BIYaesuLCString(),
+                           BIYaesuLCString(), BIYaesuLCString16(),
                            BIString(), YType("Empty"),
-                           BIHex(), BIInt(), BIFixed(),
+                           BIHexDigits(), BIInt(), BIHex(), BIFixed(),
                            BIFixedFreq(), BIBCDFixedFreq(),
                            BISpecial(), BISpecial857A(),
                            BISpecial857B(), BISetToZero() ]

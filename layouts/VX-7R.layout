@@ -87,10 +87,177 @@ Memories take up 22 bytes, format is:
      00 - Ham Only TX
      01 - Wide TX
 
+05ba - ff=No memory groups used, 00=Some memory groups moved
+       Mirrored in 063a
+
+05bb - Last memory group used: 0=memgrp1, 1=memgrp2, etc.
+       Mirrored in 063b
+
+0611 - Checksum of 0592 to 0610
+
+0612-0691 - Mirror of 0592 to 0611
+
+0692 - NFM squelch (Basic Setup #1)
+0694 - WFM squelch (Basic Setup #2)
+0695 - bit 0 - DTMF Dialer enable (TSQ/DCS/DTMF #7)
+       bit 1 - Split Tone enable (TSQ/DCS/DTMF #6)
+       bit 2 - Key Beep enable (Basic Setup #9)
+       bit 3 - ARS enable (Basic Setup #5)
+       bit 4 - Spec Analyzer 2 enable (Scan Modes #7)
+       bit 5 - Scan Lamp enable (Scan Modes #4)
+       bit 6 - CW ID enable (ARTS #3)
+       Bit 7 - VFO Mode, 0=All, 1=Band (Misc Setup #10)
+
+0696 - bit 0 - TX Save enable (Save Modes #3)
+       bit 1 - Mute Set (Basic Setup #8)
+       bit 2 - Hyper Write enable (Basic Setup #14)
+       bit 3 - Edge Beep enable (Scan Modes #2)
+       bit 4 - Busy Channel Lock Out enable (Misc Setup #1)
+       bit 5 - Band Link enable (Misc Setup #9)
+       bit 6 - Language, 0=English, 1=Japanese (Misc Setup #17)
+       bit 7 - Busy LED enable (Display Setup #1)
+
+0697 - bit 0 - Moni/TCall key, 0=Moni, 1=TCall (Misc Setup #3)
+       bit 1 - Home/Rev key, 0=Home, 1=Rev (Misc Setup #2)
+       bit 2 - ?
+       bit 3 - ARTS Interval, 0=15sec, 1=25sec (ARTS #2)
+       bit 4 - Spec Analyzer 1, 0=1sec, 1=continuous (Scan Modes #6)
+       bit 5 - Smart Search, 0=1sec, 1=continuous (Scan Modes #5)
+       bit 6 - ?
+       bit 7 - ?
+
+0698 - bit 0 - Memory Write Mode, 0=Lower, 1=Next (Basic Setup #12)
+       bit 1 - ?
+       bit 2 - DCS Compliment enable (TSQ/DCS/DTMF #4)
+       bit 3 - Temp Unit, 0=Celcius,1=Fahrenheit (Measurement #3)
+       bit 4 - Altitude Unit, 0=Feet, 1=Meters (Measurement #6)
+       bits 5-7 - ?
+
+0699 - bit 0 - On Timer Enable (Save Modes #5), see On Timer below
+       bit 1 - Off Timer Enable (Save Modes #6), see Off Timer below
+       bit 2 - Front End Attenuator enable (Misc Setup #18)
+       bit 3 - ?
+       bit 4 - Mic Monitor enable (Misc Setup #19)
+       bit 5 - WX Alert enable (Misc Setup #20)
+       bit 6 - Icon On splash screen? (?)
+       bit 7 - Mon/Func, 0=Fun, 1=Mon (Misc Setup #4)
+
+069a - VOX Sensitivity: 0=off, 1=high, 2=low (Misc Setup #7)
+
+069b - VOX Delay: 0=.5sec, 1=1sec, 2=2sec (Misc Setup #8)
+
+069c - Emergency Function setting: 0=Beep+Strobe, 1=Beep, 2=Strobe1
+       3=Strobe2, 4=Strobe3, 5=Strobe4, 6=Strobe5, 7=Beam (Misc Setup #5)
+
+069d - LCD Contrast: 0=1, c=2, f=3, 12=4, 15=5, 18=6, 1b=7, 1e=8, 21=9, 24=10
+       (Display Setup #2)
+
+069e - LCD Dimmer: 0=0, 1=1, ... 12=12
+       (Display setup #3)
+
+069f - Lamp Mode: 0=Key, 1=Continuous, 2=Off (Display Setup #5)
+
+06a0 - On Timer hours (Save Modes #5)
+06a1 - On Timer minutes (Save Modes #5)
+
+06a2 - Off Timer hours (Save Modes #6)
+06a3 - Off Timer minutes (Save Modes #6)
+
+06a4 - Wave Monitor: 0=All, 1=RX, 2=TX (Measurement #2)
+
+06a5 - Barometer Unit: 0=hPa, 1=mBar, 2=mmHg, 3=Inch (Measurement #4)
+
+06a6-06a7 - Barometer offset: 0-65536 (Measurement #5)
+
+06a8-06a9 - Altimeter offset: 0-65536 (Measurement #7)
+
+06aa - Scan Resume mode: 0=3sec, 1=5sec, 2=7Sec, 3=10sec, 4=Busy,
+       5=Hold (Scan Modes #3)
+
+06ac - RX Save, 0=off, 1=200msec, 2=300ms, 3=500ms, 4=1sec, 5=2sec
+       (Save Modes #2)
+
+06ad - Channel Counter Search Width: 0=5MHz, 1=10MHz, 2=50MHz, 3=100MHz
+       (Scan Modes #1)
+
+06af - ARTS Beep: 0=Off, 1=In Range, 2=Always
+
+06b0-06bf - Callsign for CW ID (character set 0, may be in swapped-character
+	    mode, need to test).  0xff in disabled areas.  Each character
+	    is two bytes big-endian, the top 8 bits is always 0 (or perhaps
+	    the character set?), bottom 8 bits is the character mapping
+	    used elsewhere.
+
+06e0 - Automatic Power Off: 0=Off, 1=30min, 2=1hour, 3=3hours, 4=5hours
+       5=8hours (Save Modes #1)
+
+06e1 - Transmit Off Timer: 0=Off, 1=1min, 2=2.5min, 3=5min, 4=10min
+       (Save Modes #4)
+
+06e2 - CTCSS Bell Ringer repetitions: 0=Off, 1=1, 2=3, 3=5, 4=8, 5=Continuous
+       (TSQ/DCS/DTMF #5)
+
+06e3 - Power Off Display mode: 0=None, 1=Temp, 2=Baro, 3=Alti, 4=Temp+Baro,
+       5=Temp+Alti, 6=All, 7=WX (Display Setup  #4)
+
+06e4 - Meter Symbol: 0=S1, 1-S2, 2-S3, 3=S4, 4=S5, 5=CHR (Display Setup #8)
+
+0706 - Sensor Display (Measurement #1), 0=Off, 1=Time, 2=DC, 3=Temp, 4=Wave,
+       5=Barometer, 6=Altimeter, 7=Weather
+
+0707 - Icon Set enable (Misc Setup #12)
+
+708-70a - LED Color palette 1 (Display Setup #6), RGB values, one byte each
+70b-70d - LED Color palette 2
+70e-710 - LED Color palette 3
+711-713 - LED Color palette 4
+714-716 - LED Color palette 5
+717-719 - LED Color palette 6
+71a-71c - LED Color palette 7
+71d-71f - LED Color palette 8
+720-722 - LED Color palette 9
+723-725 - LED Color palette 10
+
+0728 - Main Busy LED Color (Display Setup #7), Choose color palletes 1-10
+       0=palette 1, 1=palette2, etc and 10=Off
+0729 - Sub Busy LED Color
+072a - Dual Busy LED Color
+072b - Main TX LED Color
+072c - Sub TX LED Color
+072d - Charge Complete Color
+
+0730 - Lock mode: 0=Key, 1=Diak. 2=Key+Dial, 3=PTT, 4=Key+PTT, 5=Dial+PTT,
+       6=All (Basic Setup #10)
+
 0742 - Memory group 1 enable: 00=enable, ffh=disable
 0743 - Memory group 1 count: 00=1 entry, 01=2 entries, 03=3 entries, etc.
      ffh=disable
 0744-0753 - Memory group enable/count for groups 2-9
+
+0754-0769 - External Font 1 bitmap - This is a bitmap, 10(width) by 11(height)
+	    first two bytes are the top row, big endian, with the top 6 bits
+	    not used.  Each succeeding pair is the next row down.
+076a-077f - External Font 2 bitmap
+0780-0795 - External Font 3 bitmap
+0796-07ab - External Font 4 bitmap
+07ac-07c1 - External Font 5 bitmap
+
+07c2-07d1 - DTMF Autodialer 1 These are 8-bit hex values, 0xff means the
+	    value is not used. (TSQ/DCS/DTMF #8)
+07d2-07e1 - DTMF Autodialer 2
+07e2-07f1 - DTMF Autodialer 3
+07f2-0801 - DTMF Autodialer 4
+0802-0811 - DTMF Autodialer 5
+0812-0821 - DTMF Autodialer 6
+0822-0831 - DTMF Autodialer 7
+0832-0841 - DTMF Autodialer 8
+0842-0851 - DTMF Autodialer 9
+
+0852-08cc - Icon 1 (Misc Setup #13/14) This is a bitmap, 21(width) by 41(height)
+	    first three bytes are the top row, big endian, with the top 3 bits
+	    not used.  Each succeeding trio is the next row down.
+08ce-0948 - Icon 2
+094a-09c4 - Icon 3
 
 0c62-0d53 - Home memories in the following order: BC, SW, FM BC, VHF TV,
 	  50MHz, 144MHz, 220MHz, 430MHz, Air, Action 1, Action2.

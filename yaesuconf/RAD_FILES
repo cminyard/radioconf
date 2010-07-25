@@ -107,8 +107,12 @@ YaesuString - This is a Yaesu-specific string format used in some radios
 	like the FT-60R.  Must start on a byte offset and by a byte
 	multiple length.
 
-YaesuLCString = This is like YaesuString, but supports lower case and
+YaesuLCString - This is like YaesuString, but supports lower case and
 	has a different layout.  This is for the VX-7R.
+
+YaesuLCString16 - Like YaesuLCString, but each character is 16 bytes
+	and unused (space) characters are converted to 0xffff.  This
+	is for the CW ID in the VX-7R.
 
 String - An ASCII string (though it's limited to standard characters).
         Must start on a byte offset and by a byte multiple length.
