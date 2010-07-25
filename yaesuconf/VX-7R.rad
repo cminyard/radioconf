@@ -1,0 +1,752 @@
+#
+# Configuration for a Yaesu VX-7R
+#
+
+# TODO: The font and icon editors
+#
+# Memory groups are not implemented
+# Hypermemories are not implemented
+
+enum CTCSS_e
+	0x00 "67.0"
+	0x01 "69.3"
+	0x02 "71.9"
+	0x03 "74.4"
+	0x04 "77.0"
+	0x05 "79.7"
+	0x06 "82.5"
+	0x07 "85.4"
+	0x08 "88.5"
+	0x09 "91.5"
+	0x0a "94.8"
+	0x0b "97.4"
+	0x0c "100.0"
+	0x0d "103.5"
+	0x0e "107.2"
+	0x0f "110.9"
+	0x10 "114.8"
+	0x11 "188.8"
+	0x12 "123.0"
+	0x13 "127.3"
+	0x14 "131.8"
+	0x15 "136.5"
+	0x16 "141.3"
+	0x17 "146.2"
+	0x18 "151.4"
+	0x19 "156.7"
+	0x1a "159.8"
+	0x1b "162.2"
+	0x1c "165.5"
+	0x1d "167.9"
+	0x1e "171.3"
+	0x1f "173.8"
+	0x20 "177.3"
+	0x21 "179.9"
+	0x22 "183.5"
+	0x23 "186.2"
+	0x24 "189.9"
+	0x25 "192.8"
+	0x26 "196.6"
+	0x27 "199.5"
+	0x28 "203.5"
+	0x29 "206.5"
+	0x2a "210.7"
+	0x2b "218.1"
+	0x2c "225.7"
+	0x2d "229.1"
+	0x2e "233.6"
+	0x2f "241.8"
+	0x30 "250.3"
+	0x31 "254.1"
+endenum
+
+enum DCSCode_e
+	0x00 "023"
+	0x01 "025"
+	0x02 "026"
+	0x03 "031"
+	0x04 "032"
+	0x05 "036"
+	0x06 "043"
+	0x07 "047"
+	0x08 "051"
+	0x09 "053"
+	0x0a "054"
+	0x0b "065"
+	0x0c "071"
+	0x0d "072"
+	0x0e "073"
+	0x0f "074"
+	0x10 "114"
+	0x11 "115"
+	0x12 "116"
+	0x13 "122"
+	0x14 "125"
+	0x15 "131"
+	0x16 "132"
+	0x17 "134"
+	0x18 "143"
+	0x19 "145"
+	0x1a "152"
+	0x1b "155"
+	0x1c "156"
+	0x1d "162"
+	0x1e "165"
+	0x1f "172"
+	0x20 "174"
+	0x21 "205"
+	0x22 "212"
+	0x23 "223"
+	0x24 "225"
+	0x25 "226"
+	0x26 "243"
+	0x27 "244"
+	0x28 "245"
+	0x29 "246"
+	0x2a "251"
+	0x2b "252"
+	0x2c "255"
+	0x2d "261"
+	0x2e "263"
+	0x2f "265"
+	0x30 "266"
+	0x31 "271"
+	0x32 "274"
+	0x33 "306"
+	0x34 "311"
+	0x35 "315"
+	0x36 "325"
+	0x37 "331"
+	0x38 "332"
+	0x39 "343"
+	0x3a "346"
+	0x3b "351"
+	0x3c "356"
+	0x3d "364"
+	0x3e "365"
+	0x3f "371"
+	0x40 "411"
+	0x41 "412"
+	0x42 "413"
+	0x43 "423"
+	0x44 "431"
+	0x45 "432"
+	0x46 "445"
+	0x47 "446"
+	0x48 "452"
+	0x49 "454"
+	0x4a "455"
+	0x4b "462"
+	0x4c "464"
+	0x4d "465"
+	0x4e "466"
+	0x4f "503"
+	0x50 "506"
+	0x51 "516"
+	0x52 "523"
+	0x53 "526"
+	0x54 "532"
+	0x55 "546"
+	0x56 "565"
+	0x57 "606"
+	0x58 "612"
+	0x59 "624"
+	0x5a "627"
+	0x5b "631"
+	0x5c "632"
+	0x5d "654"
+	0x5e "662"
+	0x5f "664"
+	0x60 "703"
+	0x61 "712"
+	0x62 "723"
+	0x63 "731"
+	0x64 "732"
+	0x65 "734"
+	0x66 "743"
+	0x67 "754"
+endenum
+
+enum Step_e
+	0 "5kHz"
+	1 "10kHz"
+	2 "12.5kHz"
+	3 "15kHz"
+	4 "20kHz"
+	5 "25kHz"
+	6 "60kHz"
+	7 "100kHz"
+endenum
+
+# Note that this is not the same names as the VX-7R uses, but matches the
+# other radio types for ease of transfer of information.
+enum XmitPower_e
+	0 "High"
+	1 "Med"
+	2 "Med2"
+	3 "Low"
+endenum
+
+enum OffsetDir_e
+	0x0 "smplx"
+	0x1 "-"
+	0x2 "+"
+	0x3 "split"
+endenum
+
+
+# This is a helper for convenient values, the real value is a BCD fixed-point
+enum OffsetFreq_e
+	 0x100 "100kHz"
+	 0x500 "500kHz"
+	 0x600 "600kHz"
+	0x1000 "1.00MHz"
+	0x1600 "1.60MHz"
+	0x3000 "3.00MHz"
+	0x5000 "5.00MHz"
+	0x7600 "7.60MHz"
+endenum
+
+enum ToneMode_e
+	0 "None"
+	1 "Tone"
+	2 "T-SQL"
+	3 "Rev CTCSS"
+	4 "DCS"
+	5 "D Code"
+	6 "T DCS"
+	7 "D Tone"
+endenum
+
+enum ReceiveMode_e
+	0 "FM"
+	1 "AM"
+	2 "WFM"
+endenum
+
+enum ScanMode_e
+	0	"Off"
+	1	"Skip"
+	2	"Pref"
+endenum
+
+list Memories 450(0x1322)
+#	Name			Address			type
+	"Valid"			(0x1202,0,1,4)		CheckBox
+	"Mask"			(0x1202,1,1,4)		RCheckBox
+
+	"Label"			(6*,0,64,176)		YaesuLCString(8)
+
+	"Rx\nFreq"		(2*,0,24,176)		BCDFreq2 "tie(basefreq)=Tx\nFreq"
+	"Offset\nDirect"	(1*,4,2,176)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
+	"Tx\nFreq"		(15*,0,24,176)		BCDFreq2
+	"Offset\nFreq"		(15*,0,24,176)		BCDFixedFreq(2,3,50,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFTab"		(15*,0,24,176)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
+
+	"Tone\nMode"		(20*,0,3,176)		ToneMode_e tone=both
+	"CTCSS\nTone"		(18*,0,8,176)		CTCSS_e
+	"DCS\nCode"		(19*,0,8,176)		DCSCode_e
+	"Xmit\nPower"		(1*,6,2,176)		XmitPower_e
+# Called "Half Deviation" in the VX-7R
+	"Tx\nNarrow"		(0*,5,1,176)		CheckBox
+	"Step"			(1*,0,3,176)		Step_e
+	"Mode"			(5*,0,2,176)		ReceiveMode_e
+# Called "CPU Shift" in the VX-7R
+	"Clock\nShift"		(0*,4,1,176)		CheckBox
+
+	"Scan\nMode"		(0x1202,2,2,4)		ScanMode_e
+
+	"Char\nSet"		(0*,0,1)		Empty
+	"1"			(21*,0,1,176)		CheckBox
+	"2"			(21*,1,1,176)		CheckBox
+	"3"			(21*,2,1,176)		CheckBox
+	"4"			(21*,3,1,176)		CheckBox
+	"5"			(21*,4,1,176)		CheckBox
+	"6"			(21*,5,1,176)		CheckBox
+	"7"			(21*,6,1,176)		CheckBox
+	"8"			(21*,7,1,176)		CheckBox
+endlist
+
+list VFO 15(0xd54) BC SW FMBC TV 50MHz 144MHz 220MHz 430MHz AIR Action1 Action2 Sub50MHz Sub144MHz Sub220MHz Sub430MHz
+#	Name			Address			type
+	"Rx\nFreq"		(2*,0,24,176)		BCDFreq2 "tie(basefreq)=Tx\nFreq"
+	"Offset\nDirect"	(1*,4,2,176)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
+	"Tx\nFreq"		(15*,0,24,176)		BCDFreq2
+	"Offset\nFreq"		(15*,0,24,176)		BCDFixedFreq(2,3,50,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFTab"		(15*,0,24,176)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
+
+	"Tone\nMode"		(20*,0,3,176)		ToneMode_e tone=both
+	"CTCSS\nTone"		(18*,0,8,176)		CTCSS_e
+	"DCS\nCode"		(19*,0,8,176)		DCSCode_e
+	"Xmit\nPower"		(1*,6,2,176)		XmitPower_e
+# Called "Half Deviation" in the VX-7R
+	"Tx\nNarrow"		(0*,5,1,176)		CheckBox
+	"Step"			(1*,0,3,176)		Step_e
+	"Mode"			(5*,0,2,176)		ReceiveMode_e
+# Called "CPU Shift" in the VX-7R
+	"Clock\nShift"		(0*,4,1,176)		CheckBox
+endlist
+
+list Home 11(0xc62) BC SW FMBC TV 50MHz 144MHz 220MHz 430MHz AIR Action1 Action2
+#	Name			Address			type
+	"Rx\nFreq"		(2*,0,24,176)		BCDFreq2 "tie(basefreq)=Tx\nFreq"
+	"Offset\nDirect"	(1*,4,2,176)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
+	"Tx\nFreq"		(15*,0,24,176)		BCDFreq2
+	"Offset\nFreq"		(15*,0,24,176)		BCDFixedFreq(2,3,50,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFTab"		(15*,0,24,176)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
+
+	"Tone\nMode"		(20*,0,3,176)		ToneMode_e tone=both
+	"CTCSS\nTone"		(18*,0,8,176)		CTCSS_e
+	"DCS\nCode"		(19*,0,8,176)		DCSCode_e
+	"Xmit\nPower"		(1*,6,2,176)		XmitPower_e
+# Called "Half Deviation" in the VX-7R
+	"Tx\nNarrow"		(0*,5,1,176)		CheckBox
+	"Step"			(1*,0,3,176)		Step_e
+	"Mode"			(5*,0,2,176)		ReceiveMode_e
+# Called "CPU Shift" in the VX-7R
+	"Clock\nShift"		(0*,4,1,176)		CheckBox
+endlist
+
+list OneTouch 10(0x39ce) 1 2 3 4 5 6 7 8 9 0
+#	Name			Address			type
+	"Valid"			(0x12e3,0,1,4)		CheckBox
+	"Mask"			(0x12e3,1,1,4)		RCheckBox
+
+	"Label"			(6*,0,64,176)		YaesuLCString(8)
+
+	"Rx\nFreq"		(2*,0,24,176)		BCDFreq2 "tie(basefreq)=Tx\nFreq"
+	"Offset\nDirect"	(1*,4,2,176)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
+	"Tx\nFreq"		(15*,0,24,176)		BCDFreq2
+	"Offset\nFreq"		(15*,0,24,176)		BCDFixedFreq(2,3,50,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFTab"		(15*,0,24,176)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
+
+	"Tone\nMode"		(20*,0,3,176)		ToneMode_e tone=both
+	"CTCSS\nTone"		(18*,0,8,176)		CTCSS_e
+	"DCS\nCode"		(19*,0,8,176)		DCSCode_e
+	"Xmit\nPower"		(1*,6,2,176)		XmitPower_e
+# Called "Half Deviation" in the VX-7R
+	"Tx\nNarrow"		(0*,5,1,176)		CheckBox
+	"Step"			(1*,0,3,176)		Step_e
+	"Mode"			(5*,0,2,176)		ReceiveMode_e
+# Called "CPU Shift" in the VX-7R
+	"Clock\nShift"		(0*,4,1,176)		CheckBox
+endlist
+
+list ProgMemScan 40(0x3aaa) L1 U1 L2 U2 L3 U3 L4 U4 L5 U5 L6 U6 L7 U7 L8 U8 L9 U9 L10 U10 L11 U11 L12 U12 L13 U13 L14 U14 L15 U15 L16 U16 L17 U17 L18 U18 L19 U19 L20 U20
+#	Name			Address			type
+	"Valid"			(0x12e8,0,1,8)		CheckBox
+	"Mask"			(0x12e8,1,1,8)		RCheckBox
+
+	"Label"			(6*,0,64,176)		YaesuLCString(8)
+
+	"Rx\nFreq"		(2*,0,24,176)		BCDFreq2 "tie(basefreq)=Tx\nFreq"
+	"Offset\nDirect"	(1*,4,2,176)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
+	"Tx\nFreq"		(15*,0,24,176)		BCDFreq2
+	"Offset\nFreq"		(15*,0,24,176)		BCDFixedFreq(2,3,50,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFTab"		(15*,0,24,176)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
+
+	"Tone\nMode"		(20*,0,3,176)		ToneMode_e tone=both
+	"CTCSS\nTone"		(18*,0,8,176)		CTCSS_e
+	"DCS\nCode"		(19*,0,8,176)		DCSCode_e
+	"Xmit\nPower"		(1*,6,2,176)		XmitPower_e
+# Called "Half Deviation" in the VX-7R
+	"Tx\nNarrow"		(0*,5,1,176)		CheckBox
+	"Step"			(1*,0,3,176)		Step_e
+	"Mode"			(5*,0,2,176)		ReceiveMode_e
+# Called "CPU Shift" in the VX-7R
+	"Clock\nShift"		(0*,4,1,176)		CheckBox
+
+	"Skip"			(0x12e8,2,1,4)		CheckBox
+	"Pref"			(0x12e8,3,1,4)		CheckBox
+endlist
+
+enum 15levels
+	0	"0"
+	1	"1"
+	2	"2"
+	3	"3"
+	4	"4"
+	5	"5"
+	6	"6"
+	7	"7"
+	8	"8"
+	9	"9"
+	10	"10"
+	11	"11"
+	12	"12"
+	13	"13"
+	14	"14"
+	15	"15"
+endenum
+
+enum 13levels
+	0	"0"
+	1	"1"
+	2	"2"
+	3	"3"
+	4	"4"
+	5	"5"
+	6	"6"
+	7	"7"
+	8	"8"
+	9	"9"
+	10	"10"
+	11	"11"
+	12	"12"
+endenum
+
+enum 10levels1
+	0	"1"
+	1	"2"
+	2	"3"
+	3	"4"
+	4	"5"
+	5	"6"
+	6	"7"
+	7	"8"
+	8	"9"
+	9	"10"
+endenum
+
+enum 9levels
+	0	"0"
+	1	"1"
+	2	"2"
+	3	"3"
+	4	"4"
+	5	"5"
+	6	"6"
+	7	"7"
+	8	"8"
+	9	"9"
+endenum
+
+enum LockMode_e
+	0	"Key"
+	1	"Dial"
+	2	"Key+Dial"
+	3	"PTT"
+	4	"Key+PTT"
+	5	"Dial+PTT"
+	6	"All"
+endenum
+
+enum MWM_e
+	0	"Lower Channel"
+	1	"Next Channel"
+endenum
+
+enum MSM_e
+	0	"Off"
+	1	"Skip"
+	2	"Preferential"
+endenum
+
+enum OffDisplay_e
+	0	"None"
+	1	"Temp"
+	2	"Barometer"
+	3	"Altitude"
+	4	"Temp+Baro"
+	5	"Temp+Alti"
+	6	"All"
+endenum
+
+enum LampMode_e
+	0	"Key"
+	1	"Continue"
+	2	"Off"
+endenum
+
+enum MeterSymbol_e
+	0	"S1"
+	1	"S2"
+	2	"S3"
+	3	"S4"
+	4	"S5"
+	5	"CHR"
+endenum
+
+enum CBellRing_e
+	0	"Off"
+	1	"1"
+	2	"3"
+	3	"5"
+	4	"8"
+	5	"Continuous"
+endenum
+
+enum CHCountWidth_e
+	0	"5MHz"
+	1	"10MHz"
+	2	"50MHz"
+	3	"100MHz"
+endenum
+
+enum ScanResume_e
+	0	"3Sec"
+	1	"5Sec"
+	2	"7Sec"
+	3	"10Sec"
+	4	"Busy"
+	5	"Hold"
+endenum
+
+enum 1Contin_e
+	0	"1Sec"
+	1	"Continuous"
+endenum
+
+enum SensDisp_e
+	0	"Off"
+	1	"Time"
+	2	"DC"
+	3	"Temp"
+	4	"Wave"
+	5	"Barometer"
+	6	"Altimeter"
+	7	"Weather"
+endenum
+
+enum WaveMon_e
+	0	"All"
+	1	"RX Signal"
+	2	"TX Modulation"
+endenum
+
+enum TempUnit_e
+	0	"Celcius"
+	1	"Fahrenheit"
+endenum
+
+enum BaroUnit_e
+	0	"hPa"
+	1	"mBar"
+	2	"mmHg"
+	3	"Inch"
+endenum
+
+enum DistUnit_e
+	0	"Meters"
+	1	"Feet"
+endenum
+
+enum APO_e
+	0	"Off"
+	1	"30Min"
+	2	"1Hour"
+	3	"3Hours"
+	4	"5Hours"
+	5	"8Hours"
+endenum
+
+enum RcvBatSave_e
+	0	"Off"
+	1	"200mSec(1:1)"
+	2	"300mSec(1:1.5)"
+	3	"500mSec(1:2.5)"
+	4	"1Sec(1:5)"
+	5	"2Sec(1:10)"
+endenum
+
+enum TOT_e
+	0	"Off"
+	1	"1Min"
+	2	"2.5Min"
+	3	"5Min"
+	4	"10Min"
+endenum
+
+enum ARTSInterval_e
+	0	"15Sec"
+	1	"25Sec"
+endenum
+
+enum ARTSBeep_e
+	0	"Off"
+	1	"In Range"
+	2	"Always"
+endenum
+
+enum HomeRev_e
+	0	"Home"
+	1	"Rev"
+endenum
+
+enum MonTCal_e
+	0	"Moni"
+	1	"T-Cal"
+endenum
+
+enum MonF_e
+	0	"Func"
+	1	"Moni"
+endenum
+
+enum EmegFuncAlrm_e
+	0	"Beep+Strobe"
+	1	"Beep"
+	2	"Strobe1"
+	3	"Strobe2"
+	4	"Strobe3"
+	5	"Strobe4"
+	6	"Strobe5"
+	7	"Beam"
+endenum
+
+enum VoxSens_e
+	0	"Off"
+	1	"High"
+	2	"Low"
+endenum
+
+enum VoxDelay_e
+	0	"0.5Sec"
+	1	"1Sec"
+	2	"2Sec"
+endenum
+
+enum VFOMode_e
+	0	"All"
+	1	"Band"
+endenum
+
+enum EngJap_e
+	0	"English"
+	1	"Japanese"
+endenum
+
+enum PaletteSel_e
+	0	"Palette 1"
+	1	"Palette 2"
+	2	"Palette 3"
+	3	"Palette 4"
+	4	"Palette 5"
+	5	"Palette 6"
+	6	"Palette 7"
+	7	"Palette 8"
+	8	"Palette 9"
+	9	"Palette 10"
+	10	"Off"
+endenum
+
+tab Config
+#	Name			Address			type
+#Basic Setup
+	"Narrowband Squelch"	(0x692,0,8)		15levels
+	"Wideband Squelch"	(0x693,0,8)		9levels
+# VFO Stop
+# RX Mode
+	"Automatic Repeater Shift" (0x695,3,1)		CheckBox
+# Repeater Shift
+	"Mute Set"		(0x696,1,1)		CheckBox
+	"Key Beep"		(0x695,2,1)		CheckBox
+	"Lock Mode"		(0x730,0,8)		LockMode_e
+# Name set
+	"Memory Write Mode"	(0x698,0,1)		MWM_e
+# Memory Scan Mode
+	"Hypermemory Write"	(0x696,2,1)		CheckBox
+
+#Display Setup
+	"Busy LED"		(0x696,7,1)		CheckBox
+	"Contrast"		(0x69d,0,8)		10levels1
+	"Dimmer"		(0x69e,0,8)		13levels
+	"Off Display Mode"	(0x6e3,0,8)		OffDisplay_e
+	"Lamp Mode"  		(0x69f,0,8)		LampMode_e
+	"Color Palette 1"	(0x70a,0,24)		Hex(0,0xffffff,0,1,)
+	"Color Palette 2"	(0x70d,0,24)		Hex(0,0xffffff,0,1,)
+	"Color Palette 3"	(0x710,0,24)		Hex(0,0xffffff,0,1,)
+	"Color Palette 4"	(0x713,0,24)		Hex(0,0xffffff,0,1,)
+	"Color Palette 5"	(0x716,0,24)		Hex(0,0xffffff,0,1,)
+	"Color Palette 6"	(0x719,0,24)		Hex(0,0xffffff,0,1,)
+	"Color Palette 7"	(0x71c,0,24)		Hex(0,0xffffff,0,1,)
+	"Color Palette 8"	(0x71f,0,24)		Hex(0,0xffffff,0,1,)
+	"Color Palette 9"	(0x722,0,24)		Hex(0,0xffffff,0,1,)
+	"Color Palette 10"	(0x725,0,24)		Hex(0,0xffffff,0,1,)
+
+	"Main Busy Color Palette"   (0x728,0,8)		PaletteSel_e
+	"Sub Busy Color Palette"    (0x729,0,8)		PaletteSel_e
+	"Dual Busy Color Palette"   (0x72a,0,8)		PaletteSel_e
+	"Main TX Color Palette"     (0x72b,0,8)		PaletteSel_e
+	"Sub TX Color Palette"      (0x72c,0,8)		PaletteSel_e
+	"Charge Done Color Palette" (0x72d,0,8)		PaletteSel_e
+
+	"Meter Symbol"		(0x6e4,0,8)		MeterSymbol_e
+
+#TSQ/DCS/DTMF
+# Squelch Type
+# Tone Set
+# DCS Set
+	"DCS Complement"	(0x698,2,1)		CheckBox
+	"CTCSS Bell Ringer Repetitions"	(0x6e2,0,8)	CBellRing_e
+	"Split Tone"		(0x695,1,1)		CheckBox
+	"DTMF Dialer"		(0x695,0,1)		CheckBox
+	"DTMF Set 1"		(0x7c2,0,128)		HexDigits
+	"DTMF Set 2"		(0x7d2,0,128)		HexDigits
+	"DTMF Set 3"		(0x7e2,0,128)		HexDigits
+	"DTMF Set 4"		(0x7f2,0,128)		HexDigits
+	"DTMF Set 5"		(0x802,0,128)		HexDigits
+	"DTMF Set 6"		(0x812,0,128)		HexDigits
+	"DTMF Set 7"		(0x822,0,128)		HexDigits
+	"DTMF Set 8"		(0x832,0,128)		HexDigits
+	"DTMF Set 9"		(0x842,0,128)		HexDigits
+
+#Scan Modes
+	"Channel Counter Search Width" (0x6ad,0,8)	CHCountWidth_e
+	"Scan Edge Beep"	(0x696,3,1)		CheckBox
+	"Scan Resume Mode"	(0x6aa,0,8)		ScanResume_e
+	"Scan Lamp"		(0x695,5,1)		CheckBox
+	"Smart Search"		(0x697,5,1)		1Contin_e
+	"Spectrum Analyzer Sweep" (0x697,4,1)		1Contin_e
+	"Spectrum Analyzer Audio" (0x695,4,1)		CheckBox
+
+#Measurement
+	"Sensor Display"	(0x706,0,8)		SensDisp_e
+	"Wave Monitor"		(0x6a4,0,8)		WaveMon_e
+	"Temp Unit"		(0x698,3,1)		TempUnit_e
+	"Barometric Unit"	(0x6a5,0,8)		BaroUnit_e
+	"Barometric Offset"	(0x6a6,0,16)		Int(0,65535,0,1,)
+	"Altitude Unit"		(0x698,4,1)		DistUnit_e
+	"Altitude Offset"	(0x6a8,0,16)		Int(0,65535,0,1,)
+
+#Save Modes
+	"Automatic Power Off"	(0x6e0,0,8)	APO_e
+	"Receive Battery Saver"	(0x6ac,0,8)	RcvBatSave_e
+	"Transmit Batter Saver" (0x696,0,1)	CheckBox
+	"Transmit Off Timer"	(0x6e1,0,8)	TOT_e
+	"On Timer enable"	(0x699,0,1)	CheckBox
+	"Off Timer enable"	(0x699,1,1)	CheckBox
+	"On Timer Hours"	(0x6a0,0,8)	Int(0,23,0,1,)
+	"On Timer Minutes"	(0x6a1,0,8)	Int(0,59,0,1,)
+	"Off Timer Hours"	(0x6a2,0,8)	Int(0,23,0,1,)
+	"Off Timer Minutes"	(0x6a3,0,8)	Int(0,59,0,1,)
+
+#ARTS
+	"ARTS Beep"		(0x6af,0,8)	ARTSBeep_e
+	"ARTS Interval"		(0x697,3,1)	ARTSInterval_e
+	"ARTS CW ID Enable"	(0x695,6,1)	CheckBox
+	"ARTS CW ID"		(0x6b0,0,128)	YaesuLCString16(8)
+
+#Misc Setup
+	"Busy Channel Lockout"	(0x696,4,1)	CheckBox
+	"Home/Rev key func"	(0x697,1,1)	HomeRev_e
+	"Mon/T-Cal key func"	(0x697,0,1)	MonTCal_e
+	"Mon-F change swap"	(0x699,7,1)	MonF_e
+	"Emergency Function Alarm" (0x69c,0,8)	EmegFuncAlrm_e
+# Half Deviation
+	"VOX Sensitivity"	(0x69a,0,8)	VoxSens_e
+	"VOX Delay"		(0x69b,0,8)	VoxDelay_e
+	"Band Link"		(0x696,5,1)	CheckBox
+	"VFO Mode"		(0x695,7,1)	VFOMode_e
+# :Font Editor:
+	"Icon Set"		(0x707,0,8)	CheckBox
+# :Icon Editor:
+# :Icon Select:
+# CPU Shift
+# -Time Set-
+	"Language"		(0x696,6,1)	EngJap_e
+	"Front End Attenuator"	(0x699,2,1)	CheckBox
+	"Mic Monitor"		(0x699,4,1)	CheckBox
+	"Weather Alert"		(0x699,5,1)	CheckBox
+
+endtab

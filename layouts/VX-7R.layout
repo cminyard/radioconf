@@ -207,16 +207,16 @@ Memories take up 22 bytes, format is:
 
 0707 - Icon Set enable (Misc Setup #12)
 
-708-70a - LED Color palette 1 (Display Setup #6), RGB values, one byte each
-70b-70d - LED Color palette 2
-70e-710 - LED Color palette 3
-711-713 - LED Color palette 4
-714-716 - LED Color palette 5
-717-719 - LED Color palette 6
-71a-71c - LED Color palette 7
-71d-71f - LED Color palette 8
-720-722 - LED Color palette 9
-723-725 - LED Color palette 10
+70a-70c - LED Color palette 1 (Display Setup #6), RGB values, one byte each
+70d-70f - LED Color palette 2
+710-712 - LED Color palette 3
+713-715 - LED Color palette 4
+716-718 - LED Color palette 5
+719-71b - LED Color palette 6
+71c-71e - LED Color palette 7
+71f-721 - LED Color palette 8
+722-724 - LED Color palette 9
+725-727 - LED Color palette 10
 
 0728 - Main Busy LED Color (Display Setup #7), Choose color palletes 1-10
        0=palette 1, 1=palette2, etc and 10=Off
