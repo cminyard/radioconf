@@ -16,6 +16,18 @@ How do I use this?
   on in clone mode before running yaesu_rw, as turning the power
   on can glitch the serial line.
 
+  Maybe I can work on integrating these programs, it would be a
+  little nicer.
+
+
+How can I transfer memories between radios?
+
+  Cut and paste the memory.  Pull up yaesu_edit for the two radio
+  config files, and you can cut and paste arbitrary numbers of memories
+  between the radios.
+
+  There's no CSV support, though that wouldn't be to terribly hard.
+
 
 Sometime I get an ERROR transferring data from the radio, but the data is ok.
 
