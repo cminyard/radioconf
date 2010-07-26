@@ -181,10 +181,10 @@ endenum
 # Note that this is not the same names as the VX-7R uses, but matches the
 # other radio types for ease of transfer of information.
 enum XmitPower_e
-	0 "High"
-	1 "Med"
-	2 "Med2"
-	3 "Low"
+	0 "Low"
+	1 "Med2"
+	2 "Med"
+	3 "High"
 endenum
 
 enum OffsetDir_e
@@ -232,7 +232,7 @@ endenum
 
 list Memories 450(0x1322)
 #	Name			Address			type
-	"Valid"			(0x1202,0,1,4)		CheckBox
+	"Enable"		(0x1202,0,1,4)		CheckBox
 	"Mask"			(0x1202,1,1,4)		RCheckBox
 
 	"Label"			(6*,0,64,176)		YaesuLCString(8)
@@ -240,7 +240,7 @@ list Memories 450(0x1322)
 	"Rx\nFreq"		(2*,0,24,176)		BCDFreq2 "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(1*,4,2,176)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
 	"Tx\nFreq"		(15*,0,24,176)		BCDFreq2
-	"Offset\nFreq"		(15*,0,24,176)		BCDFixedFreq(2,3,50,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFreq"		(15*,0,24,176)		BCDFixedFreq(2,3,50,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq" cutpaste=False
 	"Offset\nFTab"		(15*,0,24,176)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
 	"Tone\nMode"		(20*,0,3,176)		ToneMode_e tone=both
@@ -257,14 +257,14 @@ list Memories 450(0x1322)
 	"Scan\nMode"		(0x1202,2,2,4)		ScanMode_e
 
 	"Char\nSet"		(0*,0,1)		Empty
-	"1"			(21*,0,1,176)		CheckBox
-	"2"			(21*,1,1,176)		CheckBox
-	"3"			(21*,2,1,176)		CheckBox
-	"4"			(21*,3,1,176)		CheckBox
-	"5"			(21*,4,1,176)		CheckBox
-	"6"			(21*,5,1,176)		CheckBox
-	"7"			(21*,6,1,176)		CheckBox
-	"8"			(21*,7,1,176)		CheckBox
+	"C1"			(21*,0,1,176)		CheckBox
+	"C2"			(21*,1,1,176)		CheckBox
+	"C3"			(21*,2,1,176)		CheckBox
+	"C4"			(21*,3,1,176)		CheckBox
+	"C5"			(21*,4,1,176)		CheckBox
+	"C6"			(21*,5,1,176)		CheckBox
+	"C7"			(21*,6,1,176)		CheckBox
+	"C8"			(21*,7,1,176)		CheckBox
 endlist
 
 list VFO 15(0xd54) BC SW FMBC TV 50MHz 144MHz 220MHz 430MHz AIR Action1 Action2 Sub50MHz Sub144MHz Sub220MHz Sub430MHz
@@ -272,7 +272,7 @@ list VFO 15(0xd54) BC SW FMBC TV 50MHz 144MHz 220MHz 430MHz AIR Action1 Action2 
 	"Rx\nFreq"		(2*,0,24,176)		BCDFreq2 "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(1*,4,2,176)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
 	"Tx\nFreq"		(15*,0,24,176)		BCDFreq2
-	"Offset\nFreq"		(15*,0,24,176)		BCDFixedFreq(2,3,50,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFreq"		(15*,0,24,176)		BCDFixedFreq(2,3,50,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq" cutpaste=False
 	"Offset\nFTab"		(15*,0,24,176)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
 	"Tone\nMode"		(20*,0,3,176)		ToneMode_e tone=both
@@ -292,7 +292,7 @@ list Home 11(0xc62) BC SW FMBC TV 50MHz 144MHz 220MHz 430MHz AIR Action1 Action2
 	"Rx\nFreq"		(2*,0,24,176)		BCDFreq2 "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(1*,4,2,176)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
 	"Tx\nFreq"		(15*,0,24,176)		BCDFreq2
-	"Offset\nFreq"		(15*,0,24,176)		BCDFixedFreq(2,3,50,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFreq"		(15*,0,24,176)		BCDFixedFreq(2,3,50,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq" cutpaste=False
 	"Offset\nFTab"		(15*,0,24,176)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
 	"Tone\nMode"		(20*,0,3,176)		ToneMode_e tone=both
@@ -317,7 +317,7 @@ list OneTouch 10(0x39ce) 1 2 3 4 5 6 7 8 9 0
 	"Rx\nFreq"		(2*,0,24,176)		BCDFreq2 "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(1*,4,2,176)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
 	"Tx\nFreq"		(15*,0,24,176)		BCDFreq2
-	"Offset\nFreq"		(15*,0,24,176)		BCDFixedFreq(2,3,50,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFreq"		(15*,0,24,176)		BCDFixedFreq(2,3,50,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq" cutpaste=False
 	"Offset\nFTab"		(15*,0,24,176)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
 	"Tone\nMode"		(20*,0,3,176)		ToneMode_e tone=both
@@ -342,7 +342,7 @@ list ProgMemScan 40(0x3aaa) L1 U1 L2 U2 L3 U3 L4 U4 L5 U5 L6 U6 L7 U7 L8 U8 L9 U
 	"Rx\nFreq"		(2*,0,24,176)		BCDFreq2 "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(1*,4,2,176)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
 	"Tx\nFreq"		(15*,0,24,176)		BCDFreq2
-	"Offset\nFreq"		(15*,0,24,176)		BCDFixedFreq(2,3,50,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFreq"		(15*,0,24,176)		BCDFixedFreq(2,3,50,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq" cutpaste=False
 	"Offset\nFTab"		(15*,0,24,176)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
 	"Tone\nMode"		(20*,0,3,176)		ToneMode_e tone=both
@@ -397,15 +397,15 @@ endenum
 
 enum 10levels1
 	0	"1"
-	1	"2"
-	2	"3"
-	3	"4"
-	4	"5"
-	5	"6"
-	6	"7"
-	7	"8"
-	8	"9"
-	9	"10"
+	0xc	"2"
+	0xf	"3"
+	0x12	"4"
+	0x15	"5"
+	0x18	"6"
+	0x1b	"7"
+	0x1e	"8"
+	0x21	"9"
+	0x24	"10"
 endenum
 
 enum 9levels

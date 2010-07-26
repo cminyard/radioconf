@@ -561,7 +561,7 @@ list Memories 1000
 	"Rx\nFreq"		(0x249,0,24,128)	BCDFreq "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(0x248,0,3,128)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
 	"Tx\nFreq"		(0x24d,0,24,128)	BCDFreq
-	"Offset\nFreq"		(0x253,0,16,128)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFreq"		(0x253,0,16,128)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq" cutpaste=False
 	"Offset\nFTab"		(0x253,0,16,128)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
 	"Tone\nMode"		(0x24c,0,4,128)		ToneMode_e tone=both
@@ -592,7 +592,7 @@ list VFOs 5
 	"Rx\nFreq"		(0x49,0,24,128)		BCDFreq "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(0x48,0,3,128)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
 	"Tx\nFreq"		(0x4d,0,24,128)		BCDFreq
-	"Offset\nFreq"		(0x53,0,16,128)		Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFreq"		(0x53,0,16,128)		Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq" cutpaste=False
 	"Offset\nFTab"		(0x53,0,16,128)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
 	"Tone\nMode"		(0x4c,0,3,128)		ToneMode_e tone=both
@@ -614,7 +614,7 @@ list Lower_Limit 50
 	"Rx\nFreq"		(0x40c9,0,24,256)	BCDFreq "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(0x40c8,0,3,256)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
 	"Tx\nFreq"		(0x40cd,0,24,256)	BCDFreq
-	"Offset\nFreq"		(0x40d3,0,16,256)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFreq"		(0x40d3,0,16,256)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq" cutpaste=False
 	"Offset\nFTab"		(0x40d3,0,16,256)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
 	"Tone\nMode"		(0x40cc,0,3,256)	ToneMode_e tone=both
@@ -636,7 +636,7 @@ list Upper_Limit 50
 	"Rx\nFreq"		(0x40d9,0,24,256)	BCDFreq "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(0x40d8,0,3,256)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
 	"Tx\nFreq"		(0x40dd,0,24,256)	BCDFreq
-	"Offset\nFreq"		(0x40e3,0,16,256)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFreq"		(0x40e3,0,16,256)	Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq" cutpaste=False
 	"Offset\nFTab"		(0x40e3,0,16,256)	OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
 	"Tone\nMode"		(0x40dc,0,3,256)	ToneMode_e tone=both
@@ -653,7 +653,7 @@ list Current 1
 	"Rx\nFreq"		(0x9,0,24)		BCDFreq "tie(basefreq)=Tx\nFreq"
 	"Offset\nDirect"	(0x8,0,3)		OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq" "tie(enableoff)=Offset\nFTab"
 	"Tx\nFreq"		(0xd,0,24)		BCDFreq
-	"Offset\nFreq"		(0x13,0,16)		Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq"
+	"Offset\nFreq"		(0x13,0,16)		Fixed(2,2,5,MHz,w=8) "tie=Offset\nFTab" "tie(freqoff)=Tx\nFreq" cutpaste=False
 	"Offset\nFTab"		(0x13,0,16)		OffsetFreq_e "tie=Offset\nFreq" "tie(freqoff)=Tx\nFreq" cutpaste=False
 
 	"Tone\nMode"		(0xc,0,3)		ToneMode_e tone=both
