@@ -1,3 +1,23 @@
+2010-07-25  Corey Minyard <minyard@acm.org>
+
+	* yaesu_edit.py.in: Added a Hex type (for holding the RGB values
+	in the VX-7R color handling), added a 16-bit string for handling
+	the CW ID on the VX-7R, and fixed some more cut/paste issues.
+
+	* layouts/VX-7R.layout: Found a few more things and finished out
+	what I needed to support the useful config in the VX-7R.
+
+	* yaesuconf/VX-7R.rad: Add all the config and fix some problems
+	in the memory layout.
+
+	* yaesuconf/FT-60R.rad, yaesuconf/FT-7800R.rad: Fix some cut/paste
+	issues, don't cut/paste the transmit offset, just the transmit
+	frequency.  If we do a radio that doesn't have a transmit frequency,
+	just an offset, we will need to pull the transmit frequency from
+	the stream and calculate the offset.  Not a big deal, really.
+
+	* README, FAQ, yaesu_rw.1: Worked some on the documentation.
+
 2010-07-24  Corey Minyard <minyard@acm.org>
 
 	* yaesu_rw.c, yaesu_rw.1: Added some options to allow chunksize

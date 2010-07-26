@@ -1,9 +1,67 @@
+How do I use this?
+
+  It's not the easiest program to use as yet, as it is not fully
+  integrated.  You have to use yaesu_rw to copy the data from the
+  radio to the computer.  Then you can use yaesu_edit to modify
+  the contents of the file.  After you are happy with that, you
+  can use yaesu_rw to write the data back to the radio.
+
+  For instance, I do the following with my VX-7R:
+    yaesu_rw -d /dev/ttyUSB0 -s 19200 -h -r VX-7R.mem
+    yaesu_edit VX-7R.mem
+    yaesu_rw -d /dev/ttyUSB0 -s 19200 -h -w VX-7R.mem
+
+  The cloning instructions are different for every radio, but the
+  manuals for the radios cover this.  Make sure to turn the radio
+  on in clone mode before running yaesu_rw, as turning the power
+  on can glitch the serial line.
+
+
+Sometime I get an ERROR transferring data from the radio, but the data is ok.
+
+  Yeah, I know.  Sometimes the radios do this, and I haven't figured
+  out why.  There are timing constraints with these things that, of
+  course, are not documented, so I have to guess.  The error is
+  generally harmless.
+
+
+Are there any settings I need to know about?
+
+  Well, a few things.  The VX-7R radios use 19200 for the serial speed,
+  not 9600 like the FT-xxx radios I have.  There's no easy way to auto-
+  detect this, so you have to set it by hand.
+
+  Finding the serial port can be tricky if you have more than a few.
+  Generally, for USB cables, just plug and unplug the cable and see
+  what changes in /dev/ttyUSB*
+
+
+I have one of the new RT Systems USB cables and the kernel doesn't see it.
+
+  The new cables are not automatically recognized by the kernel, they
+  need to have their USB IDs added to the proper files.  I've added the
+  one for the VX-7 cable, but I don't have any other cables so I can't
+  get the IDs.
+
+  If you have one of these, do the following:
+    <unplug the cable>
+    lsusb >file1
+    <plug the cable in>
+    lsusb >file2
+    diff file1 file2
+  and send me the results of the diff.  I can add it pretty easily and
+  provide a kernel patch.
+
+
 Will this work with my radio?
 
-  I have no idea.  I have an FT-60, and FT-7800, and an FT-897, so
-  I've made it work with those.  Other people may make it work with
-  their radios, or it may just work.  If so, I will take changes
-  and reports of working/nonworking radios.
+  I have no idea.  I have an FT-60, an FT-7800, an FT-897, and a
+  VX-7R, so I've made it work with those.  Other people may make it
+  work with their radios, or it may just work.  If so, I will take
+  changes and reports of working/nonworking radios.
+
+  And, of course, the same radio model may have different versions
+  that work slightly differently.
 
 
 Will you make it work with my radio?

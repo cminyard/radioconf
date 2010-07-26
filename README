@@ -1,4 +1,5 @@
-This is yaesu_conf, software for configuring Yaesu radios.
+This is yaesu_conf, software for configuring Yaesu radios.  It consists
+of two programs: yaesu_rw and yaesu_edit.
 
 
 yaesu_rw
@@ -6,6 +7,16 @@ yaesu_rw
 
 The yaesu_rw program for using the clone mode of Yaesu radios to back
 up and restore radio configuration.
+
+
+yaesu_edit
+----------
+
+The yaesu_edit program lets you edit the configuration of the Yaesu
+radios.  It can generally edit all the memories of the radio along with
+a lot of the menu configuration.  It does not transfer the data, you
+have to use yaesu_rw independently to get the configuration from the
+radio and write it back out after you edit it.
 
 
 Layout files
@@ -27,12 +38,13 @@ This software has been tested with the following radios:
   FT-60R       works
   FT-7800R     works
   FT-897D      works
+  VX-7R        works
 
 
 Thanks
 ------
 
-Jim Tittsler wrote a program named vxu that did the same time, but I
-had stability problems with it, as the timing method he was using
-caused glitching on on of my serial port.  So I rewrote using, IMHO, a
-better method for using this.
+Jim Tittsler wrote a program named vxu that did the same thing as
+yaesu_rw, but I had stability problems with it, as the timing method
+he was using caused glitching on on of my serial port.  So I rewrote
+using, IMHO, a better method for using this.
