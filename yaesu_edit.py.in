@@ -35,10 +35,10 @@ class ParseException(Exception):
         self.lineno = lineno.get()
         self.err = err
         pass
-    
+
     def __str__(self):
         return self.filename + "(" + str(self.lineno) + "): " + self.err
-    
+
     pass
 
 class DataException(Exception):
@@ -48,14 +48,14 @@ class DataException(Exception):
 
     def __str__(self):
         return self.err
-    
+
     pass
 
 class LineNum:
     def __init__(self):
         self.val = 0
         return
-    
+
     def get(self):
         return self.val
 
@@ -110,7 +110,7 @@ def read_radios():
                 break;
             lineno.inc()
             if l[len(l) - 1] == '\\':
-               continue 
+               continue
             if l[0] == '#':
                 l = ""
                 continue
@@ -248,7 +248,7 @@ class RepeaterOffsets:
             if (not country):
                 return
             pass
-        
+
         filename = os.path.join(radiodir, country + ".rpt")
         try:
             fd = open(filename, "r")
@@ -274,7 +274,7 @@ class RepeaterOffsets:
                 if v[2] != "+" and v[2] != "-":
                     raise ParseException(filename, lineno,
                                          "Invalid offset, must be + or -")
-                    
+
                 self.offsets.append((getHz(v[0], filename, lineno),
                                      getHz(v[1], filename, lineno),
                                      v[2],
@@ -384,7 +384,7 @@ class Address:
             numbits += a[2]
             pass
         return numbits
-    
+
     pass
 
 class RadioFileData:
@@ -421,7 +421,7 @@ class RadioFileData:
         pass
 
     # The get and set routine throw IndexError if out of range.
-    
+
     def get_bits(self, addr, num):
         v = 0
         for a in addr.entries:
@@ -476,7 +476,7 @@ class RadioFileData:
 
             v = vt >> bitsleft
             v = v & ~(0xffffffff << numbits)
-        
+
             x = self.data[byte_off]
             if ((bit_off + numbits) <= 8):
                 # Special case, all in one byte
@@ -526,13 +526,13 @@ class RadioFileData:
         self.changed = True
         self.data[byte_pos + offset] = v
         pass
-    
+
     pass
 
 
 ###############################################################################
 #
-# 
+#
 #
 ###############################################################################
 class HandlerTie:
@@ -567,7 +567,7 @@ class Handler:
         self.basefreqtie = []
         self.offfreqtie = []
         self.lastbfreq = None
-        
+
         self.enabletie = None
         self.enableoffsettie = None
         pass
@@ -588,7 +588,7 @@ class Handler:
     def tieChanged(self, h, newtie):
         self.type.tieChanged(self, h, newtie)
         return
-        
+
     # Called when the user modifies a value.  Not required for setSelect
     # because that does a full redisplay.  Causes any tied values to be
     # redisplayed.
@@ -600,17 +600,17 @@ class Handler:
 
     def getValue(self, num):
         return self.type.getValue(self, num)
-    
+
     def getSelect(self, num):
         return self.type.getSelect(self, num)
-    
+
     def setSelect(self, v, num):
         return self.type.setSelect(v, self, num)
 
     def redisplay(self, h):
         self.type.redisplay(h)
         return
-    
+
     def set(self):
         self.handler(self)
         pass
@@ -622,7 +622,7 @@ class Handler:
 
 ###############################################################################
 #
-# 
+#
 #
 ###############################################################################
 def rewriteEntry(w, v):
@@ -685,17 +685,17 @@ class YType:
     def tieChanged(self, h, newtie):
         self.redisplay(h)
         return
-    
+
     def checkAddrOk(self, c, addr):
         return True
 
     def getSelect(self, h, num):
         return ""
-    
+
     def getValue(self, h, num):
         # Most types are the same for select and value
         return self.getSelect(h, num)
-    
+
     def setSelect(self, v, h, num):
         return
 
@@ -712,7 +712,7 @@ class YType:
             self.redisplay(myh)
             pass
         return
-    
+
     pass
 
 class BISpecial(YType):
@@ -731,16 +731,16 @@ class BISpecial(YType):
     def getSelect(self, h, num):
         t = h.data
         return str(t.data.get_bits(t.addr, num))
-    
+
     def getValue(self, h, num):
         t = h.data
         return str(t.data.get_bits(t.addr, num))
-    
+
     def setSelect(self, v, h, num):
         t = h.data
         t.data.set_bits(int(v), t.addr, num)
         return
-    
+
     pass
 
 class BISpecial857A(BISpecial):
@@ -812,7 +812,7 @@ class BISpecial857A(BISpecial):
             pass
         pass
 
-    pass        
+    pass
 
 class BISpecial857B(BISpecial):
     def __init__(self, name="Special857B"):
@@ -848,7 +848,7 @@ class BISpecial857B(BISpecial):
             pass
         pass
 
-    pass        
+    pass
 
 class BISetToZero(BISpecial):
     def __init__(self, name="SetToZero"):
@@ -873,7 +873,7 @@ class BISetToZero(BISpecial):
         else:
             off = int(off)
             pass
-        
+
         if (off):
             t = h.data
             oldv = t.data.get_bits(t.addr, num)
@@ -883,7 +883,7 @@ class BISetToZero(BISpecial):
             pass
         pass
 
-    pass        
+    pass
 
 class BIInt(YType):
     valid_digits = decimal_digits
@@ -902,7 +902,7 @@ class BIInt(YType):
         self.units = units
         self.unitslen = len(units)
         return
-    
+
     def newInst(self, name):
         return BIInt(name=name)
 
@@ -971,7 +971,7 @@ class BIInt(YType):
             pass
         data.set_bits(v, addr, num)
         return
-        
+
     def getSelect(self, h, num):
         t = h.data
         return str(self.getInt(t.data, t.addr, num))
@@ -995,9 +995,9 @@ class BIInt(YType):
             pass
         except Exception, e:
             return None
-        
+
         return i
-    
+
     def set(self, h, event):
         c = event.keysym
         if ((c == "Left") or (c == "Right")
@@ -1019,7 +1019,7 @@ class BIInt(YType):
         if (cursor > (end - self.unitslen)):
             # Don't mess with the units.
             return "break"
-        
+
         s = w.get()
 
         if (c == "BackSpace"):
@@ -1155,7 +1155,7 @@ class BIString(YType):
         t = h.data
         rewriteEntry(h.widget, self.get_string(t.data, t.addr, num));
         pass
-        
+
     def getSelect(self, h, num):
         t = h.data
         return self.get_string(t.data, t.addr, num)
@@ -1265,19 +1265,19 @@ class BIFixed(YType):
     def getBits(self, h, num):
         t = h.data
         return self.get_raw(t, num)
-    
+
     def setBits(self, v, h, num):
         t = h.data
         self.set_raw(t, v, num)
         return
-    
+
     def renumWidget(self, h, num):
         YType.renumWidget(self, h, num)
         h.num = num
         v = self.getBits(h, num)
         rewriteEntry(h.widget, self.conv_to_str(v))
         pass
-        
+
     def getSelect(self, h, num):
         return self.conv_to_str(self.getBits(h, num))
 
@@ -1388,7 +1388,7 @@ class BIFixed(YType):
         elif (postdec < self.suf):
             v *= 10 ** (self.suf - postdec)
             pass
-        
+
         # Make sure to round as necessary
         return (v + (self.inc / 2)) / self.inc
 
@@ -1409,11 +1409,11 @@ class BIFixedFreq(BIFixed):
     def __init__(self, name="FixedFreq", width=10):
         BIFixed.__init__(self, name, width)
         return
-    
+
     def getWidgetHandler(self, parent, t, num):
         h = BIFixed.getWidgetHandler(self, parent, t, num)
         return h
-    
+
     def newTie(self, myh, fromh, tie):
         if (tie.tietype == "offset"):
             myh.offtie.append(fromh)
@@ -1441,7 +1441,7 @@ class BIFixedFreq(BIFixed):
             pass
         if (not off or off == "split"):
             return freq
-        
+
         bfreq = None
         for m in h.basefreqtie:
             bfreq = m.getValue(num)
@@ -1451,7 +1451,7 @@ class BIFixedFreq(BIFixed):
         if (bfreq):
             bfreq = int(bfreq)
             pass
-            
+
         if (off == "smplx"):
             if bfreq:
                 return bfreq
@@ -1468,7 +1468,7 @@ class BIFixedFreq(BIFixed):
             print("Warning: unknown offset: " + off)
 
         return freq
-    
+
     def setBits(self, v, h, num):
         t = h.data
         off = None
@@ -1483,7 +1483,7 @@ class BIFixedFreq(BIFixed):
         if (off == "smplx"):
             # Ignore in simplex mode
             return
-        
+
         bfreq = None
         for m in h.basefreqtie:
             bfreq = m.getValue(num)
@@ -1493,7 +1493,7 @@ class BIFixedFreq(BIFixed):
         if (bfreq):
             bfreq = int(bfreq)
             pass
-            
+
         if not bfreq:
             pass
         elif (off == "+"):
@@ -1522,21 +1522,19 @@ class BIFixedFreq(BIFixed):
                 pass
             pass
 
-        if (h.lastbfreq is None):
-            bfreq = None
-            for m in h.basefreqtie:
-                bfreq = m.getValue(num)
-                if (bfreq):
-                    break
-                pass
+        bfreq = None
+        for m in h.basefreqtie:
+            bfreq = m.getValue(num)
             if (bfreq):
-                h.lastbfreq = int(bfreq) * 10
-                pass
+                break
+            pass
+        if (bfreq):
+            h.lastbfreq = int(bfreq) * 10
             pass
 
         BIFixed.renumWidget(self, h, num)
         return
-    
+
     def tieChanged(self, h, newtie):
         num = h.num
         off = None
@@ -1561,7 +1559,7 @@ class BIFixedFreq(BIFixed):
         if ((not off) or (off == "split") or (off == "smplx")):
             BIFixed.renumWidget(self, h, num)
             pass
-        
+
         t = h.data
         if (not t.data.config.doRptOffsets):
             BIFixed.renumWidget(self, h, num)
@@ -1578,7 +1576,7 @@ class BIFixedFreq(BIFixed):
         if (not bfreq):
             BIFixed.renumWidget(self, h, num)
             return
-        
+
         bfreq = int(bfreq) * 10
         if bfreq != h.lastbfreq:
             h.lastbfreq = bfreq
@@ -1592,7 +1590,7 @@ class BIFixedFreq(BIFixed):
             pass
         self.renumWidget(h, num)
         return
-    
+
     def matchName(self, c, string):
         if not string.startswith(self.name + "("):
             return None
@@ -1644,12 +1642,12 @@ class BIFixedFreq(BIFixed):
 
     pass
 
-# Like the above, but the value is stored in BCD format.    
+# Like the above, but the value is stored in BCD format.
 class BIBCDFixedFreq(BIFixedFreq):
     def __init__(self, name="BCDFixedFreq", width=10):
         BIFixedFreq.__init__(self, name, width)
         return
-    
+
     def newInst(self, name, width):
         return BIBCDFixedFreq(name=name, width=width)
 
@@ -1726,7 +1724,7 @@ class BICheckBox(YType):
             h.widget["state"] = oldstate
             pass
         pass
-        
+
     def set(self, h):
         w = h.widget
         t = h.data
@@ -1753,7 +1751,7 @@ class BICheckBox(YType):
             return '1'
         else:
             return '0'
-    
+
     def setSelect(self, v, h, num):
         t = h.data
         if (v == "0"):
@@ -1767,7 +1765,7 @@ class BICheckBox(YType):
             pass
         t.data.set_bits(v, t.addr, num)
         pass
-    
+
     pass
 
 class BIYaesuString(YType):
@@ -1879,7 +1877,7 @@ class BIYaesuString(YType):
         t = h.data
         rewriteEntry(h.widget, self.get_yaesu_string(t.data, t.addr, num))
         pass
-        
+
     def getSelect(self, h, num):
         t = h.data
         return self.get_yaesu_string(t.data, t.addr, num)
@@ -2158,16 +2156,14 @@ class BIBCDFreq(YType):
                 pass
             pass
 
-        if (h.lastbfreq is None):
-            bfreq = None
-            for m in h.basefreqtie:
-                bfreq = m.getValue(num)
-                if (bfreq):
-                    break
-                pass
+        bfreq = None
+        for m in h.basefreqtie:
+            bfreq = m.getValue(num)
             if (bfreq):
-                h.lastbfreq = getHz(bfreq, "", 0)
-                pass
+                break
+            pass
+        if (bfreq):
+            h.lastbfreq = getHz(bfreq, "", 0)
             pass
 
         h.num = num
@@ -2200,7 +2196,7 @@ class BIBCDFreq(YType):
         if ((not off) or (off == "split") or (off == "smplx")):
             self.renumWidget(h, num)
             pass
-        
+
         t = h.data
         if (not t.data.config.doRptOffsets):
             self.renumWidget(h, num)
@@ -2218,7 +2214,7 @@ class BIBCDFreq(YType):
             v = self.getStr(h, num)
             rewriteEntry(h.widget, v)
             return
-        
+
         bfreq = getHz(bfreq, "", 0)
         if bfreq != h.lastbfreq:
             h.lastbfreq = bfreq
@@ -2230,11 +2226,11 @@ class BIBCDFreq(YType):
                 m.redisplay(m)
                 pass
             pass
-        
+
         v = self.getStr(h, num)
         rewriteEntry(h.widget, v)
         return
-    
+
     def newTie(self, myh, fromh, tie):
         if (tie.tietype == "offset"):
             myh.offtie.append(fromh)
@@ -2251,7 +2247,7 @@ class BIBCDFreq(YType):
             self.redisplay(myh)
             pass
         return
-    
+
     def getValue(self, h, num):
         t = h.data
         return self.get_bcd(t.data, t.addr, num)
@@ -2297,7 +2293,7 @@ class BIBCDFreq(YType):
                 c = '7.5'
                 pass
             pass
-                
+
         s = w.get()
         if (s[cursor] != c):
             for m in c:
@@ -2439,7 +2435,6 @@ class BIBCDFreq2(BIBCDFreq):
             pass
         pass
 
-
 class BIHexDigits(YType):
     def __init__(self):
         YType.__init__(self, "HexDigits")
@@ -2514,7 +2509,7 @@ class BIHexDigits(YType):
         v = self.get_hex(t.data, t.addr, num)
         rewriteEntry(h.widget, v)
         pass
-        
+
     def getSelect(self, h, num):
         t = h.data
         return self.get_hex(t.data, t.addr, num)
@@ -2593,7 +2588,7 @@ class Enum(YType):
         if (v[0] == "endenum"):
             c.addEnum(self)
             return
-        
+
         if (len(v) != 2):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for enum")
@@ -2675,7 +2670,7 @@ class Enum(YType):
                 return
             pass
         pass
-    
+
     pass
 
 class SListEntry:
@@ -2696,7 +2691,7 @@ class SList(YType):
         if (v[0] == "endslist"):
             c.addEnum(self)
             return
-        
+
         if (len(v) != 2):
             raise ParseException(c.filename, c.lineno,
                                  "Invalid number of elements for enum")
@@ -2782,12 +2777,12 @@ class SList(YType):
                 return
             pass
         pass
-    
+
     pass
 
 ###############################################################################
 #
-# 
+#
 #
 ###############################################################################
 class Tie:
@@ -2895,7 +2890,7 @@ class TabEntry:
                             v = "DCS"
                             pass
                         pass
-                        
+
                     pass
                 if v:
                     self.type.setSelect(v, h, num)
@@ -2931,7 +2926,7 @@ class TabEntry:
                 pass
             pass
         return
-    
+
     pass
 
 class TabBase:
@@ -2985,12 +2980,12 @@ class TabBase:
                 raise ParseException(c.filename, c.lineno,
                                      "Invalid option: " + i);
             pass
-            
+
         self.entries.append(TabEntry(name, len(self.entries), addr,
                                      type, c.filedata, ties, cutpaste,
                                      specials))
         return
-    
+
     def finalize(self, c):
         for i in self.entries:
             for t in i.tielist:
@@ -3008,7 +3003,7 @@ class TabBase:
                 pass
             pass
         return
-    
+
     pass
 
 class List(TabBase):
@@ -3027,7 +3022,7 @@ class List(TabBase):
         # If supplied, these will be applied to as many list entries
         # as possible
         self.labels = labels
-        
+
         # Number of lines currently displayed
         self.numdisplines = 0
 
@@ -3061,7 +3056,7 @@ class List(TabBase):
             widget.bind("<Button-5>", self.ButtonDownWheel)
             pass
         pass
-        
+
     def setup(self, top):
         try:
             self.winsys = top.tk.eval("return [ tk windowingsystem ]")
@@ -3100,7 +3095,7 @@ class List(TabBase):
         self.bindWidget(self.list)
         self.bindWidget(self.xscroll)
         self.bindWidget(self.yscroll)
-        
+
         i = 1
         for e in self.entries:
             e.column = i
@@ -3117,7 +3112,7 @@ class List(TabBase):
     def mapped(self, event=None):
         self.list.focus_set()
         return
-        
+
     def selection_request(self, offset, length):
         if (self.first_select < 0):
             return ""
@@ -3171,13 +3166,13 @@ class List(TabBase):
             # Nothing to see
             self.list.selection_clear()
             return
-        
+
         if (self.first_select <= self.firstdispline):
             pos1 = 0
         else:
             pos1 = self.first_select - self.firstdispline
             pass
-        
+
         end = self.firstdispline + self.numdisplines - 1
         if (self.last_select >= end):
             pos2 = self.numdisplines - 1
@@ -3195,7 +3190,7 @@ class List(TabBase):
         self.list.selection_set(pos1, pos2)
         self.list.selection_own()
         pass
-    
+
     def Button1(self, event):
         self.list.focus_set()
         line = int(self.list.nearest(event.y))
@@ -3203,7 +3198,7 @@ class List(TabBase):
         self.last_select = self.firstdispline + line
         self.redoSelection()
         return "break"
-    
+
     def SButton1(self, event):
         if (self.first_select < 0):
             return self.Button1(event)
@@ -3216,10 +3211,10 @@ class List(TabBase):
             pass
         self.redoSelection()
         return "break"
-    
+
     def CButton1(self, event):
         return "break"
-    
+
     def Button2(self, event):
         linenum = int(self.list.nearest(event.y)) + self.firstdispline
         s = self.list.selection_get()
@@ -3253,27 +3248,27 @@ class List(TabBase):
             pass
         self.redisplay()
         return "break"
-    
+
     def Button3(self, event):
         self.first_select = -1
         self.last_select = -1
         self.redoSelection()
         return "break"
-    
+
     def Wheel(self, event):
         self.y_move("scroll", -(event.delta / 20), "units")
         return
-    
+
     def ButtonUpWheel(self, event):
         event.delta = 120
         self.Wheel(event);
         return
-    
+
     def ButtonDownWheel(self, event):
         event.delta = -120
         self.Wheel(event);
         return
-    
+
     def y_scrolled(self, a, b):
         b = float(b)
         if (self.numdisplines < self.length) and (b >= 1.0):
@@ -3292,19 +3287,19 @@ class List(TabBase):
     def pageDown(self, event=None):
         self.y_move("scroll", 1, "pages")
         return "break"
-    
+
     def pageUp(self, event=None):
         self.y_move("scroll", -1, "pages")
         return "break"
-    
+
     def lineDown(self, event=None):
         self.y_move("scroll", 1, "units")
         return "break"
-    
+
     def lineUp(self, event=None):
         self.y_move("scroll", -1, "units")
         return "break"
-    
+
     def y_move(self, a, b=None, c=None):
         if (a == "scroll"):
             if (c == "units"):
@@ -3372,7 +3367,7 @@ class List(TabBase):
             i += 1
             pass
         pass
-    
+
     def add_one_line(self):
         handlers = []
         pos = self.firstdispline + self.numdisplines
@@ -3403,17 +3398,17 @@ class List(TabBase):
         self.handlerlists.append(handlers)
         self.numdisplines += 1
         pass
-        
+
     def del_one_line(self):
         if (self.numdisplines < 0):
             return
         self.numdisplines -= 1
-        
+
         # FIXME - does this break all the pointer cycles?
         del self.handlerlists[self.numdisplines]
         self.list.delete_entry(self.numdisplines)
         pass
-    
+
     pass
 
 class Tab(TabBase):
@@ -3441,21 +3436,21 @@ class Tab(TabBase):
             widget.bind("<Button-5>", self.ButtonDownWheel)
             pass
         pass
-        
+
     def Wheel(self, event):
         self.list.hlist.yview("scroll", -(event.delta / 20), "units")
         return
-    
+
     def ButtonUpWheel(self, event):
         event.delta = 120
         self.Wheel(event);
         return
-    
+
     def ButtonDownWheel(self, event):
         event.delta = -120
         self.Wheel(event);
         return
-    
+
     def setup(self, top):
         try:
             self.winsys = top.tk.eval("return [ tk windowingsystem ]")
@@ -3507,7 +3502,7 @@ class Tab(TabBase):
 
 ###############################################################################
 #
-# 
+#
 #
 ###############################################################################
 quote_hash = {"n" : "\n",
@@ -3579,7 +3574,7 @@ class RadioConfig:
                                              "got endmulti, but not in multi")
                     self.parent.addMulti(self)
                     return
-                
+
                 self.parseLine(v)
                 pass
             pass
@@ -3663,7 +3658,7 @@ class RadioConfig:
         if (inname):
             v.append(l[start:i])
         return v
-    
+
     def parseLine(self, s):
         if (self.curr == None):
             if (s[0] == "enum"):
@@ -3695,7 +3690,7 @@ class RadioConfig:
                     length = self.toNum(s[2][0:i])
                     base = self.toNum(s[2][i+1:ep])
                     pass
-                    
+
                 self.curr = List(s[1], length, s[3:], base)
             elif (s[0] == "tab"):
                 if (len(s) < 2):
@@ -3733,7 +3728,7 @@ class RadioConfig:
                 return t
             pass
         raise ParseException(self.filename, self.lineno, "Unknown type: " + s)
-    
+
     def addList(self, e):
         self.toplevel.append(e)
         self.curr = None
@@ -3786,7 +3781,7 @@ class MyTop(Tix.Tk):
 class GUI(Tix.Frame):
     def __init__(self, filename, master):
         master.destroyhandler = self.quitcmd
-        
+
         Tix.Frame.__init__(self, master)
         self.top = master
         self.pack(fill=Tix.BOTH, expand=1);
@@ -3821,7 +3816,7 @@ class GUI(Tix.Frame):
             return
 
         self.fd.config = self.config
-        
+
         try:
             self.radioname = find_radio(self.fd.data)
             if (not self.radioname):
@@ -3845,7 +3840,7 @@ class GUI(Tix.Frame):
         self.master.wm_title(filename + " (" + self.radioname + ")")
         self.radio.setup(self)
         pass
-    
+
     def quitcmd(self, event=None):
         if (not self.fd or not self.fd.changed):
             self.top.realDestroy()
@@ -3875,7 +3870,7 @@ class GUI(Tix.Frame):
             g = GUI(filename, MyTop())
             pass
         return g
-    
+
     def saveascmd(self, event=None):
         if (not self.fd):
             return
@@ -3887,7 +3882,7 @@ class GUI(Tix.Frame):
             return
         self.fd.write(filename)
         return
-    
+
     def savecmd(self, event=None):
         if (self.fd.filename is None):
             return self.saveascmd()
@@ -3906,11 +3901,11 @@ class GUI(Tix.Frame):
     def rptShftCmd(self):
         self.config.doRptOffsets = not self.config.doRptOffsets
         return
-    
+
     def createWidgets(self):
         self.buttons = Tix.Frame(self)
         self.buttons.pack(side=Tix.TOP, fill=Tix.X)
-        
+
         self.filebutton = Tix.Menubutton(self.buttons, text="File",
                                          underline=0, takefocus=0)
         self.filemenu = Tix.Menu(self.filebutton, tearoff=0)
@@ -3955,7 +3950,7 @@ class GUI(Tix.Frame):
             self.editmenu.invoke(0)
             pass
         return
-    
+
     pass
 
 progname = sys.argv[0]
