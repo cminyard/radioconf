@@ -1,3 +1,18 @@
+2010-07-31  Corey Minyard <minyard@acm.org>
+
+	* yaesu_edit.py.in: Fix a problem with the input of numerical
+	data.  It would give errors on inputting bad data.  It now turns
+	the value red if the value is invalid.
+
+	* yaesuconf/FT-857D.rad: Add separate RF power level for HF, 50MHz
+	144MHz, and 440MHz, since they are individually settable.
+
+	* yaesu_rw.c: Added a short delay before sending the last ack to
+	the radios.  Some radios would give an error if the last ack came
+	too fast.
+
+	* ChangeLog: Move to version 0.9 for release.
+
 2010-07-25  Corey Minyard <minyard@acm.org>
 
 	* yaesu_edit.py.in: Added a Hex type (for holding the RGB values

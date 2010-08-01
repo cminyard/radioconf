@@ -947,7 +947,10 @@ tab Config
 	"DCS Invert"		(0x0015,6,2)		DCSInvert_e
 	"Alaska Emer Chan"	(0x0015,5,1)		CheckBox
 	"Scope Width"		(0x0045,2,2)		ScopeWidth_e
-	"RF Power"		(0x0046,0,7)		Int(2,100,0,1,)
+	"HF RF Power"		(0x0037,0,7)		Int(5,100,0,1,)
+	"50MHZ RF Power"	(0x0046,0,7)		Int(5,100,0,1,)
+	"144MHZ RF Power"	(0x0047,0,7)		Int(5,50,0,1,)
+	"440MHZ RF Power"	(0x0048,0,7)		Int(2,20,0,1,)
 
 	""			(0,0,0)			Empty
 	"___Speech Settings____" (0,0,0)		Empty

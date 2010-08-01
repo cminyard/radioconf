@@ -81,6 +81,7 @@ enum yaesu_read_state {
     YAESU_STATE_WAITBLOCK,
     YAESU_STATE_INBLOCK,
     YAESU_STATE_DELAYCSUM,
+    YAESU_STATE_DELAYACK,
     YAESU_STATE_WAITCSUM,
     YAESU_STATE_CSUM,
     YAESU_STATE_CSUM_WAITACK,
@@ -664,8 +665,12 @@ handle_yaesu_read_data(struct yaesu_data *d)
 		return rv;
 	    if (d->has_checksum)
 		d->state = YAESU_STATE_WAITCSUM;
-	    else
-		d->state = YAESU_STATE_DONE;
+	    else {
+		/* Some radios are picky and want a delay before sending the
+		   last ack. */
+		YAESU_WAITWRITE_TIMEOUT(d);
+		d->state = YAESU_STATE_DELAYACK;
+	    }
 	    rv = yaesu_write(d, ack, 1);
 	    if (rv)
 		return rv;
@@ -700,7 +705,10 @@ handle_yaesu_read_data(struct yaesu_data *d)
 	if ((d->csum & 0xff) != buf[0])
 	    /* Checksum failure. */
 	    return EBADMSG;
-	d->state = YAESU_STATE_DONE;
+	/* Some radios are picky and want a delay before sending the
+	   last ack. */
+	YAESU_WAITWRITE_TIMEOUT(d);
+	d->state = YAESU_STATE_DELAYACK;
 	rv = yaesu_write(d, ack, 1);
 	if (rv)
 	    return rv;
@@ -709,6 +717,7 @@ handle_yaesu_read_data(struct yaesu_data *d)
     case YAESU_STATE_CSUM_WAITACK:
     case YAESU_STATE_DONE:
     case YAESU_STATE_DELAYCSUM:
+    case YAESU_STATE_DELAYACK:
     break;
     }
 
@@ -735,6 +744,13 @@ handle_yaesu_read_timeout(struct yaesu_data *d)
     case YAESU_STATE_WAITCSUM:
     case YAESU_STATE_CSUM:
 	return ETIMEDOUT;
+
+    case YAESU_STATE_DELAYACK:
+	d->state = YAESU_STATE_DONE;
+	rv = yaesu_write(d, ack, 1);
+	if (rv)
+	    return rv;
+	return 0;
 
     case YAESU_STATE_CSUM_WAITACK:
     case YAESU_STATE_DONE:

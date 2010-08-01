@@ -554,6 +554,7 @@ class Handler:
         self.data = data
         self.type = wtype
         self.widget = None # Will be filled in later by the type
+        self.foreground = None # Filled in if needed
 
         # The set of widgets/handlers we are tied to.  When the widget
         # associated with this handler changes, we call everything in
@@ -1040,9 +1041,21 @@ class BIInt(YType):
 
         intstr = s[0:len(s)-self.unitslen]
         v = self.convToNum(intstr)
-        t = h.data
-        self.setInt(v, t.data, t.addr, h.num)
-
+        if (v is not None):
+            t = h.data
+            self.setInt(v, t.data, t.addr, h.num)
+            if (h.foreground):
+                w['foreground'] = h.foreground
+                h.foreground = None
+                pass
+            pass
+        else:
+            # Turn the value red if out of range.
+            if (h.foreground is None):
+                h.foreground = w['foreground']
+                w['foreground'] = 'red'
+                pass
+            pass
         h.widget.delete(0, 'end')
         w.insert(0, s)
         w.icursor(cursor + 1)
