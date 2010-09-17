@@ -68,6 +68,7 @@ radio VX-7R
 #	The VX-7R doesn't seem to handle having data thrown at it at
 #	a high rate, and it doesn't send an ack before or after the
 #	checksum.
+	nodelayack
 	nowaitchecksum
 	chunksize 64
 	waitchunk 50000

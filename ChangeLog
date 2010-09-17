@@ -2,8 +2,21 @@
 
 	* yaesuconf/Makefile.am: Install the VX-7R files.
 
-	* yaesu_rw.c: get --chunksize and --waitchunk working.
+	* yaesu_rw.c: Get --chunksize and --waitchunk working.
 
+	* yaesu_rw.c: Add a delayack setting, and don't send the ack twice
+	if we are delaying the ack.
+
+	* yaesu_edit.py.in: Fix a cut-paste problem.  For the VX-7R, don't
+	paste into the TxFreq values unless it's in split mode.  For the
+	VX-7R and FT-60, inform the offset freq of a change from TxFreq
+	if the offset freq is not an enum.  cutpaste wouldn't work because
+	they are all cutpaste.
+
+	* yaesuconf/radios: Add nodelayack for VX-7R.
+
+	* yaesuconf/VX-7R.rad: Fix the enable settings for memories.
+	
 2010-09-15  Corey Minyard <minyard@acm.org>
 
 	* Makefile.am: Fix a script problem, use -eq, not == to compare

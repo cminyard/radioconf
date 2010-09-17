@@ -60,6 +60,8 @@ static struct option long_options[] = {
     {"nowaitchecksum", 0, NULL, 'k'},
     {"checkblock", 0, NULL, 'p'},
     {"nocheckblock",0, NULL, 'q'},
+    {"delayack", 0, NULL, 'l'},
+    {"nodelayack",0, NULL, 'o'},
     {"chunksize",1, NULL, 'a'},
     {"waitchunk",1, NULL, 'b'},
     {"configdir",0, NULL, 'f'},
@@ -140,6 +142,7 @@ struct yaesu_data {
     int has_checksum;
     int has_checkblock;
     int waitchecksum;
+    int delayack;
 };
 
 #define DEFAULT_CHUNKSIZE 0
@@ -152,7 +155,7 @@ struct yaesu_data *
 alloc_yaesu_data(int rfd, int wfd, int is_read,
 		 int send_echo, int recv_echo, int has_checksum,
 		 int has_checkblock, int waitchecksum, int chunksize,
-		 int waitchunk)
+		 int waitchunk, int delayack)
 {
     struct yaesu_data *d;
 
@@ -180,6 +183,7 @@ alloc_yaesu_data(int rfd, int wfd, int is_read,
     d->write_len = 0;
     d->chunksize = chunksize;
     d->waitchunk = waitchunk;
+    d->delayack = 1;
     d->waiting_chunk_done = CHUNK_NOWAIT;
     d->send_echo = send_echo;
     d->recv_echo = recv_echo;
@@ -298,6 +302,7 @@ struct yaesu_conf {
     int waitchecksum;
     int chunksize;
     int waitchunk;
+    int delayack;
     struct yaesu_blocksizes *bsizes;
     struct yaesu_conf *next;
 };
@@ -349,6 +354,8 @@ check_yaesu_type(struct yaesu_data *d, unsigned char *buff, unsigned int len,
 		d->chunksize = r->chunksize;
 	    if (d->waitchunk < 0)
 		d->waitchunk = r->waitchunk;
+	    if (d->delayack < 0)
+		d->delayack = r->delayack;
 	    return 1;
 	}
     }
@@ -370,6 +377,8 @@ check_yaesu_type(struct yaesu_data *d, unsigned char *buff, unsigned int len,
 	    d->waitchunk = DEFAULT_WAITCHUNK;
 	if (d->chunksize < 0)
 	    d->chunksize = DEFAULT_CHUNKSIZE;
+	if (d->delayack < 0)
+	    d->delayack = 1;
 	d->timeout_mode = 1;
 	return 1;
     }
@@ -665,20 +674,25 @@ handle_yaesu_read_data(struct yaesu_data *d)
 	if (d->data_count > d->expect_len)
 	    return EINVAL;
 	else if (d->data_count == d->expect_len) {
+	    int doack = 1;
 	    rv = yaesu_check_block(d, b);
 	    if (rv)
 		return rv;
 	    if (d->has_checksum)
 		d->state = YAESU_STATE_WAITCSUM;
-	    else {
+	    else if (d->delayack) {
 		/* Some radios are picky and want a delay before sending the
 		   last ack. */
 		YAESU_WAITWRITE_TIMEOUT(d);
 		d->state = YAESU_STATE_DELAYACK;
+		doack = 0;
+	    } else
+		d->state = YAESU_STATE_DONE;
+	    if (doack) {
+		rv = yaesu_write(d, ack, 1);
+		if (rv)
+		    return rv;
 	    }
-	    rv = yaesu_write(d, ack, 1);
-	    if (rv)
-		return rv;
 	} else if (!d->timeout_mode && (b->len == d->block_len)) {
 	    if (hash) {
 		printf(".");
@@ -710,13 +724,16 @@ handle_yaesu_read_data(struct yaesu_data *d)
 	if ((d->csum & 0xff) != buf[0])
 	    /* Checksum failure. */
 	    return EBADMSG;
-	/* Some radios are picky and want a delay before sending the
-	   last ack. */
-	YAESU_WAITWRITE_TIMEOUT(d);
-	d->state = YAESU_STATE_DELAYACK;
-	rv = yaesu_write(d, ack, 1);
-	if (rv)
-	    return rv;
+	if (d->delayack) {
+	    /* Some radios are picky and want a delay before sending the
+	       last ack. */
+	    YAESU_WAITWRITE_TIMEOUT(d);
+	    d->state = YAESU_STATE_DELAYACK;
+	} else {
+	    rv = yaesu_write(d, ack, 1);
+	    if (rv)
+		return rv;
+	}
 	break;
 
     case YAESU_STATE_CSUM_WAITACK:
@@ -1249,6 +1266,7 @@ read_yaesu_config(char *configdir)
 	    r->waitchecksum = -1;
 	    r->chunksize = -1;
 	    r->waitchunk = -1;
+	    r->delayack = -1;
 	    r->name = strdup(tok);
 	    if (!r->name)
 		conferr(linenum, "out of memory\n");
@@ -1278,6 +1296,8 @@ read_yaesu_config(char *configdir)
 		r->waitchunk = DEFAULT_WAITCHUNK;
 	    if (r->chunksize == -1)
 		r->chunksize = DEFAULT_CHUNKSIZE;
+	    if (r->delayack == -1)
+		r->delayack = 1;
 
 	    r->next = radios;
 	    radios = r;
@@ -1541,6 +1561,20 @@ read_yaesu_config(char *configdir)
 	    goto line_done;
 	}
 
+	if (strcmp(tok, "delayack") == 0) {
+	    if (r->delayack != -1)
+		conferr(linenum, "delayack already specified");
+	    r->delayack = 1;
+	    goto line_done;
+	}
+
+	if (strcmp(tok, "nodelayack") == 0) {
+	    if (r->delayack != -1)
+		conferr(linenum, "delayack already specified");
+	    r->delayack = 0;
+	    goto line_done;
+	}
+
     line_done:
 	free(line);
     }
@@ -1583,6 +1617,8 @@ usage(void)
     printf("  -q, --nocheckblock - Do not send/expect block checksums\n");
     printf("  -a, --chunksize <size> - Send data in size blocks and wait\n");
     printf("  -b, --waitchunk <usec> - wait usecs between chunks\n");
+    printf("  -l, --delayack - Delay before sending the last ack\n");
+    printf("  -o, --nodelayack - No delay before sending the last ack\n");
     printf("  -f, --configdir <file> - Use the given directory for the radio"
 	   " configuration instead\nof the default %s\n", YAESU_CONFIGDIR);
 }
@@ -1623,6 +1659,7 @@ main(int argc, char *argv[])
     int do_waitchecksum = -1;
     int waitchunk = -1;
     int chunksize = -1;
+    int delayack = -1;
     char *speed = "9600";
     int bspeed = -1;
     struct termios orig_termios, curr_termios;
@@ -1707,6 +1744,14 @@ main(int argc, char *argv[])
 		    usage();
 		    exit(1);
 		}
+		break;
+
+	    case 'l':
+		delayack = 1;
+		break;
+
+	    case 'o':
+		delayack = 0;
 		break;
 
 	    case 'y':
@@ -1855,7 +1900,8 @@ main(int argc, char *argv[])
     }
 
     d = alloc_yaesu_data(fd, fd, do_read, send_echo, recv_echo, do_checksum,
-			 do_checkblock, do_waitchecksum, chunksize, waitchunk);
+			 do_checkblock, do_waitchecksum, chunksize, waitchunk,
+			 delayack);
     if (!d) {
 	fclose(f);
 	close(fd);

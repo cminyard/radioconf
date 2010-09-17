@@ -1980,6 +1980,8 @@ def convFromBCD(v):
 class BIBCDFreq(YType):
     def __init__(self):
         YType.__init__(self, "BCDFreq")
+        # Our split value is in a separate location (FT-60R, etc.)
+        self.splitsep = True
         pass
 
     def checkAddrOk(self, c, addr):
@@ -2096,6 +2098,9 @@ class BIBCDFreq(YType):
                         # It's a + or - offset, add/sub the offset frequency
                         o = None
                         for m in h.offfreqtie:
+                            if (m.type.__class__ == Enum):
+                                # We don't send offset values to enums.
+                                continue
                             # Use getSelect, not getValue, because getSelect
                             # carries Mhz, kHz, etc.
                             o = m.getSelect(num)
@@ -2361,10 +2366,11 @@ class BIBCDFreq(YType):
                         # It's a + or - offset, add/sub the offset frequency
                         o = None
                         for m in h.offfreqtie:
-                            if (m.data.cutpaste):
-                                o = m
-                                pass
-                            pass
+                            if (m.type.__class__ == Enum):
+                                # We don't send offset values to enums.
+                                continue
+                            o = m
+                            break
 
                         if (o):
                             freq = float(v)
@@ -2383,8 +2389,13 @@ class BIBCDFreq(YType):
                 pass
             pass
 
-        t = h.data
-        self.set_bcd(v, t.data, t.addr, num, None)
+        # If the split value (TX) is in a separate place, or there is not
+        # an offset setting (like for RX) or if the offset setting is split,
+        # then write the value.
+        if (self.splitsep or (not off) or (off == "split")):
+            t = h.data
+            self.set_bcd(v, t.data, t.addr, num, None)
+            pass
         pass
     pass
 
@@ -2400,6 +2411,8 @@ def convFromHex(v):
 class BIBCDFreq2(BIBCDFreq):
     def __init__(self):
         YType.__init__(self, "BCDFreq2")
+        # Our split location is shared with the offset value
+        self.splitsep = False
         pass
 
     def get_bcd(self, data, addr, num):
