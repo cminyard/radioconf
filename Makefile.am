@@ -13,7 +13,7 @@ CLEANFILES = yaesu_edit
 yaesu_edit: yaesu_edit.py.in
 	sub=`echo $(YAESU_CONFIGDIR) | sed 's/\//\\\\\//g'` && \
 	sed "s/@YCONF@/$${sub}/" <$< >$@; \
-	if [ $$? == 0 ]; then \
+	if [ $$? -eq 0 ]; then \
 		chmod +x $@; \
 	else \
 		rm $@; \
