@@ -1,3 +1,8 @@
+2010-09-15  Corey Minyard <minyard@acm.org>
+
+	* Makefile.am: Fix a script problem, use -eq, not == to compare
+	numbers.
+
 2010-07-31  Corey Minyard <minyard@acm.org>
 
 	* yaesu_edit.py.in: Fix a problem with the input of numerical
