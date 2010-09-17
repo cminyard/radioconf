@@ -31,6 +31,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/select.h>
+#include <sys/time.h>
 #include <stdarg.h>
 #include <ctype.h>
 
@@ -59,6 +60,8 @@ static struct option long_options[] = {
     {"nowaitchecksum", 0, NULL, 'k'},
     {"checkblock", 0, NULL, 'p'},
     {"nocheckblock",0, NULL, 'q'},
+    {"chunksize",1, NULL, 'a'},
+    {"waitchunk",1, NULL, 'b'},
     {"configdir",0, NULL, 'f'},
     {NULL,	 0, NULL, 0}
 };
@@ -583,7 +586,9 @@ handle_yaesu_read_data(struct yaesu_data *d)
     len = rv;
 
     if (verbose > 1) {
-	printf("Read:");
+        struct timeval tv;
+	gettimeofday(&tv, NULL);
+	printf("Read (%ld:%6.6ld):", tv.tv_sec, tv.tv_usec);
 	for (i = 0; i < len; i++)
 	    printf(" %2.2x", buf[i]);
 	printf("\n");

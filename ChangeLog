@@ -1,3 +1,9 @@
+2010-09-16  Corey Minyard <minyard@acm.org>
+
+	* yaesuconf/Makefile.am: Install the VX-7R files.
+
+	* yaesu_rw.c: get --chunksize and --waitchunk working.
+
 2010-09-15  Corey Minyard <minyard@acm.org>
 
 	* Makefile.am: Fix a script problem, use -eq, not == to compare

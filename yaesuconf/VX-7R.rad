@@ -232,8 +232,8 @@ endenum
 
 list Memories 450(0x1322)
 #	Name			Address			type
-	"Enable"		(0x1202,0,1,4)		CheckBox
-	"Mask"			(0x1202,1,1,4)		RCheckBox
+	"Enable"		(0x1202,1,1,4)		CheckBox
+	"Mask"			(0x1202,0,1,4)		RCheckBox
 
 	"Label"			(6*,0,64,176)		YaesuLCString(8)
 
@@ -309,8 +309,8 @@ endlist
 
 list OneTouch 10(0x39ce) 1 2 3 4 5 6 7 8 9 0
 #	Name			Address			type
-	"Valid"			(0x12e3,0,1,4)		CheckBox
-	"Mask"			(0x12e3,1,1,4)		RCheckBox
+	"Enable"		(0x12e3,1,1,4)		CheckBox
+	"Mask"			(0x12e3,0,1,4)		RCheckBox
 
 	"Label"			(6*,0,64,176)		YaesuLCString(8)
 
@@ -334,8 +334,8 @@ endlist
 
 list ProgMemScan 40(0x3aaa) L1 U1 L2 U2 L3 U3 L4 U4 L5 U5 L6 U6 L7 U7 L8 U8 L9 U9 L10 U10 L11 U11 L12 U12 L13 U13 L14 U14 L15 U15 L16 U16 L17 U17 L18 U18 L19 U19 L20 U20
 #	Name			Address			type
-	"Valid"			(0x12e8,0,1,8)		CheckBox
-	"Mask"			(0x12e8,1,1,8)		RCheckBox
+	"Enable"		(0x12e8,1,1,8)		CheckBox
+	"Mask"			(0x12e8,0,1,8)		RCheckBox
 
 	"Label"			(6*,0,64,176)		YaesuLCString(8)
 
