@@ -1,3 +1,9 @@
+2010-09-27  Corey Minyard <minyard@acm.org>
+
+	* yaesuconf/Makefile.am: Fix the filename for the 857 empty file.
+
+	* configure.in: Move to version 0.10 for release.
+
 2010-09-16  Corey Minyard <minyard@acm.org>
 
 	* yaesuconf/Makefile.am: Install the VX-7R files.
@@ -16,7 +22,7 @@
 	* yaesuconf/radios: Add nodelayack for VX-7R.
 
 	* yaesuconf/VX-7R.rad: Fix the enable settings for memories.
-	
+
 2010-09-15  Corey Minyard <minyard@acm.org>
 
 	* Makefile.am: Fix a script problem, use -eq, not == to compare
@@ -35,7 +41,7 @@
 	the radios.  Some radios would give an error if the last ack came
 	too fast.
 
-	* ChangeLog: Move to version 0.9 for release.
+	* configure.in: Move to version 0.9 for release.
 
 2010-07-25  Corey Minyard <minyard@acm.org>
 
