@@ -25,7 +25,11 @@
 #include <errno.h>
 #include <unistd.h>
 #include <getopt.h>
+#ifdef __APPLE__
+#include <sys/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -597,7 +601,7 @@ handle_yaesu_read_data(struct yaesu_data *d)
     if (verbose > 1) {
         struct timeval tv;
 	gettimeofday(&tv, NULL);
-	printf("Read (%ld:%6.6ld):", tv.tv_sec, tv.tv_usec);
+	printf("Read (%ld:%6.6ld):", tv.tv_sec, (long) tv.tv_usec);
 	for (i = 0; i < len; i++)
 	    printf(" %2.2x", buf[i]);
 	printf("\n");
