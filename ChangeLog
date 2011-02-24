@@ -1,7 +1,12 @@
+2011-02-23  Corey Minyard <minyard@acm.org>
+
+	* yaesuconf/VX-7R.empty: Clean up the empty VX-7R to remove
+	cruft from my radio.
+	
 2010-12-02  Paul Thomas, Corey Minyard <minyard@acm.org>
 
 	* yaesu_rw.c: Add support for compiling under OSX.
-	
+
 2010-09-27  Corey Minyard <minyard@acm.org>
 
 	* yaesuconf/Makefile.am: Fix the filename for the 857 empty file.
