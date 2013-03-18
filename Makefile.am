@@ -7,6 +7,8 @@ EXTRA_DIST = $(man_MANS) FAQ yaesu_edit.py.in TODO
 SUBDIRS = yaesuconf layouts
 CLEANFILES = yaesu_edit
 
+ACLOCAL_AMFLAGS = -I m4
+
 # This exists because I couldn't figure out a way to force autoconf/automake
 # to set yaseu_edit executable nor to properly set YAESU_CONFIGDIR in the
 # python script :(
