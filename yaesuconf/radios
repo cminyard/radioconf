@@ -80,6 +80,7 @@ radio FT-7800R
 	filesize  31560
 	blocksize 64
 	checksum
+	prewritedelay 100000
 endradio
 
 radio FT-857D
