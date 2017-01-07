@@ -70,6 +70,7 @@ static struct option long_options[] = {
     {"waitchunk",1, NULL, 'b'},
     {"configdir",0, NULL, 'f'},
     {"prewritedelay", 1, NULL, 't'},
+    {"noendecho", 1, NULL, 'u'},
     {NULL,	 0, NULL, 0}
 };
 char *progname = NULL;
@@ -129,6 +130,7 @@ struct yaesu_data {
     unsigned int block_count;
     int send_echo;
     int recv_echo;
+    int noendecho;
     unsigned int expect_len;
     int timeout_mode;
     unsigned int csum;
@@ -159,7 +161,7 @@ const unsigned char ack[1] = { 0x06 };
 
 struct yaesu_data *
 alloc_yaesu_data(int rfd, int wfd, int is_read,
-		 int send_echo, int recv_echo, int has_checksum,
+		 int send_echo, int recv_echo, int noendecho, int has_checksum,
 		 int has_checkblock, int waitchecksum, int chunksize,
 		 int waitchunk, int delayack, int prewritedelay)
 {
@@ -193,6 +195,7 @@ alloc_yaesu_data(int rfd, int wfd, int is_read,
     d->waiting_chunk_done = CHUNK_NOWAIT;
     d->send_echo = send_echo;
     d->recv_echo = recv_echo;
+    d->noendecho = noendecho;
     d->bsizes = NULL;
     d->timeout_mode = 0;
     d->has_checksum = has_checksum;
@@ -304,6 +307,7 @@ struct yaesu_conf {
     unsigned int data_len;
     unsigned int block_size;
     int echo;
+    int noendecho;
     int has_checksum;
     int has_checkblock;
     int waitchecksum;
@@ -352,6 +356,8 @@ check_yaesu_type(struct yaesu_data *d, unsigned char *buff, unsigned int len,
 		d->block_len = r->block_size;
 	    if (d->recv_echo < 0)
 		d->recv_echo = r->echo;
+	    if (d->noendecho < 0)
+		d->noendecho = r->noendecho;
 	    if (d->has_checksum < 0)
 		d->has_checksum = r->has_checksum;
 	    if (d->has_checkblock < 0)
@@ -377,6 +383,8 @@ check_yaesu_type(struct yaesu_data *d, unsigned char *buff, unsigned int len,
 	d->block_len = 64;
 	if (d->recv_echo < 0)
 	    d->recv_echo = 0;
+	if (d->noendecho < 0)
+	    d->noendecho = 0;
 	if (d->has_checksum < 0)
 	    d->has_checksum = 0;
 	if (d->has_checkblock < 0)
@@ -722,7 +730,7 @@ handle_yaesu_read_data(struct yaesu_data *d)
 	break;
 
     case YAESU_STATE_WAITCSUM:
-	if (d->recv_echo) {
+	if (d->recv_echo && !d->noendecho) {
 	    if (buf[0] != ack[0])
 		return EINVAL;
 	    buf++;
@@ -1588,6 +1596,10 @@ read_yaesu_config(char *configdir)
 	    goto line_done;
 	}
 
+	if (strcmp(tok, "noendecho") == 0) {
+	    r->noendecho = 1;
+	}
+
 	if (strcmp(tok, "prewritedelay") == 0) {
 	    if (r->prewritedelay)
 		conferr(linenum, "prewritedelay already specified");
@@ -1636,6 +1648,7 @@ usage(void)
 	   " the remote end.  Overrides default.\n");
     printf("  -m, --norcv_echo - Do not expect transmitted data to be echoed\n"
 	   " by the remote end.\n");
+    printf("  -u, --noendecho - No echo for the final sent ack\n");
     printf("  -y, --send_echo - Echo all received characters.\n");
     printf("  -c, --checksum - Send/expect a checksum at the end\n");
     printf("  -g, --nochecksum - Do not send/expect a checksum at the end\n");
@@ -1683,6 +1696,7 @@ main(int argc, char *argv[])
     int do_write = 0;
     int send_echo = 0;
     int recv_echo = -1;
+    int noendecho = -1;
     int do_checksum = -1;
     int do_checkblock = -1;
     int do_waitchecksum = -1;
@@ -1697,7 +1711,7 @@ main(int argc, char *argv[])
     progname = argv[0];
 
     while (1) {
-	c = getopt_long(argc, argv, "?hvd:a:b:inrwtemycgf:pqs:",
+	c = getopt_long(argc, argv, "?hvd:a:b:inrwt:emycgf:pqs:jkloux",
 			long_options, NULL);
 	if (c == -1)
 	    break;
@@ -1740,6 +1754,10 @@ main(int argc, char *argv[])
 
 	    case 'm':
 		recv_echo = 0;
+		break;
+
+	    case 'u':
+		noendecho = 1;
 		break;
 
 	    case 'c':
@@ -1938,7 +1956,8 @@ main(int argc, char *argv[])
 	    printf("Receive echo is %s\n", recv_echo ? "on" : "off");
     }
 
-    d = alloc_yaesu_data(fd, fd, do_read, send_echo, recv_echo, do_checksum,
+    d = alloc_yaesu_data(fd, fd, do_read, send_echo, recv_echo, noendecho,
+			 do_checksum,
 			 do_checkblock, do_waitchecksum, chunksize, waitchunk,
 			 delayack, prewritedelay);
     if (!d) {

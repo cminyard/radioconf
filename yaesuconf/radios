@@ -67,11 +67,12 @@ radio VX-7R
 	checksum
 #	The VX-7R doesn't seem to handle having data thrown at it at
 #	a high rate, and it doesn't send an ack before or after the
-#	checksum.
+#	checksum.  Also, it doesn't echo the last ack sent to it.
 	nodelayack
 	nowaitchecksum
+	noendecho
 	chunksize 64
-	waitchunk 50000
+	waitchunk 47000
 endradio
 
 radio FT-7800R
