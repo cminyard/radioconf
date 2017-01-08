@@ -70,7 +70,7 @@ static struct option long_options[] = {
     {"waitchunk",1, NULL, 'b'},
     {"configdir",0, NULL, 'f'},
     {"prewritedelay", 1, NULL, 't'},
-    {"noendecho", 1, NULL, 'u'},
+    {"noendecho", 0, NULL, 'u'},
     {NULL,	 0, NULL, 0}
 };
 char *progname = NULL;
