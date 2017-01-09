@@ -503,7 +503,9 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 	    total_written += rv;
 	    if (rv > 0 && verbose > 2) {
 		int i;
-		printf("Write(2):");
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		printf("Write(2: %ld:%6.6ld):", tv.tv_sec, (long) tv.tv_usec);
 		for (i = 0; i < rv; i++)
 		    printf(" %2.2x", d->write_buf[d->write_start+i]);
 		printf("\n");
@@ -616,7 +618,7 @@ handle_yaesu_read_data(struct yaesu_data *d)
     len = rv;
 
     if (verbose > 1) {
-        struct timeval tv;
+	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	printf("Read (%ld:%6.6ld):", tv.tv_sec, (long) tv.tv_usec);
 	for (i = 0; i < len; i++)
@@ -954,7 +956,9 @@ handle_yaesu_write_data(struct yaesu_data *d)
     len = rv;
 
     if (verbose > 1) {
-	printf("Read (%d):", d->state);
+        struct timeval tv;
+	gettimeofday(&tv, NULL);
+	printf("Read (%d: %ld:%6.6ld):", d->state, tv.tv_sec, tv.tv_usec);
 	for (i = 0; i < len; i++)
 	    printf(" %2.2x", buf[i]);
 	printf("\n");
@@ -1904,7 +1908,7 @@ main(int argc, char *argv[])
 	    goto out_err;
 	}
 
-	curr_termios = orig_termios;
+	memset(&curr_termios, 0, sizeof(curr_termios));
 
 	cfsetospeed(&curr_termios, bspeed);
 	cfsetispeed(&curr_termios, bspeed);

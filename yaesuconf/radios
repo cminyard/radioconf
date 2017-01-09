@@ -72,7 +72,7 @@ radio VX-7R
 	nowaitchecksum
 	noendecho
 	chunksize 64
-	waitchunk 47000
+	waitchunk 50000
 endradio
 
 radio FT-7800R
