@@ -1,4 +1,4 @@
-AC_INIT(yaesuconf, 0.10)
+AC_INIT(yaesuconf, 1.0)
 LT_INIT
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR(yaesu_rw.c)
