@@ -608,7 +608,7 @@ handle_yaesu_read_data(struct yaesu_data *d)
     unsigned int i, len;
     struct yaesu_block *b;
 
-    rv = read(d->rfd, buf, sizeof(buf));
+    rv = read(d->rfd, buf, sizeof(rbuf));
     if (rv < 0) {
 	if (errno == EAGAIN)
 	    return 0;
@@ -946,7 +946,7 @@ handle_yaesu_write_data(struct yaesu_data *d)
     int rv;
     unsigned int i, len;
 
-    rv = read(d->rfd, buf, sizeof(buf));
+    rv = read(d->rfd, buf, sizeof(rbuf));
     if (rv < 0) {
 	if (errno == EAGAIN)
 	    return 0;
@@ -1253,6 +1253,7 @@ read_yaesu_config(char *configdir)
 	perror(configfile);
 	exit(1);
     }
+    free(configfile);
 
     for (;;) {
 	char *line, *tok, *nexttok;
@@ -1348,7 +1349,7 @@ read_yaesu_config(char *configdir)
 		    alloc_len += 16;
 		    nh = malloc(alloc_len);
 		    if (!nh)
-			return ENOMEM;
+			conferr(linenum, "Out of memory");
 		    memcpy(nh, r->header, r->header_cmp_len);
 		    free(r->header);
 		    r->header = nh;
@@ -1625,6 +1626,8 @@ read_yaesu_config(char *configdir)
 
     if (in_radio)
 	conferr(linenum, "end of file while still in a radio spec");
+
+    fclose(f);
 
     return 0;
 }
