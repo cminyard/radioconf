@@ -71,6 +71,7 @@ static struct option long_options[] = {
     {"configdir",0, NULL, 'f'},
     {"prewritedelay", 1, NULL, 't'},
     {"noendecho", 0, NULL, 'u'},
+    {"csumdelay", 1, NULL, 'x'},
     {NULL,	 0, NULL, 0}
 };
 char *progname = NULL;
@@ -82,6 +83,7 @@ int hash = 0;
 #define YAESU_CHAR_TIMEOUT(d) YAESU_TIMEOUT(d, 5, 0)
 #define YAESU_TIMING_TIMEOUT(d) YAESU_TIMEOUT(d, 0, 200000)
 #define YAESU_WAITWRITE_TIMEOUT(d) YAESU_TIMEOUT(d, 0, 5000)
+#define YAESU_CSUMDELAY_TIMEOUT(d) YAESU_TIMEOUT(d, 0, d->csumdelay)
 #define YAESU_WAITCHUNK_TIMEOUT(d) YAESU_TIMEOUT(d, 0, d->waitchunk)
 #define YAESU_START_TIMEOUT(d) YAESU_TIMEOUT(d, 10, 0)
 #define YAESU_MAX_RETRIES 5
@@ -143,6 +145,7 @@ struct yaesu_data {
     unsigned int write_start;
     unsigned int write_len;
     int waitchunk;
+    int csumdelay;
     int chunksize;
     enum { CHUNK_NOWAIT, CHUNK_CHECK, CHUNK_DELAY } waiting_chunk_done;
     int check_write2;
@@ -155,6 +158,7 @@ struct yaesu_data {
 
 #define DEFAULT_CHUNKSIZE 0
 #define DEFAULT_WAITCHUNK 0
+#define DEFAULT_CSUMDELAY 0
 
 const unsigned char testbuf[8] = { '0', '1', '2', '3', '4', '5', '6', '7' };
 const unsigned char ack[1] = { 0x06 };
@@ -163,7 +167,7 @@ struct yaesu_data *
 alloc_yaesu_data(int rfd, int wfd, int is_read,
 		 int send_echo, int recv_echo, int noendecho, int has_checksum,
 		 int has_checkblock, int waitchecksum, int chunksize,
-		 int waitchunk, int delayack, int prewritedelay)
+		 int waitchunk, int delayack, int prewritedelay, int csumdelay)
 {
     struct yaesu_data *d;
 
@@ -191,6 +195,7 @@ alloc_yaesu_data(int rfd, int wfd, int is_read,
     d->write_len = 0;
     d->chunksize = chunksize;
     d->waitchunk = waitchunk;
+    d->csumdelay = csumdelay;
     d->delayack = 1;
     d->waiting_chunk_done = CHUNK_NOWAIT;
     d->send_echo = send_echo;
@@ -313,6 +318,7 @@ struct yaesu_conf {
     int waitchecksum;
     int chunksize;
     int waitchunk;
+    int csumdelay;
     int delayack;
     int prewritedelay;
     struct yaesu_blocksizes *bsizes;
@@ -368,6 +374,8 @@ check_yaesu_type(struct yaesu_data *d, unsigned char *buff, unsigned int len,
 		d->chunksize = r->chunksize;
 	    if (d->waitchunk < 0)
 		d->waitchunk = r->waitchunk;
+	    if (d->csumdelay < 0)
+		d->csumdelay = r->csumdelay;
 	    if (d->delayack < 0)
 		d->delayack = r->delayack;
 	    if (d->prewritedelay < 0)
@@ -393,6 +401,8 @@ check_yaesu_type(struct yaesu_data *d, unsigned char *buff, unsigned int len,
 	    d->waitchecksum = 1;
 	if (d->waitchunk < 0)
 	    d->waitchunk = DEFAULT_WAITCHUNK;
+	if (d->csumdelay < 0)
+	    d->csumdelay = DEFAULT_CSUMDELAY;
 	if (d->chunksize < 0)
 	    d->chunksize = DEFAULT_CHUNKSIZE;
 	if (d->delayack < 0)
@@ -483,6 +493,7 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 	d->write_len += len;
     }
 
+    d->check_write2 = 0;
     end = (d->write_start + d->write_len) % sizeof(d->write_buf);
     if (d->write_len > 0) {
 	int to_write;
@@ -1054,7 +1065,7 @@ handle_yaesu_write_data(struct yaesu_data *d)
  send_checksum:
     if (!d->waitchecksum) {
 	d->state = YAESU_STATE_DELAYCSUM;
-	YAESU_WAITCHUNK_TIMEOUT(d);
+	YAESU_CSUMDELAY_TIMEOUT(d);
 	return 0;
     }
 
@@ -1292,6 +1303,7 @@ read_yaesu_config(char *configdir)
 	    r->waitchecksum = -1;
 	    r->chunksize = -1;
 	    r->waitchunk = -1;
+	    r->csumdelay = -1;
 	    r->delayack = -1;
 	    r->name = strdup(tok);
 	    if (!r->name)
@@ -1320,6 +1332,8 @@ read_yaesu_config(char *configdir)
 		r->waitchecksum = 1;
 	    if (r->waitchunk == -1)
 		r->waitchunk = DEFAULT_WAITCHUNK;
+	    if (r->csumdelay == -1)
+		r->csumdelay = DEFAULT_CSUMDELAY;
 	    if (r->chunksize == -1)
 		r->chunksize = DEFAULT_CHUNKSIZE;
 	    if (r->delayack == -1)
@@ -1545,6 +1559,21 @@ read_yaesu_config(char *configdir)
 	    goto line_done;
 	}
 
+	if (strcmp(tok, "csumdelay") == 0) {
+	    if (r->csumdelay >= 0)
+		conferr(linenum, "Checksum wait already specified");
+
+	    tok = strtok_r(NULL, " \t", &nexttok);
+	    if (!tok)
+		conferr(linenum, "Expected number");
+
+	    r->csumdelay = strtoul_nooctal(tok, &ep);
+	    if (*ep)
+		conferr(linenum, "Invalid checksum wait");
+
+	    goto line_done;
+	}
+
 	if (strcmp(tok, "checksum") == 0) {
 	    if (r->has_checksum != -1)
 		conferr(linenum, "checksum already specified");
@@ -1665,6 +1694,7 @@ usage(void)
     printf("  -q, --nocheckblock - Do not send/expect block checksums\n");
     printf("  -a, --chunksize <size> - Send data in size blocks and wait\n");
     printf("  -b, --waitchunk <usec> - wait usecs between chunks\n");
+    printf("  -x, --waitcsum <usec> - wait usecs before writing checksum\n");
     printf("  -l, --delayack - Delay before sending the last ack\n");
     printf("  -o, --nodelayack - No delay before sending the last ack\n");
     printf("  -f, --configdir <file> - Use the given directory for the radio"
@@ -1708,6 +1738,7 @@ main(int argc, char *argv[])
     int do_checkblock = -1;
     int do_waitchecksum = -1;
     int waitchunk = -1;
+    int csumdelay = -1;
     int chunksize = -1;
     int delayack = -1;
     int prewritedelay = -1;
@@ -1796,6 +1827,15 @@ main(int argc, char *argv[])
 		waitchunk = strtoul_nooctal(optarg, &dend);
 		if ((*optarg == '\0') || (*dend != '\0')) {
 		    fprintf(stderr, "Invalid waitchunk: '%s'.\n", optarg);
+		    usage();
+		    exit(1);
+		}
+		break;
+
+	    case 'x':
+		csumdelay = strtoul_nooctal(optarg, &dend);
+		if ((*optarg == '\0') || (*dend != '\0')) {
+		    fprintf(stderr, "Invalid csumdelay: '%s'.\n", optarg);
 		    usage();
 		    exit(1);
 		}
@@ -1966,7 +2006,7 @@ main(int argc, char *argv[])
     d = alloc_yaesu_data(fd, fd, do_read, send_echo, recv_echo, noendecho,
 			 do_checksum,
 			 do_checkblock, do_waitchecksum, chunksize, waitchunk,
-			 delayack, prewritedelay);
+			 delayack, prewritedelay, csumdelay);
     if (!d) {
 	fclose(f);
 	close(fd);
