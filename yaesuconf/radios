@@ -50,6 +50,14 @@
 #    a checksum.  Note that these two values are not stored in the file
 #    when it is saved.  Defaults to nocheckblock.
 #
+#  recv_echo | norecv_echo (optional)
+#    Check whether the radio echos back the data that is sent to it.
+#    This is only valid for writing to the radio, for reading it has
+#    to test for it before reading the header.  Default to false.
+#
+#  send_echo | sendrecv_echo (optional)
+#    Check whether we should echo back the data we read.  Defaults to false.
+#
 
 radio FT-60R
 	headercmp 41 48 30 31 37 24 0b 00
@@ -67,10 +75,10 @@ radio VX-7R
 	checksum
 #	The VX-7R doesn't seem to handle having data thrown at it at
 #	a high rate, and it doesn't send an ack before or after the
-#	checksum.  Also, it doesn't echo the last ack sent to it.
+#	checksum.
+	recv_echo
 	delayack
 	nowaitchecksum
-	noendecho
 	chunksize 64
 	waitchunk 50000
 	csumdelay 100000

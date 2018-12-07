@@ -311,7 +311,8 @@ struct yaesu_conf {
     unsigned int header_len;
     unsigned int data_len;
     unsigned int block_size;
-    int echo;
+    int recv_echo;
+    int send_echo;
     int noendecho;
     int has_checksum;
     int has_checkblock;
@@ -361,7 +362,9 @@ check_yaesu_type(struct yaesu_data *d, unsigned char *buff, unsigned int len,
 	    } else
 		d->block_len = r->block_size;
 	    if (d->recv_echo < 0)
-		d->recv_echo = r->echo;
+		d->recv_echo = r->recv_echo;
+	    if (d->send_echo < 0)
+		d->send_echo = r->send_echo;
 	    if (d->noendecho < 0)
 		d->noendecho = r->noendecho;
 	    if (d->has_checksum < 0)
@@ -391,6 +394,8 @@ check_yaesu_type(struct yaesu_data *d, unsigned char *buff, unsigned int len,
 	d->block_len = 64;
 	if (d->recv_echo < 0)
 	    d->recv_echo = 0;
+	if (d->send_echo < 0)
+	    d->send_echo = 0;
 	if (d->noendecho < 0)
 	    d->noendecho = 0;
 	if (d->has_checksum < 0)
@@ -1099,6 +1104,7 @@ handle_yaesu_write_timeout(struct yaesu_data *d)
 
     if (d->waiting_chunk_done == CHUNK_CHECK) {
 	int left;
+
 	rv = ioctl(d->wfd, TIOCOUTQ, &left);
 	if (rv < 0)
 	    return errno;
@@ -1297,7 +1303,8 @@ read_yaesu_config(char *configdir)
 	    if (!r)
 		conferr(linenum, "out of memory\n");
 	    memset(r, 0, sizeof(*r));
-	    r->echo = -1;
+	    r->recv_echo = -1;
+	    r->send_echo = -1;
 	    r->has_checksum = -1;
 	    r->has_checkblock = -1;
 	    r->waitchecksum = -1;
@@ -1322,8 +1329,9 @@ read_yaesu_config(char *configdir)
 
 	    if (!r->header_len)
 		r->header_len = r->header_cmp_len;
-	    if (r->echo == -1)
-		r->echo = 0;
+	    /* Don't default the recv_echo. */
+	    if (r->send_echo == -1)
+		r->send_echo = 0;
 	    if (r->has_checksum == -1)
 		r->has_checksum = 0;
 	    if (r->has_checkblock == -1)
@@ -1571,6 +1579,34 @@ read_yaesu_config(char *configdir)
 	    if (*ep)
 		conferr(linenum, "Invalid checksum wait");
 
+	    goto line_done;
+	}
+
+	if (strcmp(tok, "recv_echo") == 0) {
+	    if (r->recv_echo != -1)
+		conferr(linenum, "recv_echo already specified");
+	    r->recv_echo = 1;
+	    goto line_done;
+	}
+
+	if (strcmp(tok, "send_echo") == 0) {
+	    if (r->send_echo != -1)
+		conferr(linenum, "send_echo already specified");
+	    r->send_echo = 1;
+	    goto line_done;
+	}
+
+	if (strcmp(tok, "norecv_echo") == 0) {
+	    if (r->recv_echo != -1)
+		conferr(linenum, "recv_echo already specified");
+	    r->recv_echo = 0;
+	    goto line_done;
+	}
+
+	if (strcmp(tok, "nosend_echo") == 0) {
+	    if (r->send_echo != -1)
+		conferr(linenum, "send_echo already specified");
+	    r->send_echo = 0;
 	    goto line_done;
 	}
 
@@ -1930,79 +1966,6 @@ main(int argc, char *argv[])
 	exit(1);
     }
 
-    for (i = 0; speeds[i].sval; i++) {
-	if (strcmp(speeds[i].sval, speed) == 0) {
-	    bspeed = speeds[i].val;
-	    break;
-	}
-    }
-    if (bspeed == -1) {
-	fprintf(stderr, "Unknown speed, valid speeds are:");
-	for (i = 0; speeds[i].sval; i++)
-	    fprintf(stderr, " %s", speeds[i].sval);
-	fprintf(stderr, "\n");
-	goto out_err;
-    }
-
-    if (dotermios) {
-	if (tcgetattr(fd, &orig_termios) == -1) {
-	    fprintf(stderr, "error getting tty attributes %s(%d)\n",
-		    strerror(errno), errno);
-	    goto out_err;
-	}
-
-	memset(&curr_termios, 0, sizeof(curr_termios));
-
-	cfsetospeed(&curr_termios, bspeed);
-	cfsetispeed(&curr_termios, bspeed);
-	cfmakeraw(&curr_termios);
-	/* two stop bits, ignore handshake, make sure rx enabled */
-	curr_termios.c_cflag |= (CSTOPB | CLOCAL | CREAD);
-
-	if (tcsetattr(fd, TCSANOW, &curr_termios) == -1) {
-	    fprintf(stderr, "error setting tty attributes %s(%d)\n",
-		    strerror(errno), errno);
-	    goto out_err;
-	}
-    }
-
-    /* Flush the input buffer */
-    while(read(fd, &dummy, 1) > 0)
-	;
-
-    if (recv_echo == -1) {
-	/* Test for echo */
-	rv = write(fd, "A", 1);
-	if (rv <= 0) {
-	    fprintf(stderr, "Error testing echo, could not write to"
-		    " device: %s (%d)\n", strerror(errno), errno);
-	    exit(1);
-	}
-
-	usleep(200000);
-	rv = read(fd, &dummy, 1);
-	if (rv < 0) {
-	    if (errno == EAGAIN)
-		rv = 0;
-	    else {
-		fprintf(stderr, "Error testing echo, could not read from"
-			" device: %s (%d)\n", strerror(errno), errno);
-		exit(1);
-	    }
-	}
-	if (rv == 0)
-	    recv_echo = 0;
-	else if (dummy == 'A')
-	    recv_echo = 1;
-	else {
-	    fprintf(stderr, "Error testing echo, received character did"
-		    " not match sent character.\n");
-	    exit(1);
-	}
-	if (verbose)
-	    printf("Receive echo is %s\n", recv_echo ? "on" : "off");
-    }
-
     d = alloc_yaesu_data(fd, fd, do_read, send_echo, recv_echo, noendecho,
 			 do_checksum,
 			 do_checkblock, do_waitchecksum, chunksize, waitchunk,
@@ -2107,6 +2070,79 @@ main(int argc, char *argv[])
 		    " a valid file\n");
 	    goto out_err;
 	}
+    }
+
+    for (i = 0; speeds[i].sval; i++) {
+	if (strcmp(speeds[i].sval, speed) == 0) {
+	    bspeed = speeds[i].val;
+	    break;
+	}
+    }
+    if (bspeed == -1) {
+	fprintf(stderr, "Unknown speed, valid speeds are:");
+	for (i = 0; speeds[i].sval; i++)
+	    fprintf(stderr, " %s", speeds[i].sval);
+	fprintf(stderr, "\n");
+	goto out_err;
+    }
+
+    if (dotermios) {
+	if (tcgetattr(fd, &orig_termios) == -1) {
+	    fprintf(stderr, "error getting tty attributes %s(%d)\n",
+		    strerror(errno), errno);
+	    goto out_err;
+	}
+
+	memset(&curr_termios, 0, sizeof(curr_termios));
+
+	cfsetospeed(&curr_termios, bspeed);
+	cfsetispeed(&curr_termios, bspeed);
+	cfmakeraw(&curr_termios);
+	/* two stop bits, ignore handshake, make sure rx enabled */
+	curr_termios.c_cflag |= (CSTOPB | CLOCAL | CREAD);
+
+	if (tcsetattr(fd, TCSANOW, &curr_termios) == -1) {
+	    fprintf(stderr, "error setting tty attributes %s(%d)\n",
+		    strerror(errno), errno);
+	    goto out_err;
+	}
+    }
+
+    /* Flush the input buffer */
+    while(read(fd, &dummy, 1) > 0)
+	;
+
+    if (d->recv_echo == -1) {
+	/* Test for echo */
+	rv = write(fd, "A", 1);
+	if (rv <= 0) {
+	    fprintf(stderr, "Error testing echo, could not write to"
+		    " device: %s (%d)\n", strerror(errno), errno);
+	    exit(1);
+	}
+
+	usleep(200000);
+	rv = read(fd, &dummy, 1);
+	if (rv < 0) {
+	    if (errno == EAGAIN)
+		rv = 0;
+	    else {
+		fprintf(stderr, "Error testing echo, could not read from"
+			" device: %s (%d)\n", strerror(errno), errno);
+		exit(1);
+	    }
+	}
+	if (rv == 0)
+	    d->recv_echo = 0;
+	else if (dummy == 'A')
+	    d->recv_echo = 1;
+	else {
+	    fprintf(stderr, "Error testing echo, received character did"
+		    " not match sent character.\n");
+	    exit(1);
+	}
+	if (verbose)
+	    printf("Receive echo is %s\n", d->recv_echo ? "on" : "off");
     }
 
     if (do_write) {
