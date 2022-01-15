@@ -852,6 +852,8 @@ class BISpecial857B(BISpecial):
     pass
 
 class BISpecialTMV71(BISpecial):
+    """There is a location that is either VHF (0x05) or UHF (0x08) depending
+       on the frequency set."""
     def __init__(self, name="SpecialTMV71"):
         BISpecial.__init__(self, name)
         return
@@ -871,7 +873,6 @@ class BISpecialTMV71(BISpecial):
             if (bfreq):
                 break
             pass
-        #print("A: %d" % bfreq)
         oldv = t.data.get_bits(t.addr, num)
         if (bfreq > 400000000):
             t.data.set_bits(0x05, t.addr, num)

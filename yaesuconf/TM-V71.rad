@@ -228,11 +228,20 @@ list Memories 1000
 	"Zero1"			(0xe09,1,7,16)		SetToZero
 endlist
 
+enum PMChannel_e
+	0	"Off"
+	1	"1"
+	2	"2"
+	3	"3"
+	4	"4"
+	5	"5"
+endenum
+
 tab Config
 	"Crossband Repeat"	(0x18,0,8)		CheckBox
 	"Wireless Remove"	(0x19,0,8)		CheckBox
 #?	"Remote ID"		(0x1a,0,8)
-	"PM Channel"		(0x1e,0,8)		Int(0,5,0,1,)
+	"PM Channel"		(0x1e,0,8)		PMChannel_e
 	"Key Lock"		(0x1f,0,8)		CheckBox
 	"Serial Speed"		(0x29,0,8)		PCSpeed_e
 	"Repeater ID"		(0x178,0,96)		String(12)
@@ -256,14 +265,89 @@ list "Groups" 8
      	"Name"			(0x7d08,0,128,128)	String(16)
 endlist
 
+enum TxPower_e
+	0x00	"High"
+	0x01	"Medium"
+	0x02	"Low"
+endenum
+
+enum VFOMem_e
+	0x00	"Mem"
+	0x01	"VFO"
+endenum
+
 enum Band_e
+	0x00	"A"
+	0x01	"B"
+endenum
+
+enum FrBand_e
 	0x05	"VHF"
 	0x08	"UHF"
 endenum
 
+# The following is for the A channel only
+enum FrBandA_e
+	0x00	"118Mhz"
+	0x01	"VHF"
+	0x02	"220Mhz"
+	0x03	"340Mhz"
+	0x04	"UHF"
+endenum
+
+enum DataBand_e
+	0x00	"A"
+	0x01	"B"
+	0x02	"TxA/RxB"
+	0x03	"TxB/RxA"
+endenum
+
+enum DataSpeed_e
+	0x00	"1200"
+	0x01	"9600"
+endenum
+
+list "ProgMemOff" 1
+	"BandA\nVFO/Mem"	(0x209,0,8)		VFOMem_e
+	"BandA\nFrBand"		(0x20a,0,8)		FrBandA_e
+	"BandA\nTXPwr"		(0x20f,0,8)		TxPower_e
+	"BandA\nSMetSqu"	(0x211,0,8)		CheckBox
+	"BandB\nVFO/Mem"	(0x215,0,8)		VFOMem_e
+	"BandB\nFrBand"		(0x216,0,8)		FrBand_e
+	"BandB\nTXPwr"		(0x21b,0,8)		TxPower_e
+	"BandB\nSMetSqu"	(0x21d,0,8)		CheckBox
+	"PTT\nBand"		(0x23a,0,8)		Band_e
+	"Control\nBand"		(0x23b,0,8)		Band_e
+	"Poweron\nMessage"	(0x2e8,0,96)		String(12)
+#	FIXME - the following is digits only.  Also, FF seems to mean the digit is off
+	"Group\nLink"		(0x2f8,0,80)		String(10)
+	"Beep"			(0x358,0,8)		CheckBox
+	"BeepVol"		(0x359,0,8)		Int(1,7,1,1,)
+	"Data\nBand"		(0x37d,0,8)		DataBand_e
+	"Data\nSpeed"		(0x37e,0,8)		DataSpeed_e
+	"Band\nMaskA"		(0x388,0,8)		RCheckBox
+	"Band\nMaskB"		(0x38d,0,8)		RCheckBox
+endlist
+
 list "ProgMem" 5
-     	"Name"			(0x7da8,0,128)		String(16)
-	"BandA/MemMode"		(0x208,0,8)		RCheckBox
-	"BandA/Band"		(0x209,0,8)		Band_e
-	"BandA/TXPwr"		(0x20f,0,8)		Band_e
+	"Name"			(0x7da8,0,128,128)	String(16)
+	"BandA\nVFO/Mem"	(0x409,0,8,4096)	VFOMem_e
+	"BandA\nFrBand"		(0x40a,0,8,4096)	FrBandA_e
+	"BandA\nTXPwr"		(0x40f,0,8,4096)	TxPower_e
+	"BandA\nSMetSqu"	(0x411,0,8,4096)	CheckBox
+	"BandB\nVFO/Mem"	(0x415,0,8,4096)	VFOMem_e
+	"BandB\nFrBand"		(0x416,0,8,4096)	FrBand_e
+	"BandB\nTXPwr"		(0x41b,0,8,4096)	TxPower_e
+	"BandB\nSMetSqu"	(0x41d,0,8,4096)	CheckBox
+	"PTT\nBand"		(0x43a,0,8,4096)	Band_e
+	"Control\nBand"		(0x43b,0,8,4096)	Band_e
+	"Poweron\nMessage"	(0x4e8,0,96,4096)	String(12)
+#	FIXME - the following is digits only.  Also, FF seems to mean the digit is off
+	"Group\nLink"		(0x4f8,0,80,4096)	String(10)
+	"Beep"			(0x558,0,8,4096)	CheckBox
+	"BeepVol"		(0x559,0,8,4096)	Int(1,7,1,1,)
+	"Data\nBand"		(0x57d,0,8,4096)	DataBand_e
+	"Data\nSpeed"		(0x57e,0,8,4096)	DataSpeed_e
+	"Band\nMaskA"		(0x588,0,8,4096)	RCheckBox
+	"Band\nMaskB"		(0x58d,0,8,4096)	RCheckBox
 endlist

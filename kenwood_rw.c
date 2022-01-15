@@ -122,7 +122,7 @@ struct radio_info {
     bool set_timeout;
     gensio_time timeout;
 
-    char id[8];
+    char id[9];
 
     unsigned char cmddata[128];
     unsigned int cmdpos;
@@ -225,8 +225,9 @@ handle_radio_rsp(struct radio_info *ri, char *rsp)
 	    ri->err = GE_INVAL;
 	    return;
 	}
-	if (len > 7)
-	    len = 7;
+	if (len > 8)
+	    len = 8;
+	/* + 3 to skip the incoming "ID " */
 	memcpy(ri->id, rsp + 3, len);
 	if (ri->write && strcmp(rsp + 3, ri->id) != 0) {
 	    fprintf(stderr,
@@ -236,7 +237,7 @@ handle_radio_rsp(struct radio_info *ri, char *rsp)
 	    ri->err = GE_INVAL;
 	    return;
 	}
-	r = find_radio(rsp + 3); /* Skip the "ID " at the beginning. */
+	r = find_radio(rsp + 3);
 	if (!r) {
 	    fprintf(stderr, "Unknown radio type: %s\n", rsp);
 	    ri->err = GE_INVAL;
@@ -555,7 +556,7 @@ main(int argc, char *argv[])
 	    fprintf(stderr, "Unable to open file %s\n", infile);
 	    rv = GE_INVAL;
 	} else {
-	    i = fread(ri.id, 1, sizeof(ri.id), f);
+	    i = fread(ri.id, 1, 8, f);
 	    if ((unsigned int) i != sizeof(ri.id)) {
 		printf("Error reading file %s\n", infile);
 		return 1;
@@ -640,7 +641,7 @@ main(int argc, char *argv[])
 	    fprintf(stderr, "Unable to open file %s\n", outfile);
 	    rv = GE_INVAL;
 	} else {
-	    i = fwrite(ri.id, 1, sizeof(ri.id), f);
+	    i = fwrite(ri.id, 1, 8, f);
 	    if ((unsigned int) i != sizeof(ri.id)) {
 		fprintf(stderr, "Error writing to file %s\n", outfile);
 		rv = GE_INVAL;
