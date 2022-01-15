@@ -272,8 +272,8 @@ enum TxPower_e
 endenum
 
 enum VFOMem_e
-	0x00	"Mem"
-	0x01	"VFO"
+	0x00	"VFO"
+	0x01	"Mem"
 endenum
 
 enum Band_e

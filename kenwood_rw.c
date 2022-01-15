@@ -647,7 +647,6 @@ main(int argc, char *argv[])
 		rv = GE_INVAL;
 	    }
 	    i = fwrite(ri.readdata, 1, ri.readlen, f);
-	    printf("A: %d %d\n", i, ri.readlen);
 	    if ((unsigned int) i != ri.readlen) {
 		fprintf(stderr, "Error writing to file %s\n", outfile);
 		rv = GE_INVAL;
