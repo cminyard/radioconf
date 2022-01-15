@@ -1,0 +1,75 @@
+.TH kenwood_rw 1 11/02/09 Kenwood "Kenwood radio clone program"
+
+.SH NAME
+kenwood_rw \- A program to read and write clone information for Kenwood radios
+
+.SH SYNOPSIS
+.B kenwood_rw
+[\fIoptions\fR]
+\fI\-\-read|\-\-write\fR
+<gensio> 
+
+.SH DESCRIPTION
+The
+.BR kenwood_rw
+program allows a user to read data from Kenwood radios, and write data
+to Kenwood radios, over the serial interface.  This allows the backup
+and restore of memories and configuration information in the radio.  The
+.B yaesu_edit
+program can modify the information, then the information can be
+written back using kenwood_rw.
+
+This currently only supports the TM-V71 radios.
+
+.SH OPTIONS
+.TP
+\fB\-h\fR
+Print out help text
+
+.TP
+\fB\-d\fR, \fB\-\-debug\fR
+Increase the debugging level.
+
+.TP
+\fB\-i\fR, \fB\-\-infile\fR \fIfilename\fR
+When writing to the radio, use the given file for the data.  Must be
+Print out help textspecified with \-\-write.
+
+.TP
+\fB\-o\fR, \fB\-\-outfile\fR \fIfilename\fR
+When reading from the radio, write the data to the given file.
+Print out help textDefaults to kenwood.rfile.
+
+.TP
+\fB\-r\fR, \fB\-\-read\fR
+Read data from the radio.
+
+.TP
+\fB\-w\fR, \fB\-\-write\fR
+Write data to the radio.
+
+.SH "USAGE"
+To use this program, you must hook your computer to the radio with the
+Print out help textproper serial cable, then do
+.IP
+kenwood_rw --read --outfile myradio.rfile <gensio for radio>
+.PP
+The gensio is a string specifying where to hook to the radio and
+Print out help textconfiguration.  If the radio is on /dev/ttyUSB0 and
+Print out help textit was set to 9600 baud, you would use
+"serialdev,/dev/ttyUSB0,9600n81".
+
+To restore your data, again put the radio in clone mode, do
+.IP
+kenwood_rw --write --infile myradio.rfile <gensio for radio>
+.PP
+
+.SH "SEE ALSO"
+.B yaesu_edit(1), gensio(5)
+
+.SH "KNOWN PROBLEMS"
+None
+
+.SH AUTHOR
+.PP
+Corey Minyard <minyard@acm.org>, AE5KM
