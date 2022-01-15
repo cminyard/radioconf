@@ -9,14 +9,21 @@ The yaesu_rw program for using the clone mode of Yaesu radios to back
 up and restore radio configuration.
 
 
-yaesu_edit
+kenwood_rw
+--------
+
+The kenwood_rw program for using the serial port to a Kenwood TM-V71
+to back up and restore radio configuration.
+
+
+radio_edit
 ----------
 
-The yaesu_edit program lets you edit the configuration of the Yaesu
-radios.  It can generally edit all the memories of the radio along with
-a lot of the menu configuration.  It does not transfer the data, you
-have to use yaesu_rw independently to get the configuration from the
-radio and write it back out after you edit it.
+The radio_edit program lets you edit the configuration of the radios.
+It can generally edit all the memories of the radio along with a lot
+of the menu configuration.  It does not transfer the data, you have to
+use yaesu_rw independently to get the configuration from the radio and
+write it back out after you edit it.
 
 
 Layout files
@@ -35,11 +42,16 @@ Supported radios
 
 This software has been tested with the following radios:
 
+Yaesu
+
   FT-60R       works
   FT-7800R     works
   FT-897D      works
   VX-7R        works
 
+Kenwood
+
+  TM-V71       works
 
 Thanks
 ------
