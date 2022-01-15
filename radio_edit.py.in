@@ -697,7 +697,7 @@ class YType:
         # Most types are the same for select and value
         return self.getSelect(h, num)
 
-    def setSelect(self, v, h, num):
+    def setSelect(self, v, h, num, default=None):
         return
 
     def newTie(self, myh, fromh, tie):
@@ -1008,11 +1008,17 @@ class BIInt(YType):
         t = h.data
         return str(self.getInt(t.data, t.addr, num))
 
-    def setSelect(self, v, h, num):
+    def setSelect(self, v, h, num, default=None):
         t = h.data
         try:
             self.setInt(int(v), t.data, t.addr, num)
         except Exception, e:
+            if default is not None:
+                try:
+                    self.setInt(int(default), t.data, t.addr, num)
+                except:
+                    pass
+                pass
             pass
         pass
 
@@ -1204,7 +1210,7 @@ class BIString(YType):
         t = h.data
         return self.get_string(t.data, t.addr, num)
 
-    def setSelect(self, v, h, num):
+    def setSelect(self, v, h, num, default=None):
         t = h.data
         self.set_string(v, t.data, t.addr, num, None)
         pass
@@ -1329,7 +1335,7 @@ class BIFixed(YType):
         t = h.data
         return str(self.get_raw(t, num))
 
-    def setSelect(self, v, h, num):
+    def setSelect(self, v, h, num, default=None):
         self.setBits(self.conv_from_str(v), h, num)
         pass
 
@@ -1796,12 +1802,18 @@ class BICheckBox(YType):
         else:
             return '0'
 
-    def setSelect(self, v, h, num):
+    def setSelect(self, v, h, num, default=None):
         t = h.data
         if (v == "0"):
             v = 0
         elif (v == "1"):
             v = 1
+        elif default is not None:
+            try:
+                v = int(default)
+            except:
+                return
+            pass
         else:
             return
         if self.reverse:
@@ -1926,7 +1938,7 @@ class BIYaesuString(YType):
         t = h.data
         return self.get_yaesu_string(t.data, t.addr, num)
 
-    def setSelect(self, v, h, num):
+    def setSelect(self, v, h, num, default=None):
         t = h.data
         self.set_yaesu_string(v, t.data, t.addr, num, None)
         pass
@@ -2358,7 +2370,7 @@ class BIBCDFreq(YType):
             w.icursor(cursor + 1)
         return "break"
 
-    def setSelect(self, v, h, num):
+    def setSelect(self, v, h, num, default=None):
         firstc = False
         c2 = [ ]
         for c in v:
@@ -2602,7 +2614,7 @@ class BIHexDigits(YType):
         w.icursor(cursor + 1)
         return "break"
 
-    def setSelect(self, v, h, num):
+    def setSelect(self, v, h, num, default=None):
         for c in v:
             if (c not in decimal_digits):
                 return
@@ -2719,10 +2731,17 @@ class Enum(YType):
             pass
         pass
 
-    def setSelect(self, v, h, num):
+    def setSelect(self, v, h, num, default=None):
         t = h.data
         for e in self.entries:
             if (v == e.str.replace(" ", "")):
+                t.data.set_bits(e.value, t.addr, num)
+                return
+            pass
+        if default is None:
+            return
+        for e in self.entries:
+            if (default == e.str.replace(" ", "")):
                 t.data.set_bits(e.value, t.addr, num)
                 return
             pass
@@ -2826,10 +2845,17 @@ class SList(YType):
             pass
         pass
 
-    def setSelect(self, v, h, num):
+    def setSelect(self, v, h, num, default=None):
         t = h.data
         for e in self.entries:
             if (v == e.str.replace(" ", "")):
+                t.data.set_bits(e.value, t.addr, num)
+                return
+            pass
+        if default is None:
+            return
+        for e in self.entries:
+            if (default == e.str.replace(" ", "")):
                 t.data.set_bits(e.value, t.addr, num)
                 return
             pass
@@ -2905,10 +2931,16 @@ class TabEntry:
         return (self.nsname + "=" + v)
 
     def setSelect(self, h, num, vhash):
+        if "default" in self.specials:
+            defval = self.specials["default"]
+        else:
+            defval = None
+            pass
+
         if (self.nsname in vhash):
             v = vhash[self.nsname]
             del vhash[self.nsname]
-            self.type.setSelect(v, h, num)
+            self.type.setSelect(v, h, num, default=defval)
             pass
         elif "tone" in self.specials:
             tt = self.specials["tone"]
@@ -2950,7 +2982,7 @@ class TabEntry:
 
                     pass
                 if v:
-                    self.type.setSelect(v, h, num)
+                    self.type.setSelect(v, h, num, default=defval)
                     pass
                 pass
             elif tt == "rx":
@@ -2964,7 +2996,7 @@ class TabEntry:
                     else:
                         v = "None"
                         pass
-                    self.type.setSelect(v, h, num)
+                    self.type.setSelect(v, h, num, default=defval)
                     pass
                 pass
             elif tt == "tx":
@@ -2978,12 +3010,12 @@ class TabEntry:
                     else:
                         v = "None"
                         pass
-                    self.type.setSelect(v, h, num)
+                    self.type.setSelect(v, h, num, default=defval)
                     pass
                 pass
             pass
-        elif "default" in self.specials:
-            self.type.setSelect(self.specials["default"], h, num)
+        elif defval is not None:
+            self.type.setSelect(defval, h, num)
         return
 
     pass
