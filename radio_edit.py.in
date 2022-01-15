@@ -2982,6 +2982,8 @@ class TabEntry:
                     pass
                 pass
             pass
+        elif "default" in self.specials:
+            self.type.setSelect(self.specials["default"], h, num)
         return
 
     pass
@@ -3032,6 +3034,9 @@ class TabBase:
                 else:
                     raise ParseException(c.filename, c.lineno,
                                          "tone takes rx, tx, or both")
+                pass
+            elif (s[0] == "default"):
+                specials["default"] = s[1]
                 pass
             else:
                 raise ParseException(c.filename, c.lineno,
