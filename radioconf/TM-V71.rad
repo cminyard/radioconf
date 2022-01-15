@@ -213,10 +213,10 @@ list Memories 1000
 	"Enable"		(0xe08,7,1,16)		RCheckBox tie=Zero1
 	"Label"			(0x5808,0,64,64)	String(8)
 	"Mode"			(0x170d,0,8,128)	Modulation_e
-	"Rx\nFreq"		(0x170b,0,8,128:0x170a,0,8,128:0x1709,0,8,128:0x1708,0,8,128)	FixedFreq(3,3,1,MHz) "tie(basefreq)=Tx\nFreq" "tie(basefreq)=Special1"
+	"Rx\nFreq"		(0x170b,0,8,128:0x170a,0,8,128:0x1709,0,8,128:0x1708,0,8,128)	FixedFreq(3,6,1,MHz,sd=6:w=14) "tie(basefreq)=Tx\nFreq" "tie(basefreq)=Special1"
 	"Offset\nDirect"	(0x170e,0,3,128)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq"
-	"Tx\nFreq"		(0x1715,0,8,128:0x1714,0,8,128:0x1713,0,8,128:0x1712,0,8,128)	FixedFreq(3,3,1,MHz)
-	"Offset\nFreq"		(0x1715,0,8,128:0x1714,0,8,128:0x1713,0,8,128:0x1712,0,8,128)	FixedFreq(3,3,1,MHz)
+	"Tx\nFreq"		(0x1715,0,8,128:0x1714,0,8,128:0x1713,0,8,128:0x1712,0,8,128)	FixedFreq(3,6,1,MHz,sd=6:w=14)
+	"Offset\nFreq"		(0x1715,0,8,128:0x1714,0,8,128:0x1713,0,8,128:0x1712,0,8,128)	FixedFreq(3,6,1,MHz,sd=6:w=14)
 	"Tone\nMode"		(0x170e,4,2,128)	ToneMode_e tone=both
 	"CTCSS\nTone"		(0x170f,0,8,128)	CTCSS_e
 	"Rx\nTone"		(0x1710,0,8,128)	CTCSS_e
