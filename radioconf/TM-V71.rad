@@ -320,6 +320,7 @@ list "ProgMemOff" 1
 	"BandB\nSMetSqu"	(0x21d,0,8)		CheckBox
 	"PTT\nBand"		(0x23a,0,8)		Band_e
 	"Control\nBand"		(0x23b,0,8)		Band_e
+	"Single\nBand"		(0x23c,0,8)		CheckBox
 	"Poweron\nMessage"	(0x2e8,0,96)		String(12)
 #	FIXME - the following is digits only.  Also, FF seems to mean the digit is off
 	"Group\nLink"		(0x2f8,0,80)		String(10)
@@ -343,6 +344,7 @@ list "ProgMem" 5
 	"BandB\nSMetSqu"	(0x41d,0,8,4096)	CheckBox
 	"PTT\nBand"		(0x43a,0,8,4096)	Band_e
 	"Control\nBand"		(0x43b,0,8,4096)	Band_e
+	"Single\nBand"		(0x43c,0,8)		CheckBox
 	"Poweron\nMessage"	(0x4e8,0,96,4096)	String(12)
 #	FIXME - the following is digits only.  Also, FF seems to mean the digit is off
 	"Group\nLink"		(0x4f8,0,80,4096)	String(10)
