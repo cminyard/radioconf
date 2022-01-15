@@ -1,0 +1,269 @@
+#
+# Configuration for a Kenwood TM-V71A
+#
+# This is based on the info at:
+#    https://github.com/LA3QMA/TM-V71_TM-D710-Kenwood/
+#
+
+# Note that kenwood_rw add an 8-byte prefix with the radio name to the
+# file, so all the values in the file are off by 8 relative to the
+# specs.
+
+enum CTCSS_e
+	0x00 "67.0"
+	0x01 "69.3"
+	0x02 "71.9"
+	0x03 "74.4"
+	0x04 "77.0"
+	0x05 "79.7"
+	0x06 "82.5"
+	0x07 "85.4"
+	0x08 "88.5"
+	0x09 "91.5"
+	0x0a "94.8"
+	0x0b "97.4"
+	0x0c "100.0"
+	0x0d "103.5"
+	0x0e "107.2"
+	0x0f "110.9"
+	0x10 "114.8"
+	0x11 "188.8"
+	0x12 "123.0"
+	0x13 "127.3"
+	0x14 "131.8"
+	0x15 "136.5"
+	0x16 "141.3"
+	0x17 "146.2"
+	0x18 "151.4"
+	0x19 "156.7"
+	0x1a "162.2"
+	0x1b "167.9"
+	0x1c "173.8"
+	0x1d "179.9"
+	0x1e "186.2"
+	0x1f "192.8"
+	0x20 "203.5"
+	0x21 "206.5"
+	0x22 "210.7"
+	0x23 "218.1"
+	0x24 "225.7"
+	0x25 "229.1"
+	0x26 "233.6"
+	0x27 "241.8"
+	0x28 "250.3"
+	0x29 "254.1"
+endenum
+
+enum DCSCode_e
+	0x00 "023"
+	0x01 "025"
+	0x02 "026"
+	0x03 "031"
+	0x04 "032"
+	0x05 "036"
+	0x06 "043"
+	0x07 "047"
+	0x08 "051"
+	0x09 "053"
+	0x0a "054"
+	0x0b "065"
+	0x0c "071"
+	0x0d "072"
+	0x0e "073"
+	0x0f "074"
+	0x10 "114"
+	0x11 "115"
+	0x12 "116"
+	0x13 "122"
+	0x14 "125"
+	0x15 "131"
+	0x16 "132"
+	0x17 "134"
+	0x18 "143"
+	0x19 "145"
+	0x1a "152"
+	0x1b "155"
+	0x1c "156"
+	0x1d "162"
+	0x1e "165"
+	0x1f "172"
+	0x20 "174"
+	0x21 "205"
+	0x22 "212"
+	0x23 "223"
+	0x24 "225"
+	0x25 "226"
+	0x26 "243"
+	0x27 "244"
+	0x28 "245"
+	0x29 "246"
+	0x2a "251"
+	0x2b "252"
+	0x2c "255"
+	0x2d "261"
+	0x2e "263"
+	0x2f "265"
+	0x30 "266"
+	0x31 "271"
+	0x32 "274"
+	0x33 "306"
+	0x34 "311"
+	0x35 "315"
+	0x36 "325"
+	0x37 "331"
+	0x38 "332"
+	0x39 "343"
+	0x3a "346"
+	0x3b "351"
+	0x3c "356"
+	0x3d "364"
+	0x3e "365"
+	0x3f "371"
+	0x40 "411"
+	0x41 "412"
+	0x42 "413"
+	0x43 "423"
+	0x44 "431"
+	0x45 "432"
+	0x46 "445"
+	0x47 "446"
+	0x48 "452"
+	0x49 "454"
+	0x4a "455"
+	0x4b "462"
+	0x4c "464"
+	0x4d "465"
+	0x4e "466"
+	0x4f "503"
+	0x50 "506"
+	0x51 "516"
+	0x52 "523"
+	0x53 "526"
+	0x54 "532"
+	0x55 "546"
+	0x56 "565"
+	0x57 "606"
+	0x58 "612"
+	0x59 "624"
+	0x5a "627"
+	0x5b "631"
+	0x5c "632"
+	0x5d "654"
+	0x5e "662"
+	0x5f "664"
+	0x60 "703"
+	0x61 "712"
+	0x62 "723"
+	0x63 "731"
+	0x64 "732"
+	0x65 "734"
+	0x66 "743"
+	0x67 "754"
+endenum
+
+enum PCSpeed_e
+	0 "9600"
+	1 "19200"
+	2 "38400"
+	3 "57600"
+endenum
+
+enum Step_e
+	0 "5 Khz"
+	1 "6.25 Khz"
+	2 "28.33Khz"
+	3 "10 Khz"
+	4 "12.5 Khz"
+	5 "15 Khz"
+	6 "20 Khz"
+	7 "25 Khz"
+	8 "30 Khz"
+	9 "50 Khz"
+	10 "100 Khz"
+endenum
+
+enum OffsetDir_e
+	0x0 "smplx"
+	0x2 "-"
+	0x1 "+"
+	0x4 "split"
+endenum
+
+enum Modulation_e
+	0 "FM"
+	1 "NFM"
+	2 "AM"
+endenum
+
+enum ToneMode_e
+	0x0 "None"
+	0x8 "Tone"
+	0x2 "T-SQL"
+	0x1 "DCS"
+endenum
+
+# Some experimenting shows that only the top bit of address 0xe00 is
+# required to enable/disable the radio.  So use that for enable, then
+# use the rest of the bits for the special VHF/UHF setting that seems
+# kind of stupid.  We also force the other bits in the lockout field
+# to zero.
+
+list Memories 1000
+#	Name			Address			type
+	"Enable"		(0xe08,7,1,16)		RCheckBox tie=Zero1
+	"Label"			(0x5808,0,64,64)	String(8)
+	"Mode"			(0x170d,0,8,128)	Modulation_e
+	"Rx\nFreq"		(0x170b,0,8,128:0x170a,0,8,128:0x1709,0,8,128:0x1708,0,8,128)	FixedFreq(3,3,1,MHz) "tie(basefreq)=Tx\nFreq" "tie(basefreq)=Special1"
+	"Offset\nDirect"	(0x170e,0,3,128)	OffsetDir_e "tie(offset)=Tx\nFreq" "tie(enableoff)=Offset\nFreq"
+	"Tx\nFreq"		(0x1715,0,8,128:0x1714,0,8,128:0x1713,0,8,128:0x1712,0,8,128)	FixedFreq(3,3,1,MHz)
+	"Offset\nFreq"		(0x1715,0,8,128:0x1714,0,8,128:0x1713,0,8,128:0x1712,0,8,128)	FixedFreq(3,3,1,MHz)
+	"Tone\nMode"		(0x170e,4,2,128)	ToneMode_e tone=both
+	"CTCSS\nTone"		(0x170f,0,8,128)	CTCSS_e
+	"Rx\nTone"		(0x1710,0,8,128)	CTCSS_e
+	"DCS\nCode"		(0x1711,0,8,128)	DCSCode_e
+	"Step"			(0x170c,0,8,128)	Step_e
+	"TX\nStep"		(0x1716,0,8,128)	Step_e
+	"Lockout"		(0xe09,0,1,16)		CheckBox
+	"Special1"		(0xe08,0,7,16)		SpecialTMV71
+	"Zero1"			(0xe09,1,7,16)		SetToZero
+endlist
+
+tab Config
+	"Crossband Repeat"	(0x18,0,8)		CheckBox
+	"Wireless Remove"	(0x19,0,8)		CheckBox
+#?	"Remote ID"		(0x1a,0,8)
+	"PM Channel"		(0x1e,0,8)		Int(0,5,0,1,)
+	"Key Lock"		(0x1f,0,8)		CheckBox
+	"Serial Speed"		(0x29,0,8)		PCSpeed_e
+	"Repeater ID"		(0x178,0,96)		String(12)
+endtab
+
+list "DTMF" 10
+     	"Name"			(0xd8,0,64,64)		String(8)
+     	"Code"			(0x38,0,128,128)	String(16)
+endlist
+
+list "EchoLink" 10
+     	"Name"			(0x128,0,64,64)		String(8)
+     	"Code"			(0x198,0,64,64)		String(8)
+endlist
+
+list "WXName" 10
+	"Name"			(0x77e8,0,64,64)	String(8)
+endlist
+
+list "Groups" 8
+     	"Name"			(0x7d08,0,128,128)	String(16)
+endlist
+
+enum Band_e
+	0x05	"VHF"
+	0x08	"UHF"
+endenum
+
+list "ProgMem" 5
+     	"Name"			(0x7da8,0,128)		String(16)
+	"BandA/MemMode"		(0x208,0,8)		RCheckBox
+	"BandA/Band"		(0x209,0,8)		Band_e
+	"BandA/TXPwr"		(0x20f,0,8)		Band_e
+endlist

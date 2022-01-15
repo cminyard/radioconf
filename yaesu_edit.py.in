@@ -331,7 +331,7 @@ class Address:
         i = 1
         l -= 1
         pos = 0
-        start = 1
+        start = i
         v = [0, 0, 0, 0]
         self.entries.append(v)
         while (i < l):
@@ -849,6 +849,36 @@ class BISpecial857B(BISpecial):
             pass
         pass
 
+    pass
+
+class BISpecialTMV71(BISpecial):
+    def __init__(self, name="SpecialTMV71"):
+        BISpecial.__init__(self, name)
+        return
+
+    def newTie(self, myh, fromh, tie):
+        if (tie.tietype == "basefreq"):
+            myh.basefreqtie.append(fromh)
+            pass
+        return
+
+    def renumWidget(self, h, num):
+        h.num = num
+        t = h.data
+        bfreq = None
+        for m in h.basefreqtie:
+            bfreq = m.getValue(num)
+            if (bfreq):
+                break
+            pass
+        #print("A: %d" % bfreq)
+        oldv = t.data.get_bits(t.addr, num)
+        if (bfreq > 400000000):
+            t.data.set_bits(0x05, t.addr, num)
+        else:
+            t.data.set_bits(0x08, t.addr, num)
+            pass
+        pass
     pass
 
 class BISetToZero(BISpecial):
@@ -3579,7 +3609,7 @@ class RadioConfig:
                            BIHexDigits(), BIInt(), BIHex(), BIFixed(),
                            BIFixedFreq(), BIBCDFixedFreq(),
                            BISpecial(), BISpecial857A(),
-                           BISpecial857B(), BISetToZero() ]
+                           BISpecial857B(), BISpecialTMV71(), BISetToZero() ]
             self.infile = open(filename, "r")
             self.lineno = LineNum()
             pass

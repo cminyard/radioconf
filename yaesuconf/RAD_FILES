@@ -31,8 +31,7 @@ RAD File Format
 The descriptor file is a fairly simple format.  It's a pretty loose language,
 there are reserved words, sort of, but not many, and they don't apply in
 a lot of situation.  You should probably stay away from using reserved
-words, and if you use end enum names with _e (like you should), then it
-won't be a problem.
+words, and you should end enum names with _e, then it won't be a problem.
 
 Note that FT-60R.rad has a good description of this.
 
@@ -50,7 +49,7 @@ a backslash) to insert a space without quotes.
 Numbers
 -------
 
-Numbers can use 0x for octal, or just numbers for decimal.  Octal is not
+Numbers can use 0x for hex, or just numbers for decimal.  Octal is not
 used, to avoid confusion, so a number that starts with zero is a decimal
 number.
 
@@ -60,11 +59,11 @@ Addresses
 Some things take an address, which describes where to find the information
 in the file.  The format is:
 
-  (<byte address>,<bit start>,<bit size>[,[r]<offset>]
+  ([L]<byte address>,<bit start>,<bit size>[,[r]<offset>]
    [:<byte address>,<bit start>,<bit size>[,<offset>][:...]])
 
 So you specify a byte offset, a bit inside that byte, and a number of
-bits.  The value may span bytes, it's done in big-endian format.
+bits.  The value may span bytes, it's done in big-endian format by default.
 If a value spans bits that are not contiguous, then the ":" separates
 multiple bit spans, the first one specifies the highest order bits.
 This can be used to combine values that are related, like if setting
@@ -101,7 +100,7 @@ BCDFreq2 - A slightly different representation of BCD than BCDFreq,
 CheckBox - A true/false value, the address specified should generally
 	be one bit.
 
-RCheckBox - A true/false value, but 0 meand enabled and 1 means disabled.
+RCheckBox - A true/false value, but 0 means enabled and 1 means disabled.
 
 YaesuString - This is a Yaesu-specific string format used in some radios
 	like the FT-60R.  Must start on a byte offset and by a byte
@@ -177,6 +176,9 @@ Special857A - There are fields in the 857 memory structure that must be set
 
 Special857B - There is a bit in the 857 that must be set in HF mode and cleared
 	in VHF and up modes.  This type handles that.
+
+SpecialTMV71 - There is a setting that needs to be one value for UHF
+        and another for VHF.  Tie from RXFreq to set this.
 
 User defined types
 ------------------
