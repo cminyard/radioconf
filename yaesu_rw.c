@@ -39,8 +39,8 @@
 #include <stdarg.h>
 #include <ctype.h>
 
-#ifndef YAESU_CONFIGDIR
-#define YAESU_CONFIGDIR "/etc/yaesuconf"
+#ifndef RADIO_CONFIGDIR
+#define RADIO_CONFIGDIR "/etc/yaesuconf"
 #endif
 
 char *version = PACKAGE_VERSION;
@@ -1734,7 +1734,7 @@ usage(void)
     printf("  -l, --delayack - Delay before sending the last ack\n");
     printf("  -o, --nodelayack - No delay before sending the last ack\n");
     printf("  -f, --configdir <file> - Use the given directory for the radio"
-	   " configuration instead\nof the default %s\n", YAESU_CONFIGDIR);
+	   " configuration instead\nof the default %s\n", RADIO_CONFIGDIR);
     printf("  -t, --prewritedelay <usec> - Delay added before every write\n");
 }
 
@@ -1761,7 +1761,7 @@ main(int argc, char *argv[])
     unsigned int i;
 
     char *devicename = "/dev/ttyS0";
-    char *configdir = YAESU_CONFIGDIR;
+    char *configdir = RADIO_CONFIGDIR;
     char *filename = NULL;
     int ignerr = 0;
     int dotermios = 1;
