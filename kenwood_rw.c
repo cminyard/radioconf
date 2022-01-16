@@ -549,7 +549,7 @@ main(int argc, char *argv[])
 
     ri.write = write;
     if (write) {
-	FILE *f = fopen(infile, "r");
+	FILE *f = fopen(infile, "rb");
 	struct radio *r;
 	
 	if (!f) {
@@ -635,7 +635,7 @@ main(int argc, char *argv[])
 	gensio_free(ri.io);
 
     if (!rv && !ri.err && read) {
-	FILE *f = fopen(outfile, "w");
+	FILE *f = fopen(outfile, "wb");
 
 	if (!f) {
 	    fprintf(stderr, "Unable to open file %s\n", outfile);
