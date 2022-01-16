@@ -1,6 +1,6 @@
 bin_PROGRAMS = yaesu_rw kenwood_rw
 bin_SCRIPTS = radio_edit
-AM_CFLAGS=-Wall -Wsign-compare -DYAESU_CONFIGDIR="\"$(YAESU_CONFIGDIR)\""
+AM_CFLAGS=-Wall -Wsign-compare -DRADIO_CONFIGDIR="\"$(RADIO_CONFIGDIR)\""
 yaesu_rw_SOURCES = yaesu_rw.c
 kenwood_rw_SOURCES = kenwood_rw.c
 kenwood_rw_LDADD = -lgensio
@@ -12,10 +12,10 @@ CLEANFILES = radio_edit
 ACLOCAL_AMFLAGS = -I m4
 
 # This exists because I couldn't figure out a way to force autoconf/automake
-# to set yaseu_edit executable nor to properly set YAESU_CONFIGDIR in the
+# to set yaseu_edit executable nor to properly set RADIO_CONFIGDIR in the
 # python script :(
 radio_edit: radio_edit.py.in
-	sub=`echo $(YAESU_CONFIGDIR) | sed 's/\//\\\\\//g'` && \
+	sub=`echo $(RADIO_CONFIGDIR) | sed 's/\//\\\\\//g'` && \
 	sed "s/@YCONF@/$${sub}/" <$< >$@; \
 	if [ $$? -eq 0 ]; then \
 		chmod +x $@; \
