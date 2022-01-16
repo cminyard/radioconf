@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #    yaesu_edit - Edit yaesu clone files
 #    Copyright (C) 2009  Corey Minyard
@@ -20,8 +20,8 @@
 
 import sys
 import traceback
-import Tix
-import Dialog
+import tkinter.tix
+import tkinter.dialog
 import os
 import locale
 
@@ -153,10 +153,10 @@ def read_radios():
                         i += 1
                         pass
                     pass
-                except TypeError, e:
+                except TypeError as e:
                     raise ParseException(filename, lineno,
                                          "invalid hexadecimal 8-bit number")
-                except ValueError, e:
+                except ValueError as e:
                     raise ParseException(filename, lineno,
                                          "invalid hexadecimal 8-bit number")
                 pass
@@ -165,7 +165,7 @@ def read_radios():
     except:
         exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
         f.close()
-        raise exceptionType, exceptionValue, exceptionTraceback
+        raise exceptionType(exceptionValue).with_traceback(exceptionTraceback)
     return
 
 ###############################################################################
@@ -252,8 +252,8 @@ class RepeaterOffsets:
         filename = os.path.join(radiodir, country + ".rpt")
         try:
             fd = open(filename, "r")
-        except IOError, e:
-            print "Can't load repeater offsets: " + str(e)
+        except IOError as e:
+            print("Can't load repeater offsets: " + str(e))
             return
 
         try:
@@ -281,8 +281,8 @@ class RepeaterOffsets:
                                      getHz(v[3], filename, lineno)))
                 pass
             pass
-        except ParseException, e:
-            print e
+        except ParseException as e:
+            print(e)
         return
 
     def calcOffset(self, freq):
@@ -706,8 +706,8 @@ class YType:
         elif (tie.tietype == "enableoff"):
             myh.enableoffsettie = fromh
         elif (tie.tietype != "normal"):
-            print ("Warning: Unknown type %s tie to %s"
-                   % (tie.tietype, tie.value))
+            print(("Warning: Unknown type %s tie to %s"
+                  % (tie.tietype, tie.value)))
             pass
         if (myh.widget):
             self.redisplay(myh)
@@ -966,7 +966,7 @@ class BIInt(YType):
     def getWidgetHandler(self, parent, t, num):
         v = self.getInt(t.data, t.addr, num)
         h = Handler(self.set, t, self)
-        w = Tix.Entry(parent, readonlybackground="tan")
+        w = tkinter.tix.Entry(parent, readonlybackground="tan")
         h.widget = w
         h.num = num
         w.bind("<Key>", h.set_event)
@@ -1012,7 +1012,7 @@ class BIInt(YType):
         t = h.data
         try:
             self.setInt(int(v), t.data, t.addr, num)
-        except Exception, e:
+        except Exception as e:
             if default is not None:
                 try:
                     self.setInt(int(default), t.data, t.addr, num)
@@ -1031,7 +1031,7 @@ class BIInt(YType):
             if ((i < self.minval) or (i > self.maxval)):
                 return None
             pass
-        except Exception, e:
+        except Exception as e:
             return None
 
         return i
@@ -1191,7 +1191,7 @@ class BIString(YType):
         h = Handler(self.set, t, self)
         h.v = v
         h.num = num
-        w = Tix.Entry(parent, readonlybackground="tan")
+        w = tkinter.tix.Entry(parent, readonlybackground="tan")
         w["width"] = self.width
         h.widget = w
         w.bind("<KeyRelease>", h.set_event)
@@ -1303,7 +1303,7 @@ class BIFixed(YType):
     def getWidgetHandler(self, parent, t, num):
         v = self.get_raw(t, num)
         h = Handler(self.set, t, self)
-        w = Tix.Entry(parent, readonlybackground="tan")
+        w = tkinter.tix.Entry(parent, readonlybackground="tan")
         w["width"] = self.width
         h.widget = w
         h.num = num
@@ -1515,7 +1515,7 @@ class BIFixedFreq(BIFixed):
         elif (off == "-"):
             return bfreq - freq
         else:
-            print("Warning: unknown offset: " + off)
+            print(("Warning: unknown offset: " + off))
 
         return freq
 
@@ -1551,7 +1551,7 @@ class BIFixedFreq(BIFixed):
         elif (off == "-"):
             v = bfreq - v
         else:
-            print("Warning: unknown offset: " + off)
+            print(("Warning: unknown offset: " + off))
             pass
         self.set_raw(t, v, num)
         return
@@ -1738,7 +1738,7 @@ class BICheckBox(YType):
     def getWidgetHandler(self, parent, t, num):
         v = t.data.get_bits(t.addr, num)
         h = Handler(self.set, t, self)
-        w = Tix.Checkbutton(parent, command=h.set)
+        w = tkinter.tix.Checkbutton(parent, command=h.set)
         h.num = num
         h.widget = w
         if self.reverse:
@@ -1919,7 +1919,7 @@ class BIYaesuString(YType):
         h = Handler(self.set, t, self)
         h.v = v
         h.num = num
-        w = Tix.Entry(parent, readonlybackground="tan")
+        w = tkinter.tix.Entry(parent, readonlybackground="tan")
         w["width"] = self.width
         h.widget = w
         w.bind("<KeyRelease>", h.set_event)
@@ -2107,7 +2107,7 @@ class BIBCDFreq(YType):
     def getWidgetHandler(self, parent, t, num):
         v = self.get_bcd(t.data, t.addr, num)
         h = Handler(self.set, t, self)
-        w = Tix.Entry(parent, readonlybackground="tan")
+        w = tkinter.tix.Entry(parent, readonlybackground="tan")
         w['width'] = 8
         h.widget = w
         h.num = num
@@ -2175,7 +2175,7 @@ class BIBCDFreq(YType):
                         elif (off == '-'):
                             freq -= offfreq
                         else:
-                            print("Warning: unknown offset: " + off)
+                            print(("Warning: unknown offset: " + off))
                             pass
                         pass
                     v = str(freq)
@@ -2422,7 +2422,7 @@ class BIBCDFreq(YType):
                             elif (off == '-'):
                                 offfreq = bfreq - freq
                             else:
-                                print("Warning: unknown offset: " + off)
+                                print(("Warning: unknown offset: " + off))
                                 return
 
                             o.setSelect(str(offfreq) + "MHz", num)
@@ -2563,7 +2563,7 @@ class BIHexDigits(YType):
         v = self.get_hex(t.data, t.addr, num)
         h = Handler(self.set, t, self)
         h.numbytes = t.addr.entries[0][2] / 8
-        w = Tix.Entry(parent, readonlybackground="tan")
+        w = tkinter.tix.Entry(parent, readonlybackground="tan")
         h.widget = w
         h.num = num
         w.bind("<Key>", h.set_event)
@@ -2625,10 +2625,10 @@ class BIHexDigits(YType):
         pass
     pass
 
-class MenuAndButton(Tix.Menubutton):
+class MenuAndButton(tkinter.tix.Menubutton):
     def __init__(self, parent):
-        Tix.Menubutton.__init__(self, parent)
-        self.menu = Tix.Menu(self)
+        tkinter.tix.Menubutton.__init__(self, parent)
+        self.menu = tkinter.tix.Menu(self)
         self['menu'] = self.menu
         pass
 
@@ -2788,7 +2788,7 @@ class SList(YType):
 
     def getWidgetHandler(self, parent, t, num):
         h = Handler(self.set, t, self)
-        h.widget = Tix.ScrolledListBox(parent, scrollbar='auto')
+        h.widget = tkinter.tix.ScrolledListBox(parent, scrollbar='auto')
         h.widget.listbox['selectmode'] = "single"
         h.widget.listbox['activestyle'] = "dotbox"
         # If we export the selection, then the listbox loses
@@ -2798,7 +2798,7 @@ class SList(YType):
         h.num = num
         v = t.data.get_bits(t.addr, num)
         for e in self.entries:
-            h.widget.listbox.insert(Tix.END, e.str)
+            h.widget.listbox.insert(tkinter.tix.END, e.str)
             if (e.value == v):
                 h.widget.listbox.selection_set(e.pos)
                 h.widget.listbox.see(e.pos)
@@ -3160,17 +3160,17 @@ class List(TabBase):
             self.winsys = "x11"
             pass
 
-        self.xscroll = Tix.Scrollbar(top, orient=Tix.HORIZONTAL)
-        self.yscroll = Tix.Scrollbar(top, orient=Tix.VERTICAL)
-        self.list = Tix.HList(top, header=1, columns=len(self.entries) + 1,
+        self.xscroll = tkinter.tix.Scrollbar(top, orient=tkinter.tix.HORIZONTAL)
+        self.yscroll = tkinter.tix.Scrollbar(top, orient=tkinter.tix.VERTICAL)
+        self.list = tkinter.tix.HList(top, header=1, columns=len(self.entries) + 1,
                               itemtype="text", selectforeground="black",
                               selectbackground="beige",
                               yscrollcommand=self.y_scrolled,
                               xscrollcommand=self.xscroll.set)
         self.xscroll['command'] = self.list.xview
         self.yscroll['command'] = self.y_move
-        self.xscroll.pack(side=Tix.BOTTOM, fill=Tix.X)
-        self.yscroll.pack(side=Tix.RIGHT, fill=Tix.Y)
+        self.xscroll.pack(side=tkinter.tix.BOTTOM, fill=tkinter.tix.X)
+        self.yscroll.pack(side=tkinter.tix.RIGHT, fill=tkinter.tix.Y)
 
         self.list.selection_handle(self.selection_request)
 
@@ -3200,7 +3200,7 @@ class List(TabBase):
             i += 1
             pass
 
-        self.list.pack(side=Tix.LEFT, fill=Tix.BOTH, expand=1)
+        self.list.pack(side=tkinter.tix.LEFT, fill=tkinter.tix.BOTH, expand=1)
         pass
 
     def mapped(self, event=None):
@@ -3479,7 +3479,7 @@ class List(TabBase):
             if (h.widget):
                 self.bindWidget(h.widget)
                 self.list.item_create(self.numdisplines, e.column,
-                                      itemtype=Tix.WINDOW,
+                                      itemtype=tkinter.tix.WINDOW,
                                       window=h.widget)
                 pass
             handlers.append(h)
@@ -3554,7 +3554,7 @@ class Tab(TabBase):
             self.winsys = "x11"
             pass
 
-        self.list = Tix.ScrolledHList(top, scrollbar="auto",
+        self.list = tkinter.tix.ScrolledHList(top, scrollbar="auto",
                                       options="hlist.header 1"
                                       + " hlist.columns 2"
                                       + " hlist.itemtype text"
@@ -3576,7 +3576,7 @@ class Tab(TabBase):
             self.list.hlist.add(i, text=e.name)
             h = e.getWidgetHandler(self.list.hlist, i)
             if (h.widget):
-                self.list.hlist.item_create(i, 1, itemtype=Tix.WINDOW,
+                self.list.hlist.item_create(i, 1, itemtype=tkinter.tix.WINDOW,
                                             window=h.widget)
                 self.bindWidget(h.widget)
                 pass
@@ -3589,7 +3589,7 @@ class Tab(TabBase):
                 pass
             pass
 
-        self.list.pack(side=Tix.LEFT, fill=Tix.BOTH, expand=1)
+        self.list.pack(side=tkinter.tix.LEFT, fill=tkinter.tix.BOTH, expand=1)
         pass
 
     pass
@@ -3672,10 +3672,10 @@ class RadioConfig:
                 self.parseLine(v)
                 pass
             pass
-        except Exception, e:
+        except Exception as e:
             exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
             self.infile.close()
-            raise exceptionType, exceptionValue, exceptionTraceback
+            raise exceptionType(exceptionValue).with_traceback(exceptionTraceback)
         self.infile.close()
         pass
 
@@ -3701,10 +3701,10 @@ class RadioConfig:
             pass
         try:
             v = int(s[i:], 0)
-        except TypeError, e:
+        except TypeError as e:
             raise ParseException(self.filename, self.lineno,
                                  "Invalid number: " + s)
-        except ValueError, e:
+        except ValueError as e:
             raise ParseException(self.filename, self.lineno,
                                  "Invalid number: " + s)
         return v
@@ -3839,8 +3839,8 @@ class RadioConfig:
         pass
 
     def setup(self, pwid):
-        self.tabs = Tix.NoteBook(pwid);
-        self.tabs.pack(side=Tix.TOP, fill=Tix.BOTH, expand=1)
+        self.tabs = tkinter.tix.NoteBook(pwid);
+        self.tabs.pack(side=tkinter.tix.TOP, fill=tkinter.tix.BOTH, expand=1)
         for t in self.toplevel:
             t.tab = self.tabs.add(t.name.lower(), label=t.name)
             t.setup(t.tab)
@@ -3859,7 +3859,7 @@ class RadioSel:
         return
     pass
 
-class MyTop(Tix.Tk):
+class MyTop(tkinter.tix.Tk):
     """We have our own top-level widget so we can catch destroy calls
     and do a dialog if the data has changed"""
     def destroy(self):
@@ -3867,24 +3867,24 @@ class MyTop(Tix.Tk):
         return
 
     def realDestroy(self):
-        Tix.Tk.destroy(self)
+        tkinter.tix.Tk.destroy(self)
         return
 
     pass
 
-class GUI(Tix.Frame):
+class GUI(tkinter.tix.Frame):
     def __init__(self, filename, master):
         master.destroyhandler = self.quitcmd
 
-        Tix.Frame.__init__(self, master)
+        tkinter.tix.Frame.__init__(self, master)
         self.top = master
-        self.pack(fill=Tix.BOTH, expand=1);
+        self.pack(fill=tkinter.tix.BOTH, expand=1);
         master.geometry('800x400')
         self.config = GenConfig()
         self.createWidgets();
-        self.filedialog = Tix.FileSelectDialog(master,
+        self.filedialog = tkinter.tix.FileSelectDialog(master,
                                                command=self.open_select)
-        self.saveasdialog = Tix.FileSelectDialog(master,
+        self.saveasdialog = tkinter.tix.FileSelectDialog(master,
                                                  command=self.saveas_select)
         if (filename):
             self.openfile(filename)
@@ -3897,8 +3897,8 @@ class GUI(Tix.Frame):
     def openfile(self, filename):
         try:
             self.fd = RadioFileData(filename)
-        except IOError, e:
-            d = Dialog.Dialog(self, title="Open File",
+        except IOError as e:
+            d = tkinter.dialog.Dialog(self, title="Open File",
                               text=str(e),
                               bitmap="error",
                               default = 0,
@@ -3914,7 +3914,7 @@ class GUI(Tix.Frame):
         try:
             self.radioname = find_radio(self.fd.data)
             if (not self.radioname):
-                d = Dialog.Dialog(self, title="Error Finding Radio",
+                d = tkinter.dialog.Dialog(self, title="Error Finding Radio",
                                   text=("Unable to find a radio that matches"
                                         + " the file %s, it is likely not a"
                                         + " radio save file.") % filename,
@@ -3924,12 +3924,12 @@ class GUI(Tix.Frame):
                 return
             self.radio = RadioConfig(radiodir + "/" + self.radioname + ".rad",
                                      self.fd)
-        except Exception, e:
+        except Exception as e:
             exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
             traceback.print_exception(exceptionType, exceptionValue,
                                       exceptionTraceback,
                                       file=sys.stdout)
-            print str(e)
+            print(str(e))
             return
         self.master.wm_title(filename + " (" + self.radioname + ")")
         self.radio.setup(self)
@@ -3939,7 +3939,7 @@ class GUI(Tix.Frame):
         if (not self.fd or not self.fd.changed):
             self.top.realDestroy()
             return
-        d = Dialog.Dialog(self, title="Ok to quit?",
+        d = tkinter.dialog.Dialog(self, title="Ok to quit?",
                           text=("Unchanged data has not been written, do you"
                                 + " really want to quit?"),
                           bitmap="error",
@@ -3997,14 +3997,14 @@ class GUI(Tix.Frame):
         return
 
     def createWidgets(self):
-        self.buttons = Tix.Frame(self)
-        self.buttons.pack(side=Tix.TOP, fill=Tix.X)
+        self.buttons = tkinter.tix.Frame(self)
+        self.buttons.pack(side=tkinter.tix.TOP, fill=tkinter.tix.X)
 
-        self.filebutton = Tix.Menubutton(self.buttons, text="File",
+        self.filebutton = tkinter.tix.Menubutton(self.buttons, text="File",
                                          underline=0, takefocus=0)
-        self.filemenu = Tix.Menu(self.filebutton, tearoff=0)
+        self.filemenu = tkinter.tix.Menu(self.filebutton, tearoff=0)
         self.filebutton["menu"] = self.filemenu
-        m = Tix.Menu(self.filemenu)
+        m = tkinter.tix.Menu(self.filemenu)
         for r in radios:
             ns = RadioSel(self, r)
             m.add_command(label=r.name,
@@ -4028,16 +4028,16 @@ class GUI(Tix.Frame):
         self.top.bind_all("<Control-q>", self.quitcmd)
         self.top.bind_all("<Control-S>", self.savecmd)
         self.top.bind_all("<Control-s>", self.savecmd)
-        self.filebutton.pack(side=Tix.LEFT)
+        self.filebutton.pack(side=tkinter.tix.LEFT)
 
-        self.editbutton = Tix.Menubutton(self.buttons, text="Edit",
+        self.editbutton = tkinter.tix.Menubutton(self.buttons, text="Edit",
                                          underline=0, takefocus=0)
-        self.editmenu = Tix.Menu(self.editbutton, tearoff=0)
+        self.editmenu = tkinter.tix.Menu(self.editbutton, tearoff=0)
         self.editbutton["menu"] = self.editmenu
         self.editmenu.add_checkbutton(label="Auto Rpt Shift", underline=1,
                                       command = lambda
                                       self=self: self.rptShftCmd() )
-        self.editbutton.pack(side=Tix.LEFT)
+        self.editbutton.pack(side=tkinter.tix.LEFT)
 
         if self.config.doRptOffsets:
             self.config.doRptOffsets = False
@@ -4057,14 +4057,14 @@ while len(sys.argv) > 1:
         break
     if (sys.argv[1] == '--configdir' or sys.argv[1] == '-f'):
         if (len(sys.argv[1]) < 2):
-            print "No configuration directory given with " + sys.argv[1]
+            print("No configuration directory given with " + sys.argv[1])
             sys.exit(1)
             pass
         del sys.argv[1]
         radiodir = sys.argv[1]
         del sys.argv[1]
     else:
-        print "Unknown option: " + sys.argv[1]
+        print("Unknown option: " + sys.argv[1])
         sys.exit(1)
         pass
     pass
