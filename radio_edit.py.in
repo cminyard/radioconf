@@ -4055,7 +4055,7 @@ while len(sys.argv) > 1:
     if (sys.argv[1] == '--'):
         del sys.argv[0]
         break
-    if (sys.argv[1] == '--configdir' or sys.argv[1] == '-f'):
+    if (sys.argv[1] == '--configdir' or sys.argv[1] == '-F'):
         if (len(sys.argv[1]) < 2):
             print("No configuration directory given with " + sys.argv[1])
             sys.exit(1)

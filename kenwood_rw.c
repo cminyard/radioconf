@@ -51,14 +51,12 @@ help(int rv)
 {
 #define p printf
     p("A program for reading and writing memory data on a Kenwood radio\n");
-    p("%s [-d|--debug] [-o|--outfile <file>] [-i|--infile <file>]\n", progname);
+    p("%s [-d|--debug] [-f|--file <file>]\n", progname);
     p("   --read|--write  <gensio>\n");
     p("\n");
     p(" --debug - Increase the debugging level.\n");
-    p(" --outfile - When reading, the file to store the data in.\n");
-    p("             The default is kenwood.rfile\n");
-    p(" --infile - When writing, where to get the data from.\n");
-    p("            This must be specified with --write\n");
+    p(" --file - The filename to read/write.\n");
+    p("          The default is kenwood.rfile\n");
     p(" --read | --write - One of these must be specified.\n");
     p(" <gensio> - A gensio to connect to the radio using.\n");
     p("\n");
@@ -504,8 +502,7 @@ int
 main(int argc, char *argv[])
 {
     int i, rv, rv2;
-    const char *outfile = "kenwood.rfile";
-    const char *infile = NULL;
+    const char *filename = "kenwood.rfile";
     struct radio_info ri;
     bool read = false, write = false;
     gensio_time timeout;
@@ -517,9 +514,7 @@ main(int argc, char *argv[])
     for (i = 1; i < argc && argv[i][0] == '-'; i++) {
 	if ((rv = cmparg(argc, argv, &i, "-d", "--debug", NULL))) {
 	    debug++;
-	} else if ((rv = cmparg(argc, argv, &i, "-o", "--outfile", &outfile))) {
-	    /* Nothing to do. */
-	} else if ((rv = cmparg(argc, argv, &i, "-i", "--infile", &infile))) {
+	} else if ((rv = cmparg(argc, argv, &i, "-f", "--file", &filename))) {
 	    /* Nothing to do. */
 	} else if ((rv = cmparg(argc, argv, &i, "-r", "--read", NULL))) {
 	    read = true;
@@ -535,10 +530,6 @@ main(int argc, char *argv[])
 	fprintf(stderr, "Must specify only one of --read or --write\n");
 	help(1);
     }
-    if (write && !infile) {
-	fprintf(stderr, "Must specify an infile with --write\n");
-	help(1);
-    }
 
     if (i >= argc) {
 	fprintf(stderr, "No gensio string given to connect to\n");
@@ -549,16 +540,16 @@ main(int argc, char *argv[])
 
     ri.write = write;
     if (write) {
-	FILE *f = fopen(infile, "rb");
+	FILE *f = fopen(filename, "rb");
 	struct radio *r;
 	
 	if (!f) {
-	    fprintf(stderr, "Unable to open file %s\n", infile);
+	    fprintf(stderr, "Unable to open file %s\n", filename);
 	    rv = GE_INVAL;
 	} else {
 	    i = fread(ri.id, 1, 8, f);
 	    if ((unsigned int) i != 8) {
-		printf("Error reading file %s\n", infile);
+		printf("Error reading file %s\n", filename);
 		return 1;
 	    }
 	    r = find_radio(ri.id);
@@ -569,7 +560,7 @@ main(int argc, char *argv[])
 	    ri.memorylen = r->memorylen;
 	    i = fread(ri.writedata, 1, ri.memorylen, f);
 	    if ((unsigned int) i != ri.memorylen) {
-		fprintf(stderr, "Error reading file %s\n", infile);
+		fprintf(stderr, "Error reading file %s\n", filename);
 		return 1;
 	    }
 	    fclose(f);
@@ -635,24 +626,24 @@ main(int argc, char *argv[])
 	gensio_free(ri.io);
 
     if (!rv && !ri.err && read) {
-	FILE *f = fopen(outfile, "wb");
+	FILE *f = fopen(filename, "wb");
 
 	if (!f) {
-	    fprintf(stderr, "Unable to open file %s\n", outfile);
+	    fprintf(stderr, "Unable to open file %s\n", filename);
 	    rv = GE_INVAL;
 	} else {
 	    i = fwrite(ri.id, 1, 8, f);
 	    if ((unsigned int) i != 8) {
-		fprintf(stderr, "Error writing to file %s\n", outfile);
+		fprintf(stderr, "Error writing to file %s\n", filename);
 		rv = GE_INVAL;
 	    }
 	    i = fwrite(ri.readdata, 1, ri.readlen, f);
 	    if ((unsigned int) i != ri.readlen) {
-		fprintf(stderr, "Error writing to file %s\n", outfile);
+		fprintf(stderr, "Error writing to file %s\n", filename);
 		rv = GE_INVAL;
 	    }
 	    fclose(f);
-	    printf("Wrote %s data to %s.\n", ri.id, outfile);
+	    printf("Wrote %s data to %s.\n", ri.id, filename);
 	}
     }
 

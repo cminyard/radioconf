@@ -63,6 +63,7 @@ radio TM-V71
 	headercmp 54 4d 2d 56 37 31 00 00
 	headerlen 8
 	filesize  16210
+	blocksize 1
 endradio
 
 radio FT-60R

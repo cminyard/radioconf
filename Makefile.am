@@ -2,6 +2,7 @@ bin_PROGRAMS = yaesu_rw kenwood_rw
 bin_SCRIPTS = radio_edit
 AM_CFLAGS=-Wall -Wsign-compare -DRADIO_CONFIGDIR="\"$(RADIO_CONFIGDIR)\""
 yaesu_rw_SOURCES = yaesu_rw.c
+yaesu_rw_LDADD = -lgensio
 kenwood_rw_SOURCES = kenwood_rw.c
 kenwood_rw_LDADD = -lgensio
 man_MANS = yaesu_rw.1 kenwood_rw.1 radio_edit.1

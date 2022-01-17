@@ -20,27 +20,21 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-#include <errno.h>
-#include <unistd.h>
 #include <getopt.h>
+#include <unistd.h> /* FIXME - for usleep. */
+#include <sys/ioctl.h> /* FIXME - for ioctl. */
 #ifdef __APPLE__
 #include <sys/malloc.h>
 #else
 #include <malloc.h>
 #endif
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/select.h>
-#include <sys/time.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <gensio/gensio.h>
 
 #ifndef RADIO_CONFIGDIR
-#define RADIO_CONFIGDIR "/etc/yaesuconf"
+#define RADIO_CONFIGDIR "/etc/radioconf"
 #endif
 
 char *version = PACKAGE_VERSION;
@@ -49,10 +43,8 @@ static struct option long_options[] = {
     {"help",	 0, NULL, '?'},
     {"hash",	 0, NULL, 'h'},
     {"verbose",  0, NULL, 'v'},
-    {"device",	 1, NULL, 'd'},
-    {"speed",	 1, NULL, 's'},
-    {"ignerr",	 0, NULL, 'i'},
-    {"notermio", 0, NULL, 'n'},
+    {"file",	 1, NULL, 'f'},
+    {"ignerr",	 0, NULL, 'I'},
     {"read",	 0, NULL, 'r'},
     {"write",	 0, NULL, 'w'},
     {"rcv_echo", 0, NULL, 'e'},
@@ -65,10 +57,10 @@ static struct option long_options[] = {
     {"checkblock", 0, NULL, 'p'},
     {"nocheckblock",0, NULL, 'q'},
     {"delayack", 0, NULL, 'l'},
-    {"nodelayack",0, NULL, 'o'},
+    {"nodelayack",0, NULL, 'n'},
     {"chunksize",1, NULL, 'a'},
     {"waitchunk",1, NULL, 'b'},
-    {"configdir",0, NULL, 'f'},
+    {"configdir",0, NULL, 'F'},
     {"prewritedelay", 1, NULL, 't'},
     {"noendecho", 0, NULL, 'u'},
     {"csumdelay", 1, NULL, 'x'},
@@ -78,7 +70,10 @@ char *progname = NULL;
 int verbose = 0;
 int hash = 0;
 
-#define YAESU_TIMEOUT(d, s, u) do { d->timeout.tv_sec = s; d->timeout.tv_usec = u; } while(0)
+#define YAESU_TIMEOUT(d, s, u) \
+    do {							\
+	d->timeout.secs = s; d->timeout.nsecs = u * 1000;	\
+    } while(0)
 #define YAESU_TEST_TIMEOUT(d) YAESU_TIMEOUT(d, 1, 0)
 #define YAESU_CHAR_TIMEOUT(d) YAESU_TIMEOUT(d, 5, 0)
 #define YAESU_TIMING_TIMEOUT(d) YAESU_TIMEOUT(d, 0, 200000)
@@ -118,11 +113,12 @@ struct yaesu_blocksizes {
 };
 
 struct yaesu_data {
+    int err;
     int is_read;
     enum yaesu_read_state state;
-    int rfd;
-    int wfd;
-    struct timeval timeout;
+    struct gensio *io;
+    struct gensio_os_funcs *o;
+    gensio_time timeout;
     unsigned int pos;
     unsigned int rpos;
     unsigned int retries;
@@ -140,7 +136,6 @@ struct yaesu_data {
     struct yaesu_blocksizes *bsizes;
     unsigned int bsize_left;
     unsigned int curr_bsize;
-    int check_write;
     unsigned char write_buf[65536];
     unsigned int write_start;
     unsigned int write_len;
@@ -148,7 +143,6 @@ struct yaesu_data {
     int csumdelay;
     int chunksize;
     enum { CHUNK_NOWAIT, CHUNK_CHECK, CHUNK_DELAY } waiting_chunk_done;
-    int check_write2;
     int has_checksum;
     int has_checkblock;
     int waitchecksum;
@@ -163,8 +157,17 @@ struct yaesu_data {
 const unsigned char testbuf[8] = { '0', '1', '2', '3', '4', '5', '6', '7' };
 const unsigned char ack[1] = { 0x06 };
 
+static void
+do_vlog(struct gensio_os_funcs *f, enum gensio_log_levels level,
+	const char *log, va_list args)
+{
+    fprintf(stderr, "gensio %s log: ", gensio_log_level_to_str(level));
+    vfprintf(stderr, log, args);
+    fprintf(stderr, "\n");
+}
+
 struct yaesu_data *
-alloc_yaesu_data(int rfd, int wfd, int is_read,
+alloc_yaesu_data(struct gensio_os_funcs *o, struct gensio *io, int is_read,
 		 int send_echo, int recv_echo, int noendecho, int has_checksum,
 		 int has_checkblock, int waitchecksum, int chunksize,
 		 int waitchunk, int delayack, int prewritedelay, int csumdelay)
@@ -187,10 +190,8 @@ alloc_yaesu_data(int rfd, int wfd, int is_read,
     d->head.next = &d->head;
     d->head.prev = &d->head;
     d->csum = 0;
-    d->rfd = rfd;
-    d->wfd = wfd;
-    d->check_write = 0;
-    d->check_write2 = 0;
+    d->io = io;
+    d->o = o;
     d->write_start = 0;
     d->write_len = 0;
     d->chunksize = chunksize;
@@ -247,21 +248,15 @@ free_yaesu_data(struct yaesu_data *d)
 }
 
 void
-yaesu_get_timeout(struct yaesu_data *d, struct timeval *tv)
+yaesu_get_timeout(struct yaesu_data *d, gensio_time *time)
 {
-    *tv = d->timeout;
-}
-
-int
-yaesu_check_write(struct yaesu_data *d)
-{
-    return d->check_write || d->check_write2;
+    *time = d->timeout;
 }
 
 int
 yaesu_is_done(struct yaesu_data *d)
 {
-    return d->state == YAESU_STATE_DONE;
+    return d->state == YAESU_STATE_DONE || d->err;
 }
 
 void
@@ -434,7 +429,7 @@ append_yaesu_data(struct yaesu_data *d, struct yaesu_block *b,
 	    alloc_len = b->alloc_len + BUFF_ALLOC_INC;
 	nb = malloc(alloc_len);
 	if (!nb)
-	    return ENOMEM;
+	    return GE_NOMEM;
 	memcpy(nb, b->buff, b->len);
 	free(b->buff);
 	b->alloc_len = alloc_len;
@@ -452,11 +447,11 @@ add_yaesu_block(struct yaesu_data *d, unsigned char *data, unsigned int size)
 
     b = yaesu_new_block(d);
     if (!b)
-	return ENOMEM;
+	return GE_NOMEM;
     b->buff = malloc(size);
     if (!b->buff) {
 	free(b);
-	return ENOMEM;
+	return GE_NOMEM;
     }
     memcpy(b->buff, data, size);
     b->len = size;
@@ -465,7 +460,8 @@ add_yaesu_block(struct yaesu_data *d, unsigned char *data, unsigned int size)
 }
 
 int
-yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
+yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len,
+	    bool *written)
 {
     unsigned int end;
     int rv;
@@ -474,8 +470,11 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
     if (d->prewritedelay > 0)
 	usleep(d->prewritedelay);
 
-    if (len + d->write_len > sizeof(d->write_buf))
-	return ENOBUFS;
+    if (len + d->write_len > sizeof(d->write_buf)) {
+	*written = false;
+	return 0;
+    }
+    *written = true;
 
     if (len > 0) {
 	if (verbose > 1) {
@@ -498,10 +497,10 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 	d->write_len += len;
     }
 
-    d->check_write2 = 0;
     end = (d->write_start + d->write_len) % sizeof(d->write_buf);
     if (d->write_len > 0) {
 	int to_write;
+	gensiods written;
 
 	if (end > d->write_start) {
 	write_nowrap:
@@ -510,26 +509,25 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 		to_write = d->chunksize - total_written;
 	    else
 		to_write = d->write_len;
-	    rv = write(d->wfd, d->write_buf + d->write_start, to_write);
-	    if (rv < 0) {
-		if (errno == EAGAIN)
-		    goto not_all_written;
-		return errno;
-	    }
-	    total_written += rv;
-	    if (rv > 0 && verbose > 2) {
+	    rv = gensio_write(d->io, &written, d->write_buf + d->write_start,
+			      to_write, NULL);
+	    if (rv)
+		return rv;
+	    total_written += written;
+	    if (written > 0 && verbose > 2) {
 		int i;
-		struct timeval tv;
-		gettimeofday(&tv, NULL);
-		printf("Write(2: %ld:%6.6ld):", tv.tv_sec, (long) tv.tv_usec);
+		gensio_time time;
+
+		gensio_os_funcs_get_monotonic_time(d->o, &time);
+		printf("Write(2: %ld:%6.6ld):", time.secs, (long) time.nsecs);
 		for (i = 0; i < rv; i++)
 		    printf(" %2.2x", d->write_buf[d->write_start+i]);
 		printf("\n");
 		fflush(stdout);
 	    }
 
-	    d->write_len -= rv;
-	    d->write_start += rv;
+	    d->write_len -= written;
+	    d->write_start += written;
 	    if ((d->chunksize > 0)
 		&& (total_written >= (unsigned int) d->chunksize))
 		goto out_delay;
@@ -547,14 +545,12 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 		to_write = d->chunksize - total_written;
 	    else
 		to_write = d->write_len;
-	    rv = write(d->wfd, d->write_buf + d->write_start, to_write);
-	    if (rv < 0) {
-		if (errno == EAGAIN)
-		    goto not_all_written;
-		return errno;
-	    }
-	    total_written += rv;
-	    if (rv > 0 && verbose > 2) {
+	    rv = gensio_write(d->io, &written,
+			      d->write_buf + d->write_start, to_write, NULL);
+	    if (rv)
+		return rv;
+	    total_written += written;
+	    if (written > 0 && verbose > 2) {
 		int i;
 		printf("Write(2):");
 		for (i = 0; i < rv; i++)
@@ -562,8 +558,8 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 		printf("\n");
 		fflush(stdout);
 	    }
-	    d->write_len -= rv;
-	    d->write_start += rv;
+	    d->write_len -= written;
+	    d->write_start += written;
 	    if (d->write_start >= sizeof(d->write_buf)) {
 		/* We wrote it all, move to the beginning of the buffer. */
 		d->write_start = 0;
@@ -578,17 +574,17 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len)
 	}
     }
 
-    d->check_write2 = 0;
+    gensio_set_write_callback_enable(d->io, false);
     return 0;
 
  out_delay:
-    d->check_write2 = 0;
+    gensio_set_write_callback_enable(d->io, false);
     YAESU_WAITWRITE_TIMEOUT(d);
     d->waiting_chunk_done = CHUNK_CHECK;
     return 0;
 
  not_all_written:
-    d->check_write2 = 1;
+    gensio_set_write_callback_enable(d->io, true);
     return 0;
 }
 
@@ -601,9 +597,9 @@ yaesu_check_block(struct yaesu_data *d, struct yaesu_block *b)
     if (!d->has_checkblock)
 	return 0;
     if (b->len < 2)
-	return EINVAL;
+	return GE_INVAL;
     if (b->buff[0] != (d->block_count - 1))
-	return EBADMSG;
+	return GE_INVAL;
     sum = 0;
     for (i = 1; i < b->len - 1; i++) {
 	sum += b->buff[i];
@@ -611,33 +607,25 @@ yaesu_check_block(struct yaesu_data *d, struct yaesu_block *b)
     }
     b->len -= 2; /* We remove the block number and the checksum */
     if (b->buff[b->len + 1] != (sum & 0xff))
-	return EBADMSG;
+	return GE_INVAL;
     return 0;
 }
 
 int
-handle_yaesu_read_data(struct yaesu_data *d)
+handle_yaesu_read_data(struct yaesu_data *d,
+		       unsigned char *buf, gensiods buflen)
 {
-    unsigned char rbuf[16];
-    unsigned char *buf = rbuf;
     int rv, err;
-    unsigned int i, len;
+    unsigned int i;
     struct yaesu_block *b;
-
-    rv = read(d->rfd, buf, sizeof(rbuf));
-    if (rv < 0) {
-	if (errno == EAGAIN)
-	    return 0;
-	return errno;
-    } else if (rv == 0)
-	return 0;
-    len = rv;
+    bool written;
 
     if (verbose > 1) {
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	printf("Read (%ld:%6.6ld):", tv.tv_sec, (long) tv.tv_usec);
-	for (i = 0; i < len; i++)
+	gensio_time time;
+
+	gensio_os_funcs_get_monotonic_time(d->o, &time);
+	printf("Read (%ld:%6.6ld):", time.secs, (long) time.nsecs);
+	for (i = 0; i < buflen; i++)
 	    printf(" %2.2x", buf[i]);
 	printf("\n");
 	fflush(stdout);
@@ -645,9 +633,11 @@ handle_yaesu_read_data(struct yaesu_data *d)
 
     if (d->send_echo) {
 	/* Radio echos everything received. */
-	int err = yaesu_write(d, buf, len);
+	int err = yaesu_write(d, buf, buflen, &written);
 	if (err)
 	    return err;
+	if (!written)
+	    return GE_TOOBIG;
     }
 
     switch(d->state) {
@@ -655,20 +645,20 @@ handle_yaesu_read_data(struct yaesu_data *d)
 	d->state = YAESU_STATE_INFIRSTBLOCK;
 	b = yaesu_new_block(d);
 	if (!b)
-	    return ENOMEM;
+	    return GE_NOMEM;
 	YAESU_CHAR_TIMEOUT(d);
 	/* FALLTHROUGH */
 
     case YAESU_STATE_INFIRSTBLOCK:
 	b = d->head.prev;
 
-	if ((len + b->len) > MAX_BLOCK_SIZE)
-	    return EINVAL;
-	err = append_yaesu_data(d, b, buf, len);
+	if ((buflen + b->len) > MAX_BLOCK_SIZE)
+	    return GE_INVAL;
+	err = append_yaesu_data(d, b, buf, buflen);
 	if (err)
 	    return err;
-	d->data_count += len;
-	for (i = 0; i < len; i++)
+	d->data_count += buflen;
+	for (i = 0; i < buflen; i++)
 	    d->csum += buf[i];
 
 	if (check_yaesu_type(d, b->buff, b->len, 0)) {
@@ -677,41 +667,43 @@ handle_yaesu_read_data(struct yaesu_data *d)
 		fflush(stdout);
 	    }
 	    d->state = YAESU_STATE_WAITBLOCK;
-	    rv = yaesu_write(d, ack, 1);
+	    rv = yaesu_write(d, ack, 1, &written);
 	    if (rv)
 		return rv;
+	    if (!written)
+		return GE_TOOBIG;
 	}
 	break;
 
     case YAESU_STATE_WAITBLOCK:
 	if (d->recv_echo) {
 	    if (buf[0] != ack[0])
-		return EINVAL;
+		return GE_INVAL;
 	    buf++;
-	    len--;
+	    buflen--;
 	}
 	d->state = YAESU_STATE_INBLOCK;
 	b = yaesu_new_block(d);
 	if (!b)
-	    return ENOMEM;
-	if (len == 0)
+	    return GE_NOMEM;
+	if (buflen == 0)
 	    break;
 	/* FALLTHROUGH */
 
     case YAESU_STATE_INBLOCK:
 	b = d->head.prev;
 
-	if (!d->timeout_mode && ((len + b->len) > d->block_len))
-	    return EINVAL;
-	err = append_yaesu_data(d, b, buf, len);
+	if (!d->timeout_mode && ((buflen + b->len) > d->block_len))
+	    return GE_INVAL;
+	err = append_yaesu_data(d, b, buf, buflen);
 	if (err)
 	    return err;
-	d->data_count += len;
-	for (i = 0; i < len; i++)
+	d->data_count += buflen;
+	for (i = 0; i < buflen; i++)
 	    d->csum += buf[i];
 
 	if (d->data_count > d->expect_len)
-	    return EINVAL;
+	    return GE_INVAL;
 	else if (d->data_count == d->expect_len) {
 	    int doack = 1;
 	    rv = yaesu_check_block(d, b);
@@ -728,9 +720,11 @@ handle_yaesu_read_data(struct yaesu_data *d)
 	    } else
 		d->state = YAESU_STATE_DONE;
 	    if (doack) {
-		rv = yaesu_write(d, ack, 1);
+		rv = yaesu_write(d, ack, 1, &written);
 		if (rv)
 		    return rv;
+		if (!written)
+		    return GE_TOOBIG;
 	    }
 	} else if (!d->timeout_mode && (b->len == d->block_len)) {
 	    if (hash) {
@@ -741,37 +735,41 @@ handle_yaesu_read_data(struct yaesu_data *d)
 	    if (rv)
 		return rv;
 	    d->state = YAESU_STATE_WAITBLOCK;
-	    rv = yaesu_write(d, ack, 1);
+	    rv = yaesu_write(d, ack, 1, &written);
 	    if (rv)
 		return rv;
+	    if (!written)
+		return GE_TOOBIG;
 	}
 	break;
 
     case YAESU_STATE_WAITCSUM:
 	if (d->recv_echo && !d->noendecho) {
 	    if (buf[0] != ack[0])
-		return EINVAL;
+		return GE_INVAL;
 	    buf++;
-	    len--;
+	    buflen--;
 	}
 	d->state = YAESU_STATE_CSUM;
-	if (len == 0)
+	if (buflen == 0)
 	    break;
 	/* FALLTHROUGH */
 
     case YAESU_STATE_CSUM:
 	if ((d->csum & 0xff) != buf[0])
 	    /* Checksum failure. */
-	    return EBADMSG;
+	    return GE_INVAL;
 	if (d->delayack) {
 	    /* Some radios are picky and want a delay before sending the
 	       last ack. */
 	    YAESU_WAITWRITE_TIMEOUT(d);
 	    d->state = YAESU_STATE_DELAYACK;
 	} else {
-	    rv = yaesu_write(d, ack, 1);
+	    rv = yaesu_write(d, ack, 1, &written);
 	    if (rv)
 		return rv;
+	    if (!written)
+		return GE_TOOBIG;
 	}
 	break;
 
@@ -791,6 +789,7 @@ handle_yaesu_read_timeout(struct yaesu_data *d)
     int rv;
     unsigned int i;
     struct yaesu_block *b;
+    bool written;
 
     switch(d->state) {
     case YAESU_STATE_INFIRSTBLOCK:
@@ -804,13 +803,15 @@ handle_yaesu_read_timeout(struct yaesu_data *d)
     case YAESU_STATE_WAITFIRSTBLOCK:
     case YAESU_STATE_WAITCSUM:
     case YAESU_STATE_CSUM:
-	return ETIMEDOUT;
+	return GE_TIMEDOUT;
 
     case YAESU_STATE_DELAYACK:
 	d->state = YAESU_STATE_DONE;
-	rv = yaesu_write(d, ack, 1);
+	rv = yaesu_write(d, ack, 1, &written);
 	if (rv)
 	    return rv;
+	if (!written)
+	    return GE_TOOBIG;
 	return 0;
 
     case YAESU_STATE_CSUM_WAITACK:
@@ -840,9 +841,11 @@ handle_yaesu_read_timeout(struct yaesu_data *d)
 	    fflush(stdout);
 	}
 	d->state = YAESU_STATE_WAITBLOCK;
-	rv = yaesu_write(d, ack, 1);
+	rv = yaesu_write(d, ack, 1, &written);
 	if (rv)
 	    return rv;
+	if (!written)
+	    return GE_TOOBIG;
 	break;
 	
     case YAESU_STATE_INBLOCK:
@@ -854,9 +857,11 @@ handle_yaesu_read_timeout(struct yaesu_data *d)
 	    fflush(stdout);
 	}
 	d->state = YAESU_STATE_WAITBLOCK;
-	rv = yaesu_write(d, ack, 1);
+	rv = yaesu_write(d, ack, 1, &written);
 	if (rv)
 	    return rv;
+	if (!written)
+	    return GE_TOOBIG;
 	break;
 
     case YAESU_STATE_WAITBLOCK:
@@ -864,13 +869,13 @@ handle_yaesu_read_timeout(struct yaesu_data *d)
 	b = d->head.prev;
 	if (b->len == 0) {
 	    printf("Last data block was 0 bytes, not a checksum?\n");
-	    return EBADMSG;
+	    return GE_INVAL;
 	}
 	b->len--;
 	d->csum -= b->buff[b->len];
 	if (d->has_checksum && (d->csum & 0xff) != b->buff[b->len])
 	    /* Checksum failure. */
-	    return EBADMSG;
+	    return GE_INVAL;
 	d->state = YAESU_STATE_DONE;
 	break;
 
@@ -887,6 +892,7 @@ yaesu_start_write(struct yaesu_data *d)
     int rv;
     unsigned int i;
     unsigned int to_write;
+    bool written;
 
     d->data_count = 0;
     d->curr_block = d->head.next;
@@ -900,12 +906,10 @@ yaesu_start_write(struct yaesu_data *d)
 	d->csum += b->buff[i];
 
     to_write = b->len - d->pos;
-    rv = yaesu_write(d, b->buff + d->pos, to_write);
-    if (rv == ENOBUFS)
-	d->check_write = 1;
-    else if (rv)
+    rv = yaesu_write(d, b->buff + d->pos, to_write, &written);
+    if (rv)
 	return rv;
-    else {
+    if (written) {
 	d->pos = to_write;
 	d->data_count += to_write;
     }
@@ -918,73 +922,72 @@ handle_yaesu_write_ready(struct yaesu_data *d)
     struct yaesu_block *b;
     int rv;
     unsigned int to_write;
+    bool written;
 
-    if (d->is_read)
-	return yaesu_write(d, NULL, 0);
+    if (d->is_read) {
+	rv = yaesu_write(d, NULL, 0, &written);
+	if (rv)
+	    return rv;
+	if (!written)
+	    return GE_TOOBIG;
+    }
 
     if (d->state == YAESU_STATE_WAITCSUM) {
 	unsigned char cs[1];
+
 	cs[0] = d->csum;
-	rv = yaesu_write(d, cs, 1);
-	if (rv == ENOBUFS)
-	    return 0;
-	else if (rv)
+	rv = yaesu_write(d, cs, 1, &written);
+	if (rv)
 	    return rv;
+	if (!written)
+	    return 0;
 	if (!d->waitchecksum)
 	    d->state = YAESU_STATE_DONE;
 	else if (!d->recv_echo)
 	    d->state = YAESU_STATE_CSUM_WAITACK;
 	else
 	    d->state = YAESU_STATE_CSUM;
-	d->check_write = 0;
 	return 0;
     }
 
     b = d->curr_block;
     to_write = b->len - d->pos;
-    rv = yaesu_write(d, b->buff + d->pos, to_write);
-    if (rv == ENOBUFS)
-	return 0;
-    else if (rv)
+    rv = yaesu_write(d, b->buff + d->pos, to_write, &written);
+    if (rv)
 	return rv;
-    d->check_write = 0;
+    if (!written)
+	return 0;
     d->pos += to_write;
     d->data_count += to_write;
     return 0;
 }
 
 int
-handle_yaesu_write_data(struct yaesu_data *d)
+handle_yaesu_write_data(struct yaesu_data *d,
+			unsigned char *buf, gensiods buflen)
 {
     struct yaesu_block *b;
-    unsigned char rbuf[16];
-    unsigned char *buf = rbuf;
     int rv;
-    unsigned int i, len;
-
-    rv = read(d->rfd, buf, sizeof(rbuf));
-    if (rv < 0) {
-	if (errno == EAGAIN)
-	    return 0;
-	return errno;
-    } else if (rv == 0)
-	return 0;
-    len = rv;
+    unsigned int i;
 
     if (verbose > 1) {
-        struct timeval tv;
-	gettimeofday(&tv, NULL);
-	printf("Read (%d: %ld:%6.6ld):", d->state, tv.tv_sec, tv.tv_usec);
-	for (i = 0; i < len; i++)
+	gensio_time time;
+
+	gensio_os_funcs_get_monotonic_time(d->o, &time);
+	printf("Read (%d: %ld:%6.6ld):", d->state, time.secs, (long)time.nsecs);
+	for (i = 0; i < buflen; i++)
 	    printf(" %2.2x", buf[i]);
 	printf("\n");
 	fflush(stdout);
     }
 
     if (d->send_echo) {
-	int err = yaesu_write(d, buf, len);
+	bool written;
+	int err = yaesu_write(d, buf, buflen, &written);
 	if (err)
 	    return err;
+	if (!written)
+	    return GE_TOOBIG;
     }
 
     if (d->state == YAESU_STATE_DONE)
@@ -992,18 +995,22 @@ handle_yaesu_write_data(struct yaesu_data *d)
 
     if (d->state == YAESU_STATE_CSUM) {
 	if (buf[0] != (d->csum & 0xff))
-	    return EINVAL;
+	    return GE_INVAL;
 	d->state = YAESU_STATE_CSUM_WAITACK;
-	len--;
-	if (len == 0)
+	buflen--;
+	if (buflen == 0)
 	    return 0;
-	buf++;
+	buflen++;
     }
 
     if (d->state == YAESU_STATE_CSUM_WAITACK) {
-	rv = yaesu_write(d, ack, 1);
+	bool written;
+
+	rv = yaesu_write(d, ack, 1, &written);
 	if (rv)
 	    return rv;
+	if (!written)
+	    return GE_TOOBIG;
 	d->state = YAESU_STATE_DONE;
 	return 0;
     }
@@ -1011,15 +1018,15 @@ handle_yaesu_write_data(struct yaesu_data *d)
     b = d->curr_block;
     if (d->recv_echo && (d->rpos < b->len)) {
 	b = d->curr_block;
-	for (i = 0; (i < len) && (d->rpos < b->len); i++, d->rpos++) {
+	for (i = 0; (i < buflen) && (d->rpos < b->len); i++, d->rpos++) {
 	    if (buf[i] != b->buff[d->rpos])
-		return EINVAL;
+		return GE_INVAL;
 	}
 	if (d->rpos < b->len)
 	    /* More echos to receive, so just return. */
 	    return 0;
 
-	len -= i;
+	buflen -= i;
 	buf += i;
 	/* Might have the ack, so go on. */
     }
@@ -1030,18 +1037,14 @@ handle_yaesu_write_data(struct yaesu_data *d)
 	   checksum, then send it now. */
 	goto send_checksum;
 
-    if (len == 0)
+    if (buflen == 0)
 	return 0;
 
-    if (d->check_write)
-	/* We haven't written all the data, so we shouldn't read an ack. */
-	return EINVAL;
-
     /* We should have the ack. */
-    if (len != 1)
-	return EINVAL;
+    if (buflen != 1)
+	return GE_INVAL;
     if (buf[0] != ack[0])
-	return EINVAL;
+	return GE_INVAL;
     /* Note that in radio mode, the ack echo was already sent */
 
     if (hash) {
@@ -1076,13 +1079,14 @@ handle_yaesu_write_data(struct yaesu_data *d)
 
     {
 	unsigned char cs[1];
+	bool written;
+
 	cs[0] = d->csum;
-	rv = yaesu_write(d, cs, 1);
-	if (rv == ENOBUFS) {
-	    d->state = YAESU_STATE_WAITCSUM;
-	    d->check_write = 1;
-	} else if (rv)
+	rv = yaesu_write(d, cs, 1, &written);
+	if (rv)
 	    return rv;
+	if (!written)
+	    d->state = YAESU_STATE_WAITCSUM;
 	if (!d->recv_echo)
 	    d->state = YAESU_STATE_CSUM_WAITACK;
 	else
@@ -1098,16 +1102,21 @@ handle_yaesu_write_timeout(struct yaesu_data *d)
 
     if (d->state == YAESU_STATE_DELAYCSUM) {
 	d->state = YAESU_STATE_WAITCSUM;
-	d->check_write = 1;
 	return 0;
     }
 
     if (d->waiting_chunk_done == CHUNK_CHECK) {
 	int left;
+	int fd;
+	gensiods len = sizeof(fd);
 
-	rv = ioctl(d->wfd, TIOCOUTQ, &left);
+	/* FIXME - this is a hack. */
+	rv = gensio_control(d->io, 0, true, GENSIO_CONTROL_REMOTE_ID,
+			    (char *) &fd, &len);
+
+	rv = ioctl(fd, TIOCOUTQ, &left);
 	if (rv < 0)
-	    return errno;
+	    return gensio_os_err_to_err(d->o, rv);
 	if (left == 0) {
 	    YAESU_WAITCHUNK_TIMEOUT(d);
 	    d->waiting_chunk_done = CHUNK_DELAY;
@@ -1116,19 +1125,18 @@ handle_yaesu_write_timeout(struct yaesu_data *d)
     } else if (d->waiting_chunk_done == CHUNK_DELAY) {
 	YAESU_CHAR_TIMEOUT(d);
 	d->waiting_chunk_done = CHUNK_NOWAIT;
-	d->check_write2 = 1;
 	return 0;
     }
-    return ETIMEDOUT;
+    return GE_TIMEDOUT;
 }
 
 int
-handle_yaesu_data(struct yaesu_data *d)
+handle_yaesu_data(struct yaesu_data *d, unsigned char *buf, gensiods buflen)
 {
     if (d->is_read)
-	return handle_yaesu_read_data(d);
+	return handle_yaesu_read_data(d, buf, buflen);
     else
-	return handle_yaesu_write_data(d);
+	return handle_yaesu_write_data(d, buf, buflen);
 }
 
 int
@@ -1140,6 +1148,7 @@ handle_yaesu_timeout(struct yaesu_data *d)
 	return handle_yaesu_write_timeout(d);
 }
 
+/* FIXME - need a better for error then -err. */
 int
 get_one_line(FILE *f, char **oline, unsigned int *linenum)
 {
@@ -1148,7 +1157,7 @@ get_one_line(FILE *f, char **oline, unsigned int *linenum)
     int len;
 
     if (!line)
-	return -ENOMEM;
+	return -GE_NOMEM;
 
  restart:
     if (fgets(line, alloc_len, f) == NULL) {
@@ -1184,7 +1193,7 @@ get_one_line(FILE *f, char **oline, unsigned int *linenum)
 	nl = malloc(80);
 	if (!nl) {
 	    free(line);
-	    return -ENOMEM;
+	    return -GE_NOMEM;
 	}
 
 	if (fgets(nl, 80, f) == NULL) {
@@ -1203,7 +1212,7 @@ get_one_line(FILE *f, char **oline, unsigned int *linenum)
 	if (!nl2) {
 	    free(nl);
 	    free(line);
-	    return -ENOMEM;
+	    return -GE_NOMEM;
 	}
 	strcpy(nl2, line);
 	strcat(nl2, nl);
@@ -1259,7 +1268,7 @@ read_yaesu_config(char *configdir)
     char *configfile = malloc(strlen(configdir) + strlen(fname) + 2);
 
     if (!configfile)
-      return ENOMEM;
+      return GE_NOMEM;
 
     strcpy(configfile, configdir);
     strcat(configfile, "/");
@@ -1697,6 +1706,38 @@ read_yaesu_config(char *configdir)
     return 0;
 }
 
+static int
+radio_event(struct gensio *io, void *user_data, int event, int err,
+	    unsigned char *buf, gensiods *buflen,
+	    const char *const *auxdata)
+{
+    struct yaesu_data *d = user_data;
+
+    if (err) {
+	if (!d->err)
+	    d->err = err;
+	fprintf(stderr, "Read error: %s\n", gensio_err_to_str(err));
+    }
+    if (d->err) {
+	gensio_set_read_callback_enable(d->io, false);
+	gensio_set_write_callback_enable(d->io, false);
+	return 0;
+    }
+
+    switch (event) {
+    case GENSIO_EVENT_READ:
+	handle_yaesu_data(d, buf, *buflen);
+	return 0;
+
+    case GENSIO_EVENT_WRITE_READY:
+	handle_yaesu_write_ready(d);
+	return 0;
+
+    default:
+	return GE_NOTSUP;
+    }
+}
+
 void
 usage(void)
 {
@@ -1704,16 +1745,13 @@ usage(void)
     printf("lets you use the clone mode of the radio to copy the data from\n");
     printf("the radio into a file, and to write the data to a radio from\n");
     printf("a file.\n\n");
-    printf("  %s [options] [-d {device}] -r|-w  file\nOptions are:\n",
+    printf("  %s [options] -r|-w <gensio>\nOptions are:\n",
 	   progname);
     printf("  -h, --hash - Print . marks for every block transferred.\n");
     printf("  -v, --verbose - once to get the version, twice to get data.\n");
-    printf("  -d, --device - specify the device to use for the radio.\n");
-    printf("  -s, --speed - specify the serial baud to use, 9600 by default\n");
-    printf("  -i, --ignerr - if an error occurs on read, still save as much"
+    printf("  -f, --file <filename> - The file to read/write.\n");
+    printf("  -I, --ignerr - if an error occurs on read, still save as much"
 	   "data as possible.\n");
-    printf("  -n, --notermio - don't set up the serial port parameters, useful"
-	   "for non-serial ports.\n");
     printf("  -r, --read - Read data from the radio.\n");
     printf("  -w, --write - Write data to the radio.\n");
     printf("  -e, --rcv_echo - Expect transmitted data to be echoed by\n"
@@ -1732,20 +1770,11 @@ usage(void)
     printf("  -b, --waitchunk <usec> - wait usecs between chunks\n");
     printf("  -x, --waitcsum <usec> - wait usecs before writing checksum\n");
     printf("  -l, --delayack - Delay before sending the last ack\n");
-    printf("  -o, --nodelayack - No delay before sending the last ack\n");
+    printf("  -n, --nodelayack - No delay before sending the last ack\n");
     printf("  -f, --configdir <file> - Use the given directory for the radio"
 	   " configuration instead\nof the default %s\n", RADIO_CONFIGDIR);
     printf("  -t, --prewritedelay <usec> - Delay added before every write\n");
 }
-
-struct {
-    char *sval;
-    int val;
-} speeds[] = {
-    { "9600", B9600 },
-    { "19200", B19200 },
-    { NULL }
-};
 
 int
 main(int argc, char *argv[])
@@ -1754,17 +1783,15 @@ main(int argc, char *argv[])
     struct yaesu_data *d = NULL;
     struct yaesu_block *b;
     FILE *f;
-    int fd;
     int rv;
     char dummy;
     char *dend;
     unsigned int i;
 
-    char *devicename = "/dev/ttyS0";
+    char *gensiostr = "serialdev,/dev/ttyS0,9600n81";
     char *configdir = RADIO_CONFIGDIR;
-    char *filename = NULL;
+    char *filename = "yaesu.rfile";
     int ignerr = 0;
-    int dotermios = 1;
     int do_read = 0;
     int do_write = 0;
     int send_echo = 0;
@@ -1778,14 +1805,15 @@ main(int argc, char *argv[])
     int chunksize = -1;
     int delayack = -1;
     int prewritedelay = -1;
-    char *speed = "9600";
-    int bspeed = -1;
-    struct termios orig_termios, curr_termios;
+    struct gensio *io;
+    struct gensio_os_funcs *o;
+    gensio_time zero_timeout = { 0, 0 }, timeout;
+    gensiods count;
 
     progname = argv[0];
 
     while (1) {
-	c = getopt_long(argc, argv, "?hvd:a:b:inrwt:emycgf:pqs:jkloux",
+	c = getopt_long(argc, argv, "?hva:b:irwt:emycgf:F:pqjkloux",
 			long_options, NULL);
 	if (c == -1)
 	    break;
@@ -1798,20 +1826,16 @@ main(int argc, char *argv[])
 		hash = 1;
 		break;
 
-	    case 'd':
-		devicename = optarg;
+	    case 'f':
+		filename = optarg;
 		break;
 
-	    case 'f':
+	    case 'F':
 		configdir = optarg;
 		break;
 
-	    case 'i':
+	    case 'I':
 		ignerr = 1;
-		break;
-
-	    case 'n':
-		dotermios = 0;
 		break;
 
 	    case 'r':
@@ -1890,7 +1914,7 @@ main(int argc, char *argv[])
 		delayack = 1;
 		break;
 
-	    case 'o':
+	    case 'n':
 		delayack = 0;
 		break;
 
@@ -1906,10 +1930,6 @@ main(int argc, char *argv[])
 		do_checkblock = 0;
 		break;
 
-	    case 's':
-		speed = optarg;
-		break;
-		
 	    case '?':
 		fprintf(stderr, "unknown argument: %c\n", optopt);
 		usage();
@@ -1930,11 +1950,11 @@ main(int argc, char *argv[])
     if (optind + 1 != argc) {
 	if (verbose)
 	    exit(0);
-	fprintf(stderr, "Missing filename.\n");
+	fprintf(stderr, "Missing gensio string.\n");
 	usage();
 	exit(1);
     }
-    filename = argv[optind];
+    gensiostr = argv[optind];
 
     read_yaesu_config(configdir);
  
@@ -1944,15 +1964,15 @@ main(int argc, char *argv[])
     }
 
     if (do_read) {
-	f = fopen(filename, "w");
+	f = fopen(filename, "wb");
 	if (!f) {
-	    fprintf(stderr, "Unable to open outfile: %s (%d)\n", strerror(errno), errno);
+	    fprintf(stderr, "Unable to open outfile %s\n", filename);
 	    exit(1);
 	}
     } else if (do_write) {
-	f = fopen(filename, "r");
+	f = fopen(filename, "rb");
 	if (!f) {
-	    fprintf(stderr, "Unable to open infile: %s (%d)\n", strerror(errno), errno);
+	    fprintf(stderr, "Unable to open infile %s\n", filename);
 	    exit(1);
 	}
     } else {
@@ -1960,21 +1980,36 @@ main(int argc, char *argv[])
 	exit(1);
     }
 
-    if ((fd = open(devicename, O_RDWR | O_NDELAY)) < 0) {
-	fclose(f);
-	perror(devicename);
-	exit(1);
+    rv = gensio_default_os_hnd(0, &o);
+    if (rv) {
+	fprintf(stderr, "Could not allocate OS handler: %s\n",
+		gensio_err_to_str(rv));
+	return 1;
+    }
+    gensio_os_funcs_set_vlog(o, do_vlog);
+
+    rv = str_to_gensio(gensiostr, o, NULL, NULL, &io);
+    if (rv) {
+	fprintf(stderr, "Could not create gensio from %s: %s\n", gensiostr,
+		gensio_err_to_str(rv));
+	return 1;
     }
 
-    d = alloc_yaesu_data(fd, fd, do_read, send_echo, recv_echo, noendecho,
+    d = alloc_yaesu_data(o, io, do_read, send_echo, recv_echo, noendecho,
 			 do_checksum,
 			 do_checkblock, do_waitchecksum, chunksize, waitchunk,
 			 delayack, prewritedelay, csumdelay);
     if (!d) {
-	fclose(f);
-	close(fd);
 	fprintf(stderr, "Out of memory\n");
 	exit(1);
+    }
+    gensio_set_callback(io, radio_event, d);
+
+    rv = gensio_open_s(io);
+    if (rv) {
+	fprintf(stderr, "Could not open gensio %s: %s\n", gensiostr,
+		gensio_err_to_str(rv));
+	return 1;
     }
 
     if (do_write) {
@@ -2072,89 +2107,70 @@ main(int argc, char *argv[])
 	}
     }
 
-    for (i = 0; speeds[i].sval; i++) {
-	if (strcmp(speeds[i].sval, speed) == 0) {
-	    bspeed = speeds[i].val;
-	    break;
-	}
-    }
-    if (bspeed == -1) {
-	fprintf(stderr, "Unknown speed, valid speeds are:");
-	for (i = 0; speeds[i].sval; i++)
-	    fprintf(stderr, " %s", speeds[i].sval);
-	fprintf(stderr, "\n");
-	goto out_err;
-    }
-
-    if (dotermios) {
-	if (tcgetattr(fd, &orig_termios) == -1) {
-	    fprintf(stderr, "error getting tty attributes %s(%d)\n",
-		    strerror(errno), errno);
-	    goto out_err;
-	}
-
-	memset(&curr_termios, 0, sizeof(curr_termios));
-
-	cfsetospeed(&curr_termios, bspeed);
-	cfsetispeed(&curr_termios, bspeed);
-	cfmakeraw(&curr_termios);
-	/* two stop bits, ignore handshake, make sure rx enabled */
-	curr_termios.c_cflag |= (CSTOPB | CLOCAL | CREAD);
-
-	if (tcsetattr(fd, TCSANOW, &curr_termios) == -1) {
-	    fprintf(stderr, "error setting tty attributes %s(%d)\n",
-		    strerror(errno), errno);
-	    goto out_err;
-	}
+    rv = gensio_set_sync(io);
+    if (rv) {
+	fprintf(stderr, "Could not set gensio sync for %s: %s\n", gensiostr,
+		gensio_err_to_str(rv));
+	return 1;
     }
 
     /* Flush the input buffer */
-    while(read(fd, &dummy, 1) > 0)
-	;
+    do {
+	rv = gensio_read_s(io, &count, &dummy, 1, &zero_timeout);
+    } while (!rv && count > 0);
+    if (rv) {
+	fprintf(stderr, "Could not read from gensio %s: %s\n", gensiostr,
+		gensio_err_to_str(rv));
+	return 1;
+    }
 
     if (d->recv_echo == -1) {
 	/* Test for echo */
-	rv = write(fd, "A", 1);
-	if (rv <= 0) {
+	rv = gensio_write_s(io, &count, "A", 1, NULL);
+	if (rv || count != 1) {
 	    fprintf(stderr, "Error testing echo, could not write to"
-		    " device: %s (%d)\n", strerror(errno), errno);
-	    exit(1);
+		    " gensio %s: %s\n", gensiostr, gensio_err_to_str(rv));
+	    return 1;
 	}
 
-	usleep(200000);
-	rv = read(fd, &dummy, 1);
-	if (rv < 0) {
-	    if (errno == EAGAIN)
-		rv = 0;
-	    else {
-		fprintf(stderr, "Error testing echo, could not read from"
-			" device: %s (%d)\n", strerror(errno), errno);
-		exit(1);
-	    }
+	timeout.secs = 0;
+	timeout.nsecs = 200000000;
+	rv = gensio_read_s(io, &count, &dummy, 1, &timeout);
+	if (rv && rv != GE_TIMEDOUT) {
+	    fprintf(stderr, "Could not read from gensio %s: %s\n", gensiostr,
+		    gensio_err_to_str(rv));
+	    return 1;
 	}
-	if (rv == 0)
+	if (rv == GE_TIMEDOUT)
 	    d->recv_echo = 0;
 	else if (dummy == 'A')
 	    d->recv_echo = 1;
 	else {
 	    fprintf(stderr, "Error testing echo, received character did"
 		    " not match sent character.\n");
-	    exit(1);
+	    return 1;
 	}
 	if (verbose)
 	    printf("Receive echo is %s\n", d->recv_echo ? "on" : "off");
     }
 
+    rv = gensio_clear_sync(io);
+    if (rv) {
+	fprintf(stderr, "Could not clear gensio sync for %s: %s\n", gensiostr,
+		gensio_err_to_str(rv));
+	return 1;
+    }
+
+    gensio_set_read_callback_enable(io, true);
+
     if (do_write) {
 	char c;
 	printf("Put the radio in rx mode and press enter");
 	fflush(stdout);
-	rv = read(0, &c, 1);
-	while (read(fd, &c, 1) > 0)
-	    ;
+	fread(&c, 1, 1, stdin);
 	rv = yaesu_start_write(d);
 	if (rv) {
-	    fprintf(stderr, "error starting write %s(%d)\n", strerror(rv), rv);
+	    fprintf(stderr, "error starting write %s\n", gensio_err_to_str(rv));
 	    goto out_err;
 	}
     } else
@@ -2162,41 +2178,16 @@ main(int argc, char *argv[])
 
     rv = 0;
     while (!yaesu_is_done(d)) {
-	fd_set rfds, wfds;
-	struct timeval tv;
-
-	FD_ZERO(&rfds);
-	FD_ZERO(&wfds);
-	FD_SET(fd, &rfds);
-	yaesu_get_timeout(d, &tv);
-	if (yaesu_check_write(d))
-	    FD_SET(fd, &wfds);
-	rv = select(fd + 1, &rfds, &wfds, NULL, &tv);
-	if (rv == 0) {
-	    /* Timeout */
+	yaesu_get_timeout(d, &timeout);
+	rv = gensio_os_funcs_service(o, &timeout);
+	if (rv == GE_TIMEDOUT) {
 	    rv = handle_yaesu_timeout(d);
 	    if (rv) {
-		printf("Error: %s\n", strerror(rv));
+		fprintf(stderr, "Error: %s\n", gensio_err_to_str(rv));
 		goto out;
 	    }
-	} else if (rv > 0) {
-	    /* Got data */
-	    if (FD_ISSET(fd, &rfds)) {
-		rv = handle_yaesu_data(d);
-		if (rv) {
-		    printf("Error handling read data: %s\n", strerror(rv));
-		    goto out;
-		}
-	    }
-	    if (FD_ISSET(fd, &wfds)) {
-		rv = handle_yaesu_write_ready(d);
-		if (rv) {
-		    printf("Error handling write data: %s\n", strerror(rv));
-		    goto out;
-		}
-	    }
-	} else {
-	    perror("select");
+	} else if (rv) {
+	    fprintf(stderr, "Service error: %s\n", gensio_err_to_str(rv));
 	    goto out;
 	}
     }
@@ -2206,6 +2197,7 @@ main(int argc, char *argv[])
 	printf("\n");
     printf("Transferred %d characters\n", d->data_count);
 
+    /* FIXME - check d->err */
     if (!rv || ignerr) {
 	b = d->head.next;
 	while (b != &d->head) {
@@ -2216,11 +2208,10 @@ main(int argc, char *argv[])
 
  out_err:
 
-    if (dotermios)
-	tcsetattr(fd, TCSANOW, &orig_termios);
-
-    fclose(f);
-    close(fd);
+    if (io) {
+	gensio_close_s(io);
+	gensio_free(io);
+    }
 
     if (d)
 	free_yaesu_data(d);
