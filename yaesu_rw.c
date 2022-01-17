@@ -426,7 +426,7 @@ append_yaesu_data(struct yaesu_data *d, struct yaesu_block *b,
 
 	alloc_len = b->alloc_len + BUFF_ALLOC_INC;
 	while (alloc_len < new_len)
-	    alloc_len = b->alloc_len + BUFF_ALLOC_INC;
+	    alloc_len = alloc_len + BUFF_ALLOC_INC;
 	nb = malloc(alloc_len);
 	if (!nb)
 	    return GE_NOMEM;
