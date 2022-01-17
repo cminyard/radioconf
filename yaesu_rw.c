@@ -2088,12 +2088,12 @@ main(int argc, char *argv[])
 	timeout.secs = 0;
 	timeout.nsecs = 200000000;
 	rv = gensio_read_s(io, &count, &dummy, 1, &timeout);
-	if (rv && rv != GE_TIMEDOUT) {
+	if (rv) {
 	    fprintf(stderr, "Could not read from gensio %s: %s\n", gensiostr,
 		    gensio_err_to_str(rv));
 	    return 1;
 	}
-	if (rv == GE_TIMEDOUT)
+	if (count == 0)
 	    d->recv_echo = 0;
 	else if (dummy == 'A')
 	    d->recv_echo = 1;
