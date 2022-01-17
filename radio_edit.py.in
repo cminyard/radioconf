@@ -396,7 +396,7 @@ class RadioFileData:
         f.close()
         self.data = []
         for c in strdata:
-            self.data.append(ord(c))
+            self.data.append(c)
         self.changed = False
         pass
 
@@ -427,7 +427,7 @@ class RadioFileData:
         for a in addr.entries:
             byte_off = a[0]
             bit_off = a[1] + a[3] * num
-            byte_off += bit_off / 8
+            byte_off += bit_off // 8
             bit_off %= 8
             numbits = a[2]
             v <<= numbits
@@ -469,7 +469,7 @@ class RadioFileData:
         for a in addr.entries:
             byte_off = a[0]
             bit_off = a[1] + a[3] * num
-            byte_off += bit_off / 8
+            byte_off += bit_off // 8
             bit_off %= 8
             numbits = a[2]
             bitsleft -= numbits
@@ -517,12 +517,12 @@ class RadioFileData:
         pass
 
     def get_bytes(self, addr, num):
-        byte_pos = addr.entries[0][0] + (addr.entries[0][3] * num / 8)
-        numbytes = addr.entries[0][2] / 8
+        byte_pos = addr.entries[0][0] + (addr.entries[0][3] * num // 8)
+        numbytes = addr.entries[0][2] // 8
         return self.data[byte_pos:byte_pos+numbytes]
 
     def set_byte(self, v, addr, num, offset):
-        byte_pos = addr.entries[0][0] + (addr.entries[0][3] * num / 8)
+        byte_pos = addr.entries[0][0] + (addr.entries[0][3] * num // 8)
         self.changed = True
         self.data[byte_pos + offset] = v
         pass
@@ -873,6 +873,7 @@ class BISpecialTMV71(BISpecial):
             if (bfreq):
                 break
             pass
+        bfreq = int(bfreq)
         oldv = t.data.get_bits(t.addr, num)
         if (bfreq > 400000000):
             t.data.set_bits(0x05, t.addr, num)
@@ -996,7 +997,7 @@ class BIInt(YType):
         return v
 
     def setInt(self, v, data, addr, num):
-        v /= self.multi
+        v //= self.multi
         v -= self.offset
         if (v < 0):
             v &= (-1 << addr.numbits())
@@ -1171,7 +1172,7 @@ class BIString(YType):
         return s
 
     def set_string(self, v, data, addr, num, h):
-        numbytes = addr.entries[0][2] / 8
+        numbytes = addr.entries[0][2] // 8
         inlen = len(v)
         for i in range(0, numbytes):
             if (i >= inlen):
@@ -1433,14 +1434,14 @@ class BIFixed(YType):
                 pass
             pass
         if (postdec > self.suf):
-            v /= 10 ** (postdec - self.suf)
+            v //= 10 ** (postdec - self.suf)
             pass
         elif (postdec < self.suf):
             v *= 10 ** (self.suf - postdec)
             pass
 
         # Make sure to round as necessary
-        return (v + (self.inc / 2)) / self.inc
+        return (v + (self.inc // 2)) // self.inc
 
     def conv_to_str(self, v):
         s = str(v * self.inc)
@@ -1633,7 +1634,7 @@ class BIFixedFreq(BIFixed):
             (o, freq) = t.data.config.rptoff.calcOffset(bfreq)
             offh.setSelect(o, num)
             offh.redisplay(offh)
-            BIFixed.setBits(self, freq / 10, h, num)
+            BIFixed.setBits(self, freq // 10, h, num)
             for m in h.offfreqtie:
                 m.redisplay(m)
                 pass
@@ -1708,10 +1709,10 @@ class BIBCDFixedFreq(BIFixedFreq):
         mult = 1
         while (v > 0):
             d += (v % 16) * mult
-            v /= 16
+            v //= 16
             mult *= 10
             pass
-        d /= self.inc
+        d //= self.inc
         return d
 
     def set_raw(self, t, d, num):
@@ -1721,7 +1722,7 @@ class BIBCDFixedFreq(BIFixedFreq):
         mult = 1
         while (d > 0):
             v += (d % 10) * mult
-            d /= 10
+            d //= 10
             mult *= 16
             pass
         t.data.set_bits(v, t.addr, num)
@@ -1886,7 +1887,7 @@ class BIYaesuString(YType):
         return s
 
     def set_yaesu_string(self, v, data, addr, num, h):
-        numbytes = addr.entries[0][2] / 8
+        numbytes = addr.entries[0][2] // 8
         inlen = len(v)
         for i in range(0, numbytes):
             if (i >= inlen):
@@ -2162,9 +2163,9 @@ class BIBCDFreq(YType):
                             o = o[0:i]
                             offfreq = float(o)
                             if (sfx == "kHz"):
-                                offfreq /= 1000.0
+                                offfreq //= 1000.0
                             elif (sfx == "Hz"):
-                                offfreq /= 1000000.0
+                                offfreq //= 1000000.0
                                 pass
                             pass
                         else:
@@ -2532,7 +2533,7 @@ class BIHexDigits(YType):
         s = data.get_bytes(addr, num)
         v = [ ]
         i = 0
-        numbytes = addr.entries[0][2] / 8
+        numbytes = addr.entries[0][2] // 8
         while (i < numbytes):
             v.append(convFromHex(s[i]))
             i += 1
@@ -2541,7 +2542,7 @@ class BIHexDigits(YType):
         pass
 
     def set_hex(self, v, data, addr, num, h):
-        numbytes = addr.entries[0][2] / 8
+        numbytes = addr.entries[0][2] // 8
 
         vlen = len(v)
         second = False
@@ -2562,7 +2563,7 @@ class BIHexDigits(YType):
     def getWidgetHandler(self, parent, t, num):
         v = self.get_hex(t.data, t.addr, num)
         h = Handler(self.set, t, self)
-        h.numbytes = t.addr.entries[0][2] / 8
+        h.numbytes = t.addr.entries[0][2] // 8
         w = tkinter.tix.Entry(parent, readonlybackground="tan")
         h.widget = w
         h.num = num
@@ -3350,7 +3351,7 @@ class List(TabBase):
         return "break"
 
     def Wheel(self, event):
-        self.y_move("scroll", -(event.delta / 20), "units")
+        self.y_move("scroll", -(event.delta // 20), "units")
         return
 
     def ButtonUpWheel(self, event):
@@ -3532,7 +3533,7 @@ class Tab(TabBase):
         pass
 
     def Wheel(self, event):
-        self.list.hlist.yview("scroll", -(event.delta / 20), "units")
+        self.list.hlist.yview("scroll", -(event.delta // 20), "units")
         return
 
     def ButtonUpWheel(self, event):
