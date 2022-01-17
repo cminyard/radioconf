@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <unistd.h> /* FIXME - for usleep. */
-#include <sys/ioctl.h> /* FIXME - for ioctl. */
 #ifdef __APPLE__
 #include <sys/malloc.h>
 #else
@@ -1100,31 +1099,14 @@ handle_yaesu_write_data(struct yaesu_data *d,
 int
 handle_yaesu_write_timeout(struct yaesu_data *d)
 {
-    int rv;
-
     if (d->state == YAESU_STATE_DELAYCSUM) {
 	d->state = YAESU_STATE_WAITCSUM;
 	return 0;
     }
 
     if (d->waiting_chunk_done == CHUNK_CHECK) {
-	int left;
-	char fdstr[10];
-	int fd;
-	gensiods len = sizeof(fdstr);
-
-	/* FIXME - this is a hack. */
-	rv = gensio_control(d->io, 0, true, GENSIO_CONTROL_REMOTE_ID,
-			    fdstr, &len);
-	fd = strtoul(fdstr, NULL, 0);
-
-	rv = ioctl(fd, TIOCOUTQ, &left);
-	if (rv < 0)
-	    return gensio_os_err_to_err(d->o, rv);
-	if (left == 0) {
-	    YAESU_WAITCHUNK_TIMEOUT(d);
-	    d->waiting_chunk_done = CHUNK_DELAY;
-	}
+	YAESU_WAITCHUNK_TIMEOUT(d);
+	d->waiting_chunk_done = CHUNK_DELAY;
 	return 0;
     } else if (d->waiting_chunk_done == CHUNK_DELAY) {
 	YAESU_CHAR_TIMEOUT(d);
@@ -2209,7 +2191,9 @@ main(int argc, char *argv[])
 	printf("\n");
     printf("Transferred %d characters\n", d->data_count);
 
-    /* FIXME - check d->err */
+    if (!rv)
+	rv = d->err;
+
     if (!rv || ignerr) {
 	b = d->head.next;
 	while (b != &d->head) {
