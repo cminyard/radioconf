@@ -60,7 +60,6 @@ static struct option long_options[] = {
     {"chunksize",1, NULL, 'a'},
     {"waitchunk",1, NULL, 'b'},
     {"configdir",0, NULL, 'F'},
-    {"prewritedelay", 1, NULL, 't'},
     {"noendecho", 0, NULL, 'u'},
     {"csumdelay", 1, NULL, 'x'},
     {NULL,	 0, NULL, 0}
@@ -146,7 +145,6 @@ struct yaesu_data {
     int has_checkblock;
     int waitchecksum;
     int delayack;
-    int prewritedelay;
 };
 
 #define DEFAULT_CHUNKSIZE 0
@@ -169,7 +167,7 @@ struct yaesu_data *
 alloc_yaesu_data(struct gensio_os_funcs *o, struct gensio *io, int is_read,
 		 int send_echo, int recv_echo, int noendecho, int has_checksum,
 		 int has_checkblock, int waitchecksum, int chunksize,
-		 int waitchunk, int delayack, int prewritedelay, int csumdelay)
+		 int waitchunk, int delayack, int csumdelay)
 {
     struct yaesu_data *d;
 
@@ -206,7 +204,6 @@ alloc_yaesu_data(struct gensio_os_funcs *o, struct gensio *io, int is_read,
     d->has_checksum = has_checksum;
     d->has_checkblock = has_checkblock;
     d->waitchecksum = waitchecksum;
-    d->prewritedelay = prewritedelay;
 
     return d;
 }
@@ -315,7 +312,6 @@ struct yaesu_conf {
     int waitchunk;
     int csumdelay;
     int delayack;
-    int prewritedelay;
     struct yaesu_blocksizes *bsizes;
     struct yaesu_conf *next;
 };
@@ -375,8 +371,6 @@ check_yaesu_type(struct yaesu_data *d, unsigned char *buff, unsigned int len,
 		d->csumdelay = r->csumdelay;
 	    if (d->delayack < 0)
 		d->delayack = r->delayack;
-	    if (d->prewritedelay < 0)
-		d->prewritedelay = r->prewritedelay;
 	    return 1;
 	}
     }
@@ -465,9 +459,6 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len,
     unsigned int end;
     int rv;
     unsigned int total_written = 0;
-
-    if (d->prewritedelay > 0)
-	usleep(d->prewritedelay);
 
     if (len + d->write_len > sizeof(d->write_buf)) {
 	*written = false;
@@ -1666,21 +1657,6 @@ read_yaesu_config(char *configdir)
 	    r->noendecho = 1;
 	}
 
-	if (strcmp(tok, "prewritedelay") == 0) {
-	    if (r->prewritedelay)
-		conferr(linenum, "prewritedelay already specified");
-
-	    tok = strtok_r(NULL, " \t", &nexttok);
-	    if (!tok)
-		conferr(linenum, "Expected number");
-
-	    r->prewritedelay = strtoul_nooctal(tok, &ep);
-	    if (*ep)
-		conferr(linenum, "Invalid prewritedelay");
-
-	    goto line_done;
-	}
-
     line_done:
 	free(line);
     }
@@ -1760,7 +1736,6 @@ usage(void)
     printf("  -n, --nodelayack - No delay before sending the last ack\n");
     printf("  -f, --configdir <file> - Use the given directory for the radio"
 	   " configuration instead\nof the default %s\n", RADIO_CONFIGDIR);
-    printf("  -t, --prewritedelay <usec> - Delay added before every write\n");
 }
 
 int
@@ -1791,7 +1766,6 @@ main(int argc, char *argv[])
     int csumdelay = -1;
     int chunksize = -1;
     int delayack = -1;
-    int prewritedelay = -1;
     struct gensio *io;
     struct gensio_os_funcs *o;
     gensio_time zero_timeout = { 0, 0 }, timeout;
@@ -1888,15 +1862,6 @@ main(int argc, char *argv[])
 		}
 		break;
 
-	    case 't':
-		prewritedelay = strtoul_nooctal(optarg, &dend);
-		if ((*optarg == '\0') || (*dend != '\0')) {
-		    fprintf(stderr, "Invalid prewritedelay: '%s'.\n", optarg);
-		    usage();
-		    exit(1);
-		}
-		break;
-
 	    case 'l':
 		delayack = 1;
 		break;
@@ -1985,7 +1950,7 @@ main(int argc, char *argv[])
     d = alloc_yaesu_data(o, io, do_read, send_echo, recv_echo, noendecho,
 			 do_checksum,
 			 do_checkblock, do_waitchecksum, chunksize, waitchunk,
-			 delayack, prewritedelay, csumdelay);
+			 delayack, csumdelay);
     if (!d) {
 	fprintf(stderr, "Out of memory\n");
 	exit(1);
