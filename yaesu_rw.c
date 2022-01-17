@@ -515,12 +515,12 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len,
 		return rv;
 	    total_written += written;
 	    if (written > 0 && verbose > 2) {
-		int i;
+		gensiods i;
 		gensio_time time;
 
 		gensio_os_funcs_get_monotonic_time(d->o, &time);
 		printf("Write(2: %ld:%6.6ld):", time.secs, (long) time.nsecs);
-		for (i = 0; i < rv; i++)
+		for (i = 0; i < written; i++)
 		    printf(" %2.2x", d->write_buf[d->write_start+i]);
 		printf("\n");
 		fflush(stdout);
@@ -547,13 +547,15 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len,
 		to_write = d->write_len;
 	    rv = gensio_write(d->io, &written,
 			      d->write_buf + d->write_start, to_write, NULL);
+	    printf("B: %d\n", rv);
 	    if (rv)
 		return rv;
 	    total_written += written;
 	    if (written > 0 && verbose > 2) {
-		int i;
+		gensiods i;
+
 		printf("Write(2):");
-		for (i = 0; i < rv; i++)
+		for (i = 0; i < written; i++)
 		    printf(" %2.2x", d->write_buf[d->write_start+i]);
 		printf("\n");
 		fflush(stdout);
@@ -1107,12 +1109,14 @@ handle_yaesu_write_timeout(struct yaesu_data *d)
 
     if (d->waiting_chunk_done == CHUNK_CHECK) {
 	int left;
+	char fdstr[10];
 	int fd;
-	gensiods len = sizeof(fd);
+	gensiods len = sizeof(fdstr);
 
 	/* FIXME - this is a hack. */
 	rv = gensio_control(d->io, 0, true, GENSIO_CONTROL_REMOTE_ID,
-			    (char *) &fd, &len);
+			    fdstr, &len);
+	fd = strtoul(fdstr, NULL, 0);
 
 	rv = ioctl(fd, TIOCOUTQ, &left);
 	if (rv < 0)
@@ -1125,6 +1129,7 @@ handle_yaesu_write_timeout(struct yaesu_data *d)
     } else if (d->waiting_chunk_done == CHUNK_DELAY) {
 	YAESU_CHAR_TIMEOUT(d);
 	d->waiting_chunk_done = CHUNK_NOWAIT;
+	gensio_set_write_callback_enable(d->io, true);
 	return 0;
     }
     return GE_TIMEDOUT;
@@ -2165,9 +2170,16 @@ main(int argc, char *argv[])
 
     if (do_write) {
 	char c;
+	size_t wr;
+
 	printf("Put the radio in rx mode and press enter");
 	fflush(stdout);
-	fread(&c, 1, 1, stdin);
+	wr = fread(&c, 1, 1, stdin);
+	if (wr == 0) {
+	    printf("Bad read from stdin, aborting");
+	    rv = GE_INVAL;
+	    goto out_err;
+	}
 	rv = yaesu_start_write(d);
 	if (rv) {
 	    fprintf(stderr, "error starting write %s\n", gensio_err_to_str(rv));
