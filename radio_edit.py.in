@@ -406,14 +406,9 @@ class RadioFileData:
         else:
             self.filename = filename
             pass
-        outs = []
-        for c in self.data:
-            outs.append(chr(c))
-            pass
-        s = "".join(outs)
         try:
             f = open(filename, "wb")
-            f.write(s)
+            f.write(bytes(self.data))
         finally:
             f.close()
             pass
@@ -836,6 +831,7 @@ class BISpecial857B(BISpecial):
                 break
             pass
         oldv = t.data.get_bits(t.addr, num)
+        bfreq = int(bfreq)
         if (not bfreq):
             if (oldv != 0):
                 t.data.set_bits(0, t.addr, num)
