@@ -6,5 +6,5 @@ AM_INIT_AUTOMAKE
 AC_PROG_CC
 AC_STDC_HEADERS
 RADIO_CONFIGDIR="${datarootdir}/radioconf"
-AC_SUBST(YAESU_CONFIGDIR)
+AC_SUBST(RADIO_CONFIGDIR)
 AC_OUTPUT([Makefile radioconf/Makefile layouts/Makefile])

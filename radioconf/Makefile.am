@@ -8,9 +8,9 @@ EXTRA_DIST = RAD_FILES radios \
 	US.rpt
 
 install-data-am:
-	echo "$(mkinstalldirs) \"$(DESTDIR)$(YAESU_CONFIGDIR)\""
-	$(mkinstalldirs) "$(DESTDIR)$(YAESU_CONFIGDIR)"
+	echo "$(mkinstalldirs) \"$(DESTDIR)$(RADIO_CONFIGDIR)\""
+	$(mkinstalldirs) "$(DESTDIR)$(RADIO_CONFIGDIR)"
 	for p in $(EXTRA_DIST); do \
-		echo " $(install_sh_DATA) $$p \"$(DESTDIR)$(YAESU_CONFIGDIR)\""; \
-		$(install_sh_DATA) $$p "$(DESTDIR)$(YAESU_CONFIGDIR)"; \
+		echo " $(install_sh_DATA) $$p \"$(DESTDIR)$(RADIO_CONFIGDIR)\""; \
+		$(install_sh_DATA) $$p "$(DESTDIR)$(RADIO_CONFIGDIR)"; \
 	done
