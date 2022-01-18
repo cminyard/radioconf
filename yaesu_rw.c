@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
-#include <unistd.h> /* FIXME - for usleep. */
 #ifdef __APPLE__
 #include <sys/malloc.h>
 #else
@@ -79,6 +78,8 @@ int hash = 0;
 #define YAESU_WAITWRITE_TIMEOUT(d) YAESU_TIMEOUT(d, 0, 5000)
 #define YAESU_CSUMDELAY_TIMEOUT(d) YAESU_TIMEOUT(d, 0, d->csumdelay)
 #define YAESU_WAITCHUNK_TIMEOUT(d) YAESU_TIMEOUT(d, 0, d->waitchunk)
+#define YAESU_PREWRITE_TIMEOUT(d) YAESU_TIMEOUT(d, d->prewritedelay / 1000000,\
+						d->prewritedelay % 1000000)
 #define YAESU_START_TIMEOUT(d) YAESU_TIMEOUT(d, 10, 0)
 #define YAESU_MAX_RETRIES 5
 
@@ -146,6 +147,7 @@ struct yaesu_data {
     int has_checkblock;
     int waitchecksum;
     int delayack;
+    bool in_prewritedelay;
     int prewritedelay;
 };
 
@@ -255,7 +257,7 @@ yaesu_get_timeout(struct yaesu_data *d, gensio_time *time)
 int
 yaesu_is_done(struct yaesu_data *d)
 {
-    return d->state == YAESU_STATE_DONE || d->err;
+    return d->err || (d->state == YAESU_STATE_DONE && !d->in_prewritedelay);
 }
 
 void
@@ -466,9 +468,6 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len,
     int rv;
     unsigned int total_written = 0;
 
-    if (d->prewritedelay > 0)
-	usleep(d->prewritedelay);
-
     if (len + d->write_len > sizeof(d->write_buf)) {
 	*written = false;
 	return 0;
@@ -494,6 +493,17 @@ yaesu_write(struct yaesu_data *d, const unsigned char *data, unsigned int len,
 	    memcpy(d->write_buf, data + left, len - left);
 	}
 	d->write_len += len;
+    }
+
+    if (d->prewritedelay) {
+	if (d->in_prewritedelay) {
+	    d->in_prewritedelay = false;
+	} else {
+	    d->in_prewritedelay = true;
+	    gensio_set_write_callback_enable(d->io, false);
+	    YAESU_PREWRITE_TIMEOUT(d);
+	    return 0;
+	}
     }
 
     end = (d->write_start + d->write_len) % sizeof(d->write_buf);
@@ -1108,7 +1118,8 @@ handle_yaesu_write_timeout(struct yaesu_data *d)
 	YAESU_WAITCHUNK_TIMEOUT(d);
 	d->waiting_chunk_done = CHUNK_DELAY;
 	return 0;
-    } else if (d->waiting_chunk_done == CHUNK_DELAY) {
+    }
+    if (d->waiting_chunk_done == CHUNK_DELAY) {
 	YAESU_CHAR_TIMEOUT(d);
 	d->waiting_chunk_done = CHUNK_NOWAIT;
 	gensio_set_write_callback_enable(d->io, true);
@@ -1129,6 +1140,13 @@ handle_yaesu_data(struct yaesu_data *d, unsigned char *buf, gensiods buflen)
 int
 handle_yaesu_timeout(struct yaesu_data *d)
 {
+    if (d->in_prewritedelay) {
+	bool written;
+
+	YAESU_CHAR_TIMEOUT(d);
+	return yaesu_write(d, NULL, 0, &written);
+    }
+
     if (d->is_read)
 	return handle_yaesu_read_timeout(d);
     else

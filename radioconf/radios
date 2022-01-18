@@ -89,7 +89,6 @@ radio VX-7R
 	chunksize 64
 	waitchunk 50000
 	csumdelay 100000
-	prewritedelay 10000
 endradio
 
 radio FT-7800R
