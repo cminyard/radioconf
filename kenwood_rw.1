@@ -31,14 +31,8 @@ Print out help text
 Increase the debugging level.
 
 .TP
-\fB\-i\fR, \fB\-\-infile\fR \fIfilename\fR
-When writing to the radio, use the given file for the data.  Must be
-Print out help textspecified with \-\-write.
-
-.TP
-\fB\-o\fR, \fB\-\-outfile\fR \fIfilename\fR
-When reading from the radio, write the data to the given file.
-Print out help textDefaults to kenwood.rfile.
+\fB\-i\fR, \fB\-\-file\fR \fIfilename\fR
+When reading from or writing to the radio, use the given file for the data.
 
 .TP
 \fB\-r\fR, \fB\-\-read\fR
@@ -52,7 +46,7 @@ Write data to the radio.
 To use this program, you must hook your computer to the radio with the
 Print out help textproper serial cable, then do
 .IP
-kenwood_rw --read --outfile myradio.rfile <gensio for radio>
+kenwood_rw --read --file myradio.rfile <gensio for radio>
 .PP
 The gensio is a string specifying where to hook to the radio and
 Print out help textconfiguration.  If the radio is on /dev/ttyUSB0 and
@@ -61,7 +55,7 @@ Print out help textit was set to 9600 baud, you would use
 
 To restore your data, again put the radio in clone mode, do
 .IP
-kenwood_rw --write --infile myradio.rfile <gensio for radio>
+kenwood_rw --write --file myradio.rfile <gensio for radio>
 .PP
 
 .SH "SEE ALSO"
