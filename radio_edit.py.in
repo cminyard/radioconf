@@ -732,9 +732,18 @@ class BISpecial(YType):
         t = h.data
         return str(t.data.get_bits(t.addr, num))
 
-    def setSelect(self, v, h, num):
+    def setSelect(self, v, h, num, default=None):
         t = h.data
-        t.data.set_bits(int(v), t.addr, num)
+        try:
+            t.data.set_bits(int(v), t.addr, num)
+        except Exception as e:
+            if default is not None:
+                try:
+                    t.data.set_bits(int(default), t.addr, num)
+                except:
+                    pass
+                pass
+            pass
         return
 
     pass
